@@ -24,7 +24,7 @@ spec:
 
   # No cluster-admin access (least privilege)
   sourceRepos:
-  - 'https://github.com/threadforge/threadforge'  # Git repo only
+  - 'https://github.com/computeaholic/TruthFast'  # Git repo only
 
   # Scoped to non-governance namespaces
   destinations:
@@ -66,7 +66,7 @@ spec:
   project: 'threadforge-infra'
 
   source:
-    repoURL: 'https://github.com/threadforge/threadforge'
+    repoURL: 'https://github.com/computeaholic/TruthFast'
     targetRevision: 'main'
     path: 'gitops/infra/observability'
 
@@ -103,7 +103,7 @@ spec:
   project: 'threadforge-infra'
 
   source:
-    repoURL: 'https://github.com/threadforge/threadforge'
+    repoURL: 'https://github.com/computeaholic/TruthFast'
     targetRevision: 'main'
     path: 'gitops/infra/networking'
 
@@ -133,7 +133,7 @@ spec:
   project: 'threadforge-infra'
 
   source:
-    repoURL: 'https://github.com/threadforge/threadforge'
+    repoURL: 'https://github.com/computeaholic/TruthFast'
     targetRevision: 'main'
     path: 'gitops/apps'
 
