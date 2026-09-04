@@ -1,0 +1,184 @@
+{
+  "uid": "policy-overview",
+  "title": "Policy — Overview",
+  "description": "OPERATIONAL_POLICY_INVENTORY: Policies: [storage_latency] | SOURCE: Prometheus recording rules (group: policy) | ABSENCE: DENY by construction | POLICY_REGISTRY: docs/policies/policy-registry.yaml",
+  "datasource": "Prometheus",
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "System Policy Posture",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 3 },
+      "description": "PANEL_CONTRACT: System policy posture summary | METRIC: policy_posture | 1=ALL POLICIES ALLOW, 0=POLICY DENY PRESENT",
+      "targets": [{ "expr": "policy_posture" }],
+      "options": {
+        "reduceOptions": { "calcs": ["last"], "fields": "", "values": false },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": { "value": 1, "text": "ALL POLICIES ALLOW" }
+            },
+            {
+              "type": "value",
+              "options": { "value": 0, "text": "POLICY DENY PRESENT" }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#999999", "value": null },
+              { "color": "#999999", "value": 0 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "Policy Posture vs Operator Actions",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 6 },
+      "description": "PANEL_CONTRACT: Correlate policy_posture with operator actions over time | METRIC: policy_posture, operator_action_active | NOTE: operator_action_active indicates human operator activity (0/1)",
+      "targets": [
+        { "expr": "policy_posture", "refId": "A" },
+        { "expr": "operator_action_active", "refId": "B" }
+      ],
+      "options": {
+        "legend": { "displayMode": "list" }
+      },
+      "id": 20
+    },
+    {
+      "type": "stat",
+      "title": "storage_latency",
+      "gridPos": { "x": 0, "y": 3, "w": 6, "h": 3 },
+      "description": "PANEL_CONTRACT: Policy: storage_latency | METRIC: policy_decision{policy=\"storage_latency\"} | DENY: Do not accept new work",
+      "targets": [{ "expr": "policy_decision{policy=\"storage_latency\"}" }],
+      "options": {
+        "reduceOptions": { "calcs": ["last"], "fields": "", "values": false },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "value": 1, "text": "ALLOW" } },
+            { "type": "value", "options": { "value": 0, "text": "DENY" } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "spire_operational",
+      "gridPos": { "x": 6, "y": 3, "w": 6, "h": 3 },
+      "description": "PANEL_CONTRACT: Policy: spire_operational | METRIC: policy_decision{policy=\"spire_operational\"} | DENY: SPIRE not operational",
+      "targets": [{ "expr": "policy_decision{policy=\"spire_operational\"}" }],
+      "options": {
+        "reduceOptions": { "calcs": ["last"], "fields": "", "values": false },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "value": 1, "text": "ALLOW" } },
+            { "type": "value", "options": { "value": 0, "text": "DENY" } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 11
+    },
+    {
+      "type": "stat",
+      "title": "PEP Would Enforce (Count/Last)",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 3 },
+      "description": "PANEL_CONTRACT: PEP Would Enforce (Count/Last) | METRIC: governance_enforcement_total (driven by EnforcementRecord writes, dry-run only)",
+      "targets": [
+        { "expr": "sum(governance_enforcement_total)", "refId": "A" }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["last"], "fields": "", "values": false },
+        "orientation": "auto",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#999999", "value": null },
+              { "color": "#999999", "value": 0 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 21
+    },
+    {
+      "type": "timeseries",
+      "title": "Authority Verification Failures",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 4 },
+      "description": "PANEL_CONTRACT: Any non-zero value indicates authority trust failure | METRIC: decision_signature_verification_failures_total",
+      "targets": [
+        {
+          "expr": "sum(rate(decision_signature_verification_failures_total[5m]))",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(decision_signature_verification_failures_total)",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "legend": { "displayMode": "list" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#999999", "value": null },
+              { "color": "red", "value": 0 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 22
+    }
+  ],
+  "schemaVersion": 39
+}

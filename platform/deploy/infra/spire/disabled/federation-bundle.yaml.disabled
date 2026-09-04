@@ -1,0 +1,17 @@
+{{- if .Values.spireServer.federation.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-federation-bundles
+  namespace: {{ .Release.Namespace }}
+data:
+  alpha.threadforge.bundle: |
+    # Populated via SPIRE Server bundle endpoint at:
+    # https://spire-server.{{ .Release.Namespace }}.svc:8443/bundle
+
+  bravo.threadforge.bundle: |
+    # Bundle endpoint for Bravo cluster federation
+
+  charlie.threadforge.bundle: |
+    # Bundle endpoint for Charlie cluster federation
+{{- end }}

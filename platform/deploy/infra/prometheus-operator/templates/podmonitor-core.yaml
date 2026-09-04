@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: threadforge-core-pods
+  namespace: observability
+  labels:
+    threadforge.monitor/enabled: "true"
+spec:
+  selector:
+    matchLabels:
+      threadforge-monitor: "true"
+  namespaceSelector:
+    any: true
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      {{- include "prometheus.metricNameAsciiOnly" . | nindent 6 }}

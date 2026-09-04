@@ -1,0 +1,42 @@
+global:
+  hub: registry.threadforge.local:30500/istio
+  tag: "1.29.0@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b"
+
+service:
+  type: NodePort
+  ports:
+    - name: status-port
+      port: 15021
+      protocol: TCP
+      targetPort: 15021
+    - name: http2
+      port: 80
+      protocol: TCP
+      targetPort: 80
+      nodePort: 31620
+    - name: https
+      port: 443
+      protocol: TCP
+      targetPort: 443
+      nodePort: 32229
+
+volumes:
+  - name: istio-ca-root-cert
+    configMap:
+      name: istio-ca-root-cert
+      defaultMode: 420
+
+volumeMounts:
+  - name: istio-ca-root-cert
+    mountPath: /etc/certs
+    readOnly: true
+
+priorityClassName: threadforge-critical
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi

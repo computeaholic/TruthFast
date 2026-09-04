@@ -1,0 +1,40 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: minio-strict
+  namespace: minio
+spec:
+  mtls:
+    mode: STRICT
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: minio-allow-tempo
+  namespace: minio
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "spiffe://identity.threadforge.local/ns/tempo/sa/tempo"
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: minio-mtls
+  namespace: minio
+spec:
+  host: minio.minio.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+
+# NOTE: Create the SPIRE WorkloadEntry / registration in SPIRE server for MinIO:
+# spiffe://identity.threadforge.local/ns/minio/sa/minio
+# Example (run via spire-server CLI or API):
+# spire-server entry create -spiffeID spiffe://identity.threadforge.local/ns/minio/sa/minio \
+#   -selector k8s:ns:minio -selector k8s:sa:minio

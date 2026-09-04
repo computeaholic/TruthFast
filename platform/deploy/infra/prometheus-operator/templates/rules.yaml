@@ -1,0 +1,99 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: threadforge-rules
+  namespace: observability
+  labels:
+    threadforge.rules/enabled: "true"
+spec:
+  groups:
+
+    # ===========================================
+    # SMP / NAVBUS LATENCY
+    # ===========================================
+    - name: smp-navbus
+      rules:
+        - alert: SMPHighLatency
+          expr: histogram_quantile(0.95, sum(rate(smp_latency_ms_bucket[5m])) by (le))
+            > 250
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "SMP latency above 250ms p95"
+            description: "SMP messaging latency is breaching SLO."
+
+        - alert: NavBusHighLatency
+          expr: histogram_quantile(0.95, sum(rate(navbus_latency_ms_bucket[5m])) by (le))
+            > 200
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "NavBus latency above 200ms p95"
+            description: "Navigation Bus latency exceeded threshold."
+
+    # ===========================================
+    # VECTOR ROUTING
+    # ===========================================
+    - name: vector-routing
+      rules:
+        - alert: VectorRouterDegraded
+          expr: increase(vector_router_errors_total[5m]) > 5
+          labels:
+            severity: critical
+          annotations:
+            summary: "Vector router error spike"
+            description: "Operator-AI routing errors increasing."
+
+    # ===========================================
+    # REFLEX PRESSURE
+    # ===========================================
+    - name: reflex-pressure
+      rules:
+        - alert: ReflexPressureHigh
+          expr: avg_over_time(reflex_pressure_score[5m]) > 0.80
+          labels:
+            severity: warning
+          annotations:
+            summary: "Reflex pressure above safe threshold"
+            description: "System reflex layer entering reactive mode."
+
+    # ===========================================
+    # STORAGE SUBSYSTEM
+    # ===========================================
+    - name: minio-subsystem
+      rules:
+        - alert: StorageWriteFailures
+          expr: increase(storage_write_failures_total[5m]) > 3
+          labels:
+            severity: warning
+          annotations:
+            summary: "MinIO write failures occurring"
+            description: "Operator storage write failures detected."
+
+    # ===========================================
+    # LLM / vLLM
+    # ===========================================
+    - name: llm-health
+      rules:
+        - alert: LLMHighQueueDepth
+          expr: avg_over_time(vllm_queue_depth[5m]) > 10
+          labels:
+            severity: warning
+          annotations:
+            summary: "vLLM queue depth high"
+            description: "LLM inference backlog detected."
+
+    # ===========================================
+    # NODE / K8s CORE
+    # ===========================================
+    - name: node-health
+      rules:
+        - alert: NodeHighLoad
+          expr: node_load1 > (count(node_cpu_seconds_total{mode="idle"}) BY (instance) * 0.7)
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node under high load"
+            description: "Node load is above safe operating thresholds."

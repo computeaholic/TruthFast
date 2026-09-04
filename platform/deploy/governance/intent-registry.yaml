@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intent-registry
+  namespace: threadforge
+  labels:
+    app: threadforge
+    component: governance
+data:
+  intents.yaml: |
+    # Intent registry: categorizes intents as internal (control-plane) or user-facing
+    # Used by operator_core.py and intent validation layer
+    registry:
+      internal:
+        # Literal intent names (exact match)
+        literal:
+          - identity.demand
+          - observe.envoy.certs
+          - storage.router
+          - storage.admin
+          - governance.override
+        # Pattern-based intent names (glob patterns)
+        patterns:
+          - "kernel.execute.*"
+          - "governance.*"
+      user_facing:
+        - vector.search
+        - vector.insert
+        - vector.delete
+        - vector.embed
+        - storage.read
+        - storage.write

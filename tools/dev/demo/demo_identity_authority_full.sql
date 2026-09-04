@@ -1,0 +1,3 @@
+-- demo_identity_authority_full.sql
+-- Full-authority fixture output is generated into a temporary file at runtime.
+-- See tools/dev/demo/demo_load_identity_authority_full.sh.

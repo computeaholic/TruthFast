@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: identity-graph-sync
+  namespace: monitoring
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: sync
+            image: registry.threadforge.local:30500/postgres@sha256:4aea012537edfad80f98d870a36e6b90b4c09b27be7f4b4759d72db863baeebb
+            env:
+            - name: PGPASSWORD
+              value: threadforge
+            command:
+            - /bin/sh
+            - -c
+            - |
+              # Query Prometheus for identity edges
+              curl -s "http://prometheus.monitoring.svc:9090/api/v1/query?query=spiffe_identity_edge" | jq -r '.data.result[] | .metric.source_principal + "," + .metric.destination_principal + "," + (.value[1] | tostring)' | while IFS=, read source dest count; do
+                timestamp=$(date +%s)
+                psql -h postgres.threadforge-system.svc -U threadforge_operator -d threadforge -c "
+                INSERT INTO identity_graph (timestamp, source_principal, destination_principal, request_count) 
+                VALUES (to_timestamp($timestamp), '$source', '$dest', $count);"
+              done
+          restartPolicy: OnFailure

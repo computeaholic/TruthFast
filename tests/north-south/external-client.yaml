@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: external-client
+  namespace: threadforge-system
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: external-client
+  namespace: threadforge-system
+  labels:
+    app: external-client
+spec:
+  serviceAccountName: external-client
+  containers:
+  - name: client
+    image: curlimages/curl:8.1.2
+    command:
+      - sleep
+      - "3600"
+    volumeMounts:
+    - name: spiffe-workload-api
+      mountPath: /run/spire/sockets
+  volumes:
+  - name: spiffe-workload-api
+    hostPath:
+      path: /run/spire/sockets

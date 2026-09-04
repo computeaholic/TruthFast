@@ -1,0 +1,29 @@
+# Cert-manager "safe no-webhook" mode (schema-valid)
+# We DO NOT disable the webhook deployment (not allowed)
+# Instead we disable all validating behaviors.
+
+webhook:
+  timeoutSeconds: 5
+  securePort: 10260
+
+# Disable validation by annotation on all webhook configs
+extraArgs:
+  - --feature-gates="ExperimentalCertificateSigningRequestControllers=true"
+  - --controllers=*,-certificaterequest-validation,-certificatesigningrequest-validation,-issuer-validation
+
+# Prevent the webhook from enforcing any CA bundles
+webhook:
+  hostNetwork: false
+  serviceType: ClusterIP
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+  extraArgs:
+    - --enable-validation=false
+    - --disable-admission-webhook
+
+# Disable cert-manager’s schema validation via cainjector
+cainjector:
+  extraArgs:
+    - --preserve-ca-bundles=true

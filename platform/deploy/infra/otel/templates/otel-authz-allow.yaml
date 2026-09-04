@@ -1,0 +1,32 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: otel-inbound-allow
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: otel-gateway
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              # OTel Agent (agent → gateway OTLP)
+              - "spiffe://identity.threadforge.local/ns/observability/sa/otel-agent"
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/runtime/sa/operator-api"
+              - "spiffe://identity.threadforge.local/ns/runtime/sa/smp-router"
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/vector-router/sa/*"
+        - source:
+            principals:
+              # Allow Istio control-plane for healthchecks / reconciler interactions
+              - "spiffe://identity.threadforge.local/ns/istio-system/sa/istiod"
+
+    # Health-checks: allow probes and health extension traffic on the collector health port (13133)
+    - to:
+        - operation:
+            ports: ["13133"]

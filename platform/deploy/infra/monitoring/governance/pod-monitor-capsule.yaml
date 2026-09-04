@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: capsule-sealer
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      subsystem: capsule-sealer
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 5s

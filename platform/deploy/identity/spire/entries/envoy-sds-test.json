@@ -1,0 +1,9 @@
+{
+  "spiffe_id": "spiffe://identity.threadforge.local/workload/envoy-sds-test",
+  "parent_id": "spiffe://identity.threadforge.local/spire/agent/k8s_psat/cluster-alpha/fa9e2c90-accd-4c9f-9e65-0e8b53b64af6",
+  "selectors": [
+    { "type": "k8s", "value": "ns:default" },
+    { "type": "k8s", "value": "pod-name:envoy-sds-test" }
+  ],
+  "ttl": 3600
+}

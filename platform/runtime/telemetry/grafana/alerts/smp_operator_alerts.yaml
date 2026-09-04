@@ -1,0 +1,103 @@
+groups:
+  - name: threadforge-smp-alerts
+    rules:
+
+      # ------------------------------------------------------------
+      # SMP Queue Pressure — early warning, not failure
+      # ------------------------------------------------------------
+      - alert: SMPQueueHighPressure
+        expr: smp_queue_depth >= 25
+        for: 30s
+        labels:
+          severity: warning
+          subsystem: smp
+        annotations:
+          summary: "SMP queue pressure detected"
+          description: >
+            SMP queue depth has exceeded the safe operating threshold (25).
+            This is a pressure signal, not a failure.
+            Operator policy may choose to shed load, rebalance, or observe.
+
+      # ------------------------------------------------------------
+      # Sustained SMP Pressure — something is falling behind
+      # ------------------------------------------------------------
+      - alert: SMPQueueSustainedPressure
+        expr: smp_queue_depth >= 50
+        for: 2m
+        labels:
+          severity: critical
+          subsystem: smp
+        annotations:
+          summary: "SMP queue sustained high pressure"
+          description: >
+            SMP queue depth has remained above 50 for over 2 minutes.
+            This indicates sustained imbalance between enqueue and dequeue rates.
+            Manual or operator intervention recommended.
+
+      # ------------------------------------------------------------
+      # Starvation Detection — fairness violation
+      # ------------------------------------------------------------
+      - alert: SMPStarvationDetected
+        expr: increase(smp_starvation_events_total[1m]) > 0
+        for: 10s
+        labels:
+          severity: warning
+          subsystem: smp
+        annotations:
+          summary: "SMP starvation event detected"
+          description: >
+            One or more messages have exceeded the maximum allowed wait time
+            for their priority class.
+            This violates fairness guarantees and should be investigated.
+
+      # ------------------------------------------------------------
+      # Priority Backlog Imbalance — low priority never drains
+      # ------------------------------------------------------------
+      - alert: SMPLowPriorityBacklogGrowing
+        expr: smp_queue_depth_by_priority{priority="low"} > 0
+              and
+              smp_queue_oldest_age_by_priority_seconds{priority="low"} > 60
+        for: 1m
+        labels:
+          severity: warning
+          subsystem: smp
+        annotations:
+          summary: "Low-priority SMP backlog not draining"
+          description: >
+            Low-priority messages are accumulating and not being serviced
+            for over 60 seconds.
+            This may indicate starvation, mis-weighted scheduling,
+            or sustained higher-priority load.
+
+      # ------------------------------------------------------------
+      # Dispatcher Throughput Stall — system looks alive but isn’t
+      # ------------------------------------------------------------
+      - alert: SMPDispatcherStall
+        expr: rate(smp_dequeued_total[1m]) == 0
+              and
+              smp_queue_depth > 0
+        for: 30s
+        labels:
+          severity: critical
+          subsystem: smp
+        annotations:
+          summary: "SMP dispatcher stall detected"
+          description: >
+            SMP queue contains messages, but none are being dequeued.
+            This suggests a dispatcher stall or downstream blockage.
+
+      # ------------------------------------------------------------
+      # Operator Pressure Signal — governance visibility
+      # ------------------------------------------------------------
+      - alert: OperatorPressureSignalActive
+        expr: smp_queue_depth >= 25
+        for: 15s
+        labels:
+          severity: info
+          subsystem: operator
+        annotations:
+          summary: "Operator pressure signal active"
+          description: >
+            SMP pressure threshold crossed.
+            Operator-AI brainstem should observe and log,
+            but not autonomously act unless policy permits.

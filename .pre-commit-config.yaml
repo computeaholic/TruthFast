@@ -1,0 +1,36 @@
+repos:
+-   repo: local
+    hooks:
+    - id: detect-private-keys
+      name: Detect private keys (staged files)
+      entry: bash scripts/check_for_private_keys.sh
+      language: script
+      stages: [commit]
+      description: "Scan staged files for PEM private-key markers to prevent accidental commits of secret key material."
+
+    - id: forbid-bad-patterns
+      name: forbid-bad-patterns
+      entry: bash -c 'if git diff --cached --name-only | grep -E "(phase|run|tmp)"; then echo "❌ Forbidden naming pattern detected (phase/run/tmp)"; echo "[ADVISORY-FAIL] non-authoritative path"; exit 0; fi'
+      language: system
+      stages: [commit]
+
+    - id: test-location-enforce
+      name: test-location-enforce
+      entry: bash -c 'if git ls-files | grep -E "^test_.*\.py" | grep -v "^tests/"; then echo "❌ Test files must live in /tests"; echo "[ADVISORY-FAIL] non-authoritative path"; exit 0; fi'
+      language: system
+      stages: [commit]
+
+    - id: validate-artifacts
+      name: validate-artifacts
+      entry: bash scripts/validate_artifacts.sh
+      language: system
+      pass_filenames: false
+      stages: [commit]
+
+-   repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+    - id: detect-secrets
+      args: ['--baseline', '.secrets.baseline']
+      stages: [commit, push]
+      description: "Yelp detect-secrets scan (baseline aware)"

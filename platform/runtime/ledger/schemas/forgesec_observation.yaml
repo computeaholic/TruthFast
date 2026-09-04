@@ -1,0 +1,25 @@
+kind: ForgeSecObservation
+version: v1
+fields:
+  mode:
+    type: string
+    description: "identity | surface | delta"
+  target:
+    type: string
+    description: "Target of observation (URL, hostname, or descriptor)"
+  timestamp:
+    type: string
+    format: date-time
+    description: "RFC3339 timestamp of observation"
+  result:
+    type: string
+    description: "pass | fail | skipped"
+  observations:
+    type: object
+    description: "Opaque object containing observation details"
+  operator_confirmed:
+    type: boolean
+    description: "Whether the operator explicitly confirmed the operation"
+  disclaimer:
+    type: string
+    description: "Must state: 'observational, non-preventive'"

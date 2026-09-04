@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-injection-sa
+  namespace: threadforge-test
+imagePullSecrets:
+  - name: registry-credentials
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-injection
+  namespace: threadforge-test
+  labels:
+    app: test-injection
+spec:
+  serviceAccountName: test-injection-sa
+  restartPolicy: Never
+  containers:
+    - name: test-injection
+      image: registry.threadforge.local:30500/mirror/docker.io/curlimages/curl@sha256:846c5f0324b40f833b9a1fa3d5a667ac0f2b4712c9a39cae8cafe890286c52f2
+      imagePullPolicy: IfNotPresent
+      command: ["sh", "-c", "sleep 5"]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 50m
+          memory: 64Mi

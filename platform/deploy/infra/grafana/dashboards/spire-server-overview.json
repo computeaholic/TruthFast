@@ -1,0 +1,75 @@
+{
+  "uid": "spire-server-overview",
+  "title": "SPIRE — Server Overview",
+  "description": "OPERATIONAL_CONTRACT: What is SPIRE server operational status and datastore performance? | METRICS_DEPENDENCY: [spire_server_started, up{job=~'.*spire.*'}, go_goroutines, spire_server_datastore_bundle_fetch] | METRICS_SOURCE: SPIRE server telemetry exporter | BREAKS_IF: SPIRE server down OR telemetry disabled OR Prometheus scrape fails | OWNER: Identity / Infrastructure SRE | Last validated: 2026-02-09",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "SPIRE Up",
+      "id": 1,
+      "datasource": "Prometheus",
+      "description": "PANEL_CONTRACT: SPIRE server availability | METRIC: spire_server_started or up{job=~\".*spire.*\"} | NOTE: 0 = SPIRE down, No data = exporter missing",
+      "targets": [
+        {
+          "expr": "spire_server_started or up{job=~\".*spire.*\"}",
+          "legendFormat": "{instance}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "SPIRE Server Started (count)",
+      "id": 2,
+      "datasource": "Prometheus",
+      "description": "PANEL_CONTRACT: SPIRE server started count | METRIC: spire_server_started | NOTE: No data = exporter missing",
+      "targets": [
+        {
+          "expr": "spire_server_started",
+          "legendFormat": "started"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "SPIRE 'up' (Prometheus)",
+      "id": 3,
+      "datasource": "Prometheus",
+      "description": "PANEL_CONTRACT: SPIRE 'up' indicator | METRIC: up{job=~\".*spire.*\"} | NOTE: 0 = SPIRE down, No data = exporter missing",
+      "targets": [
+        {
+          "expr": "up{job=~\".*spire.*\"}",
+          "legendFormat": "up"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Go runtime: goroutines",
+      "id": 4,
+      "datasource": "Prometheus",
+      "description": "PANEL_CONTRACT: Go runtime goroutine count | METRIC: go_goroutines | NOTE: No data = exporter missing",
+      "targets": [
+        {
+          "expr": "go_goroutines",
+          "legendFormat": "goroutines"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Datastore: bundle fetchs (rate)",
+      "id": 5,
+      "datasource": "Prometheus",
+      "description": "PANEL_CONTRACT: Datastore bundle fetch rate | METRIC: sum(rate(spire_server_datastore_bundle_fetch[5m])) by (status) | NOTE: No data = exporter missing",
+      "targets": [
+        {
+          "expr": "sum(rate(spire_server_datastore_bundle_fetch[5m])) by (status)",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    }
+  ]
+}

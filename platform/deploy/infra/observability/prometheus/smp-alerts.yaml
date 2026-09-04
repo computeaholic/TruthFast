@@ -1,0 +1,61 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: observability-smp-alerts
+  namespace: monitoring
+spec:
+  groups:
+  - name: smp-dispatcher.rules
+    rules:
+
+    # --------------------------------------------------
+    # Queue Pressure
+    # --------------------------------------------------
+    - alert: SMPQueuePressureHigh
+      expr: smp_queue_depth > 25
+      for: 30s
+      labels:
+        severity: warning
+        subsystem: smp
+      annotations:
+        summary: "SMP queue pressure high"
+        description: "SMP queue depth has exceeded 25 for over 30 seconds."
+
+    # --------------------------------------------------
+    # Priority Starvation
+    # --------------------------------------------------
+    - alert: SMPPriorityStarvation
+      expr: smp_queue_oldest_age_by_priority_seconds > 2
+      for: 15s
+      labels:
+        severity: critical
+        subsystem: smp
+      annotations:
+        summary: "SMP priority starvation detected"
+        description: "At least one SMP priority queue has starved for more than 2 seconds."
+
+    # --------------------------------------------------
+    # Sustained Starvation Events
+    # --------------------------------------------------
+    - alert: SMPStarvationRate
+      expr: rate(smp_starvation_events_total[1m]) > 0
+      for: 10s
+      labels:
+        severity: warning
+        subsystem: smp
+      annotations:
+        summary: "Repeated SMP starvation signals"
+        description: "Starvation events are occurring repeatedly over the last minute."
+
+    # --------------------------------------------------
+    # Dispatcher Stalling
+    # --------------------------------------------------
+    - alert: SMPDispatcherStall
+      expr: rate(smp_dequeued_total[1m]) == 0 and smp_queue_depth > 0
+      for: 20s
+      labels:
+        severity: critical
+        subsystem: smp
+      annotations:
+        summary: "SMP dispatcher appears stalled"
+        description: "Queue has items but none have been dequeued in the last minute."

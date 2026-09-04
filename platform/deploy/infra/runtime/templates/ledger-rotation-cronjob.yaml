@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: runtime-ledger-rotation
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: runtime
+    agent: Ella
+spec:
+  schedule: "{{ default "0 0 * * *" .Values.schedule.rotation }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: rotation
+              image: "{{ include "runtime.image" (dict "Values" .Values "repository" (default "localhost:5000/runtime-ledger-rotation" .Values.image.rotation.repository) "tag" (default "rebuild-20260215" .Values.image.rotation.tag)) }}"
+              env:
+                - name: LEDGER_PATH
+                  value: "{{ default "/var/threadforge/logs/operator/ledger/operator_ledger.jsonl" .Values.ledger.path }}"
+                - name: ARCHIVE_DIR
+                  value: "{{ default "/var/threadforge/logs/operator/archive" .Values.ledger.archive_dir }}"
+              volumeMounts:
+                - name: ledger
+                  mountPath: /var/threadforge/logs
+          volumes:
+            - name: ledger
+              persistentVolumeClaim:
+                claimName: {{ default "operator-ledger-pvc" .Values.pvc.ledger }}

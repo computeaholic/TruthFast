@@ -1,0 +1,19 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-monitoring-prometheus-threadforge-api
+  namespace: threadforge
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-api
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - identity.threadforge.local/ns/monitoring/sa/kube-prometheus-stack-prometheus
+    to:
+    - operation:
+        ports:
+        - "8080"

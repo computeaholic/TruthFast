@@ -1,0 +1,6 @@
+{{- /* Prevent accidental enabling of noisy debug/trace logs in production unless explicitly opted in. */ -}}
+{{- $lvl := default "" (or .Values.env.LOG_LEVEL .Values.LOG_LEVEL .Values.logLevel) -}}
+{{- $allow := default false .Values.allowDebugLogs -}}
+{{- if and (not $allow) (or (eq (lower $lvl) "debug") (eq (lower $lvl) "trace")) -}}
+{{- fail (printf "API: LOG_LEVEL is set to '%s' which can be noisy. Set .Values.allowDebugLogs=true to opt in." $lvl) -}}
+{{- end -}}

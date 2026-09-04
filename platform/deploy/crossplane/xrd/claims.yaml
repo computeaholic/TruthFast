@@ -1,0 +1,249 @@
+# ==============================================================================
+# PHASE X: XNetworkClaim (Infrastructure Claim Definition)
+# ==============================================================================
+#
+# Purpose:
+#   Define claims over existing network infrastructure.
+#   Claims do NOT create networks.
+#   Claims reference pre-existing VPC IDs from OpenTofu.
+#
+# Critical Design: Fail-Closed
+#   All claim parameters are REQUIRED (no defaults).
+#   Claims fail explicitly if referenced infrastructure missing.
+#   No implicit creation or fallback behavior.
+#   Operator intent must be explicit in claim definition.
+#
+# Authority:
+#   Claims are declarative bindings only.
+#   Claims fail if infrastructure does not exist.
+#   No defaults that imply auto-provisioning.
+#
+# ==============================================================================
+#
+# ==============================================================================
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xnetworkclaims.threadforge.local
+  namespace: crossplane-system
+spec:
+  group: threadforge.local
+
+  # The claim type exposed to users
+  names:
+    kind: XNetworkClaim
+    plural: xnetworkclaims
+
+  # The composite resource managed by compositions
+  compositeNames:
+    kind: XNetwork
+    plural: xnetworks
+
+  # Binding-only parameters (no provisioning intent)
+  versions:
+  - name: v1
+    served: true
+    referenceable: true
+
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - environment
+            - vpcId
+            properties:
+              # REQUIRED: Which environment (dev, staging, prod)
+              environment:
+                type: string
+                enum: ['dev', 'staging', 'prod']
+                description: "Environment identifier (from OpenTofu)"
+
+              # REQUIRED: Existing VPC ID from OpenTofu
+              vpcId:
+                type: string
+                description: "Pre-existing VPC ID (OpenTofu output)"
+
+              # OPTIONAL: Custom labels for binding
+              customLabels:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Additional labels for resource binding"
+
+          status:
+            type: object
+            properties:
+              networkId:
+                type: string
+                description: "Bound network identifier"
+
+              ready:
+                type: boolean
+                description: "Claim binding successful"
+
+---
+
+# ==============================================================================
+# PHASE X: XClusterClaim (Infrastructure Claim Definition)
+# ==============================================================================
+#
+# Purpose:
+#   Define claims over existing Kubernetes cluster infrastructure.
+#   Claims do NOT create clusters.
+#   Claims reference pre-existing cluster IDs from OpenTofu.
+#
+# Authority:
+#   Claims are declarative bindings only.
+#   Claims fail if cluster does not exist.
+#   No defaults that imply auto-provisioning.
+#
+# ==============================================================================
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xclusterclaims.threadforge.local
+  namespace: crossplane-system
+spec:
+  group: threadforge.local
+
+  names:
+    kind: XClusterClaim
+    plural: xclusterclaims
+
+  compositeNames:
+    kind: XCluster
+    plural: xclusters
+
+  versions:
+  - name: v1
+    served: true
+    referenceable: true
+
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - environment
+            - clusterId
+            - kubeconfig
+            properties:
+              # REQUIRED: Which environment (dev, staging, prod)
+              environment:
+                type: string
+                enum: ['dev', 'staging', 'prod']
+                description: "Environment identifier (from OpenTofu)"
+
+              # REQUIRED: Existing cluster ID from OpenTofu
+              clusterId:
+                type: string
+                description: "Pre-existing cluster ID (OpenTofu output)"
+
+              # REQUIRED: Kubeconfig reference (from OpenTofu outputs)
+              kubeconfig:
+                type: string
+                description: "Reference to kubeconfig secret name"
+
+              # OPTIONAL: Custom labels for binding
+              customLabels:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Additional labels for resource binding"
+
+          status:
+            type: object
+            properties:
+              clusterId:
+                type: string
+                description: "Bound cluster identifier"
+
+              ready:
+                type: boolean
+                description: "Claim binding successful"
+
+---
+
+# ==============================================================================
+# PHASE X: XStorageClaim (Infrastructure Claim Definition)
+# ==============================================================================
+#
+# Purpose:
+#   Define claims over existing storage infrastructure.
+#   Claims do NOT create storage.
+#   Claims reference pre-existing storage resources from OpenTofu.
+#
+# Authority:
+#   Claims are declarative bindings only.
+#   Claims fail if storage does not exist.
+#   No defaults that imply auto-provisioning.
+#
+# ==============================================================================
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: xstorageclaims.threadforge.local
+  namespace: crossplane-system
+spec:
+  group: threadforge.local
+
+  names:
+    kind: XStorageClaim
+    plural: xstorageclaims
+
+  compositeNames:
+    kind: XStorage
+    plural: xstorages
+
+  versions:
+  - name: v1
+    served: true
+    referenceable: true
+
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - environment
+            - storageClass
+            properties:
+              # REQUIRED: Which environment (dev, staging, prod)
+              environment:
+                type: string
+                enum: ['dev', 'staging', 'prod']
+                description: "Environment identifier (from OpenTofu)"
+
+              # REQUIRED: Storage class from OpenTofu
+              # (standard, fast, or custom)
+              storageClass:
+                type: string
+                description: "Pre-existing storage class (OpenTofu output)"
+
+              # OPTIONAL: Custom labels for binding
+              customLabels:
+                type: object
+                additionalProperties:
+                  type: string
+                description: "Additional labels for resource binding"
+
+          status:
+            type: object
+            properties:
+              storageClassId:
+                type: string
+                description: "Bound storage class identifier"
+
+              ready:
+                type: boolean
+                description: "Claim binding successful"

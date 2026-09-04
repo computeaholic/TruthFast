@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-agent-config
+  namespace: {{ .Release.Namespace }}
+data:
+  agent.conf: |
+    agent {
+      data_dir = "/run/spire/data"
+      log_level = "INFO"
+      trust_domain = "{{ .Values.trustDomain }}"
+
+      # NOTE: This does NOT indicate insecure steady-state communication.
+      # REQUIRED: SPIRE 1.14 agent bootstrap limitation.
+      # This flag exists because SPIRE <=1.14 lacks a secure agent bootstrap mechanism.
+      # Steady-state trust is enforced by PSAT, bundle verification, Unix socket isolation,
+      # and explicit RBAC / mesh exclusions. See docs/spire/SPIRE_FINALIZED.md for justification.
+      insecure_bootstrap = {{ .Values.spireAgent.insecure_bootstrap }}
+
+      # FUTURE: Remove insecure_bootstrap when SPIRE supports authenticated agent bootstrap (tracked upstream).
+
+      socket_path = "{{ .Values.spireAgent.workloadApi.socketPath }}"
+
+      server_address = "spire-server.spire-system.svc"
+      server_port = "8081"
+{{- if not .Values.spireAgent.insecure_bootstrap }}
+      trust_bundle_path = "/run/spire/ca/bundle.pem"
+{{- end }}
+    }
+
+    plugins {
+      KeyManager "disk" {
+        plugin_data {
+          directory = "/run/spire/data/keys"
+        }
+      }
+
+      NodeAttestor "k8s_psat" {
+        plugin_data {
+          cluster = "{{ .Values.clusterName }}"
+          token_path = "/var/run/secrets/tokens/spire-agent"
+        }
+      }
+
+      WorkloadAttestor "k8s" {
+        plugin_data {
+          pod_resources_path = "/var/lib/kubelet/pod-resources/kubelet.sock"
+          # Keep pod-level attestation for workloads that can start before
+          # container metadata is fully resolved (notably spire-csr).
+          disable_container_selectors = true
+          skip_kubelet_verification = true
+        }
+      }
+    }
+# TLS CONFIGURATION GUARD
+# SPIRE 1.14.0 does not support agent-server TLS.
+# trust_bundle_path is set to bundle.pem (no TLS) for secure bundle distribution.
+# DO NOT modify trust_bundle_path or add TLS configuration.

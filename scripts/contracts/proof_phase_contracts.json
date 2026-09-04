@@ -1,0 +1,84 @@
+{
+  "bootstrap": {
+    "guarantees": [
+      "cluster reachable",
+      "namespaces exist",
+      "core CRDs installed"
+    ]
+  },
+  "identity": {
+    "requires": ["bootstrap"],
+    "guarantees": [
+      "spire server running",
+      "workload identities issued",
+      "spiffe validation passes",
+      "node trust boundary enforced with denied spoof attestation"
+    ]
+  },
+  "envoy_identity": {
+    "requires": ["identity"],
+    "guarantees": [
+      "mtls established",
+      "spiffe SAN present",
+      "issuer chain valid",
+      "single trust root matches artifacts/trust/root.pem"
+    ]
+  },
+  "binary_integrity": {
+    "requires": ["bootstrap"],
+    "guarantees": [
+      "binary cert/key handling remains file-based and deterministic"
+    ]
+  },
+  "runtime_identity_truth": {
+    "requires": ["identity"],
+    "guarantees": [
+      "runtime SPIFFE identity truth is validated against live Envoy/SPIRE state"
+    ]
+  },
+  "policy_reality": {
+    "requires": ["envoy_identity"],
+    "guarantees": ["live allow/deny behavior matches declared policy intent"]
+  },
+  "observability_truth": {
+    "requires": ["observability"],
+    "guarantees": ["trace and log signals reflect real executed traffic"]
+  },
+  "cross_layer_consistency": {
+    "requires": ["observability"],
+    "guarantees": [
+      "identity, policy, and observability evidence remain mutually consistent"
+    ]
+  },
+  "verify": {
+    "requires": ["envoy_identity"],
+    "guarantees": [
+      "policy enforcement works",
+      "identity-bearing workload projection remains continuous from canonical spec through rendered manifest, applied workload, and running pod",
+      "admission matrix denies external/internal unsigned, wrong digest, no sidecar, mutated, privileged, hostNetwork, and hostPath pods with denial logs",
+      "100% running pod sidecar coverage",
+      "registry TLS trust remains live and authoritative from mounted cluster CA",
+      "mesh baseline remains injection-enabled and STRICT where required",
+      "north-south boundary blocks direct NodePort and pod-IP bypass while allowing only controlled ingress",
+      "canonical service topology remains notifier- and registry-host aligned",
+      "east-west isolation blocks threadforge-test from observability while preserving explicit mesh allow paths",
+      "forced cert rotation has no HTTP 503 or TLS handshake failures under continuous traffic",
+      "protected namespaces reject sidecar bypass and no running protected pod exists without istio-proxy",
+      "existing proof sessions fail closed after SVID expiry when SPIRE is unavailable",
+      "identity to role mapping resolves deterministically and unmapped identities fail closed",
+      "structured audit logging records allow and deny decisions for enforcement paths",
+      "tenant isolation enforces namespace boundaries with explicit cross-namespace allow exceptions",
+      "closed-loop validation passes or is gated",
+      "image policy enforced"
+    ]
+  },
+  "observe": {
+    "requires": ["verify"],
+    "guarantees": [
+      "signals emitted",
+      "signals ingested",
+      "signals queryable",
+      "cross-system correlation possible"
+    ]
+  }
+}

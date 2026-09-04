@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-identity-graph-table
+  namespace: threadforge-system
+spec:
+  template:
+    spec:
+      containers:
+      - name: create
+        image: registry.threadforge.local:30500/postgres@sha256:4aea012537edfad80f98d870a36e6b90b4c09b27be7f4b4759d72db863baeebb
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        env:
+        - name: PGPASSWORD
+          value: threadforge
+        command:
+        - /bin/sh
+        - -c
+        - |
+          psql -h postgres.threadforge-system.svc -U threadforge_operator -d threadforge -c "
+          CREATE TABLE IF NOT EXISTS identity_graph (
+              timestamp TIMESTAMP,
+              source_principal TEXT,
+              destination_principal TEXT,
+              request_count BIGINT
+          );"
+      restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: identity-graph-table
+  namespace: threadforge-system
+data:
+  table.sql: |
+    CREATE TABLE IF NOT EXISTS identity_graph (
+        timestamp DateTime,
+        source_principal String,
+        destination_principal String,
+        request_count UInt64
+    ) ENGINE = MergeTree()
+    ORDER BY (timestamp, source_principal, destination_principal);

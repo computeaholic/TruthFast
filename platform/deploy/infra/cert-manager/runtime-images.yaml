@@ -1,0 +1,5 @@
+images:
+  - image: registry.threadforge.local:30500/cert-manager/controller@sha256:6bf0fd34e1d5b58e31bfdc640d5d284e528685b19f20df6c0fb6f13867603bba
+  - image: registry.threadforge.local:30500/cert-manager/cainjector@sha256:6381b508a274d56f0ed3ac6af76faf12e3e5a2e0028d33a13039e364c45c93ff
+  - image: registry.threadforge.local:30500/cert-manager/webhook@sha256:7f16d397b8b48c5133d9f2859fb2dea30f0f297eb04c517bbfc06f5d207b3cf0
+  - image: registry.threadforge.local:30500/cert-manager/startupapicheck@sha256:d313d9b8a846c163e52eebe68fd5e7da2457fddda2f144848de17b6fcd6e14f4

@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: prometheus-vs
+  namespace: observability
+spec:
+  hosts:
+    - "prometheus.threadforge.local"
+  gateways:
+    - istio-system/prometheus-internal-gateway
+  http:
+    - route:
+        - destination:
+            host: kube-prometheus-stack-prometheus.observability.svc.cluster.local
+            port:
+              number: 9090

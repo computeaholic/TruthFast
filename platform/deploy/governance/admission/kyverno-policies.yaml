@@ -1,0 +1,483 @@
+# Phase G Enforcement: Kyverno Policies for Admission Control
+# These policies convert documented constraints into mechanically enforced rejections.
+# Fail-closed design: ANY violation triggers admission denial.
+
+---
+# Policy 0: Protect Authority ServiceAccounts from deletion
+# Constraint: ServiceAccounts that provide authority cannot be deleted
+# Failure mode: DELETE requests for authority SAs reject at admission
+#
+# PHASE G2 CRITICAL: This prevents CRITICAL #4 bypass (SA deletion breaks RBAC)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: protect-authority-serviceaccounts
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce  # HARD ENFORCEMENT
+  background: false  # No validation of existing SAs, only future deletes
+  rules:
+  - name: no-sa-deletion
+    match:
+      resources:
+        kinds:
+        - ServiceAccount
+        selector:
+          matchLabels:
+            threadforge.io/governance: "true"
+    validate:
+      message: "HARD ENFORCEMENT: Authority ServiceAccounts cannot be deleted. SA deletion breaks RBAC enforcement. This is a Phase G2 hard boundary and cannot be bypassed."
+      pattern:
+        metadata: {}  # Match any ServiceAccount with governance label, reject DELETE
+
+---
+# Policy 1: Block Argo CD sync policy drift (PHASE G3 ENHANCED)
+# Constraint: Manual sync only (no automated, selfHeal, or prune)
+# Failure mode: Any Application with automation features rejects at admission
+#
+# PHASE G3 ENHANCEMENT: Catches all drift vectors
+# - syncPolicy.automated (full auto-sync)
+# - syncPolicy.syncOptions[*].SelfHeal (self-healing)
+# - syncPolicy.prune (automatic pruning)
+#
+# GAP 1 FIX: Block all Argo automation that could drift cluster state
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-argocd-sync-drift
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G3"
+    threadforge.io/enforcement: "hard"
+    threadforge.io/gap: "sync-policy-drift"
+spec:
+  validationFailureAction: Enforce  # HARD ENFORCEMENT
+  background: true  # Validate existing Applications
+  rules:
+  - name: no-automated-sync
+    match:
+      resources:
+        kinds:
+        - Application
+        apiGroups:
+        - argoproj.io
+    validate:
+      message: "HARD ENFORCEMENT (G3): Argo CD automation is forbidden. syncPolicy.automated must not exist. Manual sync only. Reason: Drift prevention. No operator can enable auto-sync via API, CLI, or UI."
+      pattern:
+        spec:
+          syncPolicy:
+            =(automated): false  # If present, must be false (prohibits automation)
+
+  - name: no-self-heal
+    match:
+      resources:
+        kinds:
+        - Application
+        apiGroups:
+        - argoproj.io
+    validate:
+      message: "HARD ENFORCEMENT (G3): Argo CD self-heal is forbidden. syncPolicy.syncOptions[*].SelfHeal prevents manual drift detection. Remove SelfHeal option."
+      pattern:
+        spec:
+          syncPolicy:
+            syncOptions:
+            - x-=SelfHeal=true  # Forbid SelfHeal option
+
+  - name: no-automatic-prune
+    match:
+      resources:
+        kinds:
+        - Application
+        apiGroups:
+        - argoproj.io
+    validate:
+      message: "HARD ENFORCEMENT (G3): Argo CD automatic pruning is forbidden. syncPolicy.prune must not be true. Reason: Prevents unattended resource deletion. Manual deletion only."
+      pattern:
+        spec:
+          syncPolicy:
+            =(prune): false  # If present, must be false
+      pattern:
+        spec:
+          =(syncPolicy):
+            X(automated): false
+        spec:
+          =(syncPolicy):
+            X(automated): null
+
+---
+# Policy 2: Block Crossplane Compositions containing ManagedResources
+# Constraint: ConfigMap-only compositions (no cloud infrastructure provisioning)
+# Failure mode: Any Composition with ManagedResource names or kinds rejects at admission
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-crossplane-provisioning
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce  # PHASE G2: Hard enforcement
+  background: true  # PHASE G2: Validate existing compositions
+  rules:
+  - name: no-managed-resources
+    match:
+      resources:
+        kinds:
+        - Composition
+    validate:
+      message: "HARD ENFORCEMENT: Crossplane Compositions must be ConfigMap-only. ManagedResources are forbidden. Only ConfigMap resources allowed in spec.resources[].base.kind. This is a Phase G2 hard boundary and cannot be bypassed."
+      pattern:
+        spec:
+          resources:
+          - base:
+              apiVersion: v1
+              kind: ConfigMap
+
+---
+# Policy 3: Require explicit approval label on all Crossplane Claims
+# Constraint: Claims must be explicitly labeled threadforge.io/approved=true
+# Failure mode: Claim requests without required label reject at admission
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-claim-approval
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce  # PHASE G2: Hard enforcement
+  background: true  # PHASE G2: Validate existing claims
+  rules:
+  - name: claim-must-be-approved
+    match:
+      resources:
+        kinds:
+        - XNetworkClaim
+        - XClusterClaim
+        - XStorageClaim
+    validate:
+      message: "HARD ENFORCEMENT: Crossplane Claims require explicit approval label: threadforge.io/approved=true. This prevents accidental claim application. This is a Phase G2 hard boundary and cannot be bypassed."
+      pattern:
+        metadata:
+          labels:
+            threadforge.io/approved: "true"
+
+---
+# Policy 4: Block Crossplane Claims in example-claims.yaml by default
+# Constraint: Example claims cannot be applied without explicit override
+# Failure mode: Claims from example manifest reject unless explicitly approved
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-example-claims
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce  # PHASE G2: Hard enforcement
+  background: true  # PHASE G2: Validate existing claims
+  rules:
+  - name: no-unapproved-examples
+    match:
+      resources:
+        kinds:
+        - XNetworkClaim
+        - XClusterClaim
+        - XStorageClaim
+    exclude:
+      resources:
+        selector:
+          matchLabels:
+            threadforge.io/approved: "true"
+    validate:
+      message: "HARD ENFORCEMENT: Example claims from platform/deploy/crossplane/claims/example-claims.yaml must be explicitly approved with label threadforge.io/approved=true before application. This prevents accidental claim application. This is a Phase G2 hard boundary and cannot be bypassed."
+      pattern:
+        metadata:
+          labels:
+            threadforge.io/approved: "true"
+
+---
+# Policy 5: Validate Crossplane Claim references against OpenTofu inventory
+# Constraint: vpcId / clusterId / storageClass must exist in OpenTofu outputs
+# Failure mode: Claims referencing non-existent infrastructure reject at admission
+# NOTE: This policy is advisory only. Hard enforcement requires ValidatingAdmissionWebhook.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: validate-infra-references
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce  # PHASE G2: Hard enforcement (webhook backup required)
+  background: true  # PHASE G2: Validate existing claims
+  rules:
+  - name: vpc-id-must-exist-in-inventory
+    match:
+      resources:
+        kinds:
+        - XNetworkClaim
+    validate:
+      message: "HARD ENFORCEMENT: VPC ID must exist in OpenTofu inventory ConfigMap threadforge/infra-inventory. References to non-existent infrastructure are rejected. ValidatingAdmissionWebhook verifies inventory. This is a Phase G2 hard boundary and cannot be bypassed."
+      pattern:
+        spec:
+          parameters:
+            vpcId: "?*"  # Must be present and non-empty
+
+---
+# Policy 6: Block modifications to Kyverno policies themselves
+# Constraint: Policy configuration immutable by runtime operators
+# Failure mode: Policy modification attempts reject at admission
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: protect-kyverno-policies
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce
+  background: true  # PHASE G2: Validate existing resources
+  rules:
+  - name: policies-immutable
+    match:
+      resources:
+        kinds:
+        - ClusterPolicy
+        - Policy
+        namespaces:
+        - kyverno
+    exclude:
+      subjects:
+      - name: kyverno-admission-controller
+        kind: ServiceAccount
+        namespace: kyverno
+    validate:
+      message: "HARD ENFORCEMENT: Kyverno policies are immutable. Policy configuration managed by GitOps only. This is backed by ValidatingAdmissionWebhook to prevent self-referential bypass. This is a Phase G2 hard boundary and cannot be bypassed."
+      pattern:
+        metadata:
+          labels:
+            threadforge.io/governance: "true"
+
+---
+# Policy 7: Enforce structured logging for claim and sync operations
+# Constraint: All claim applications and argo syncs must generate audit records
+# Failure mode: Operations without audit hooks reject at admission
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: audit-claim-operations
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce  # PHASE G2: Hard enforcement
+  background: true  # PHASE G2: Validate existing claims
+  rules:
+  - name: log-claim-creation
+    match:
+      resources:
+        kinds:
+        - XNetworkClaim
+        - XClusterClaim
+        - XStorageClaim
+    validate:
+      message: "HARD ENFORCEMENT: Claim application must be traceable in audit logs. Ensure annotation threadforge.io/audit-logged=true present. This prevents unattributable infrastructure changes. This is a Phase G2 hard boundary and cannot be bypassed."
+      pattern:
+        metadata:
+          annotations:
+            threadforge.io/audit-logged: "true"
+
+---
+# Policy 8: Block CRD creation in namespace (only declarative CRDs allowed)
+# Constraint: Custom Resource Definitions must be part of Git manifests only
+# Failure mode: Runtime CRD creation attempts reject at admission
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-runtime-crds
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G2"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce
+  background: true  # PHASE G2: Validate existing resources
+  rules:
+  - name: no-dynamic-crds
+    match:
+      resources:
+        kinds:
+        - CustomResourceDefinition
+    exclude:
+      subjects:
+      - name: crossplane-system:crossplane
+        kind: ServiceAccount
+        namespace: crossplane-system
+    validate:
+      message: "CustomResourceDefinitions can only be deployed via GitOps. Runtime CRD creation is forbidden."
+      pattern:
+        metadata:
+          labels:
+            threadforge.io/gitops-managed: "true"
+
+---
+# PHASE G3 POLICIES
+# Final hardening to close residual gaps
+
+---
+# Policy 9: Block Crossplane ManagedResources (GAP 3 FIX)
+# Constraint: Crossplane cannot provision infrastructure
+# Failure mode: Any managed.crossplane.io/* resource rejects at admission
+#
+# PHASE G3 CRITICAL: Prevents operator from applying provisioning compositions
+# that would cause actual infrastructure to be created.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-crossplane-managed-resources
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G3"
+    threadforge.io/enforcement: "hard"
+    threadforge.io/gap: "managed-resource-injection"
+spec:
+  validationFailureAction: Enforce  # HARD ENFORCEMENT
+  background: true  # Validate existing resources
+  rules:
+  - name: deny-managed-resources
+    match:
+      resources:
+        kinds:
+        - "*"
+        apiGroups:
+        - "*.crossplane.io"
+    exclude:
+      resources:
+        kinds:
+        - CompositeResourceDefinition
+        - Composition
+        - ProviderConfig
+        - CompositeResource
+    validate:
+      message: "HARD ENFORCEMENT (G3): Crossplane ManagedResources are forbidden. Direct infrastructure provisioning is not allowed. Only CompositeResources (claims) with explicit approval can reference infrastructure. This prevents accidental provisioning."
+      pattern:
+        metadata: {}  # Match and reject all ManagedResources
+
+  - name: deny-provisioning-compositions
+    match:
+      resources:
+        kinds:
+        - Composition
+        apiGroups:
+        - apiextensions.crossplane.io
+    validate:
+      message: "HARD ENFORCEMENT (G3): Compositions cannot reference provisioning resources. Compositions must reference only ConfigMap bindings or approved infrastructure references. Provisioning via Composition is forbidden."
+      pattern:
+        spec:
+          resources:
+          - # Empty pattern ensures no resources are allowed in Composition
+            =name: null  # Forbids any resource references
+
+---
+# Policy 10: Block Example Claims (GAP 4 FIX)
+# Constraint: Example claims from documentation cannot be applied
+# Failure mode: Claims with example: true reject at admission
+#
+# PHASE G3 CRITICAL: Prevents accidental claim application from examples
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: block-example-claims-g3
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G3"
+    threadforge.io/enforcement: "hard"
+    threadforge.io/gap: "example-claim-weaponization"
+spec:
+  validationFailureAction: Enforce  # HARD ENFORCEMENT
+  background: true  # Validate existing resources
+  rules:
+  - name: reject-example-resources
+    match:
+      resources:
+        kinds:
+        - XNetworkClaim
+        - XClusterClaim
+        - XStorageClaim
+        - XResourceClaim
+        apiGroups:
+        - xrd.threadforge.io
+    validate:
+      message: "HARD ENFORCEMENT (G3): Example resources are not allowed. Claims from .example.yaml or marked example: true cannot be applied. Remove example label/annotation and provide explicit infrastructure approval."
+      pattern:
+        metadata:
+          labels:
+            =(example): false  # Forbid example: true label
+          annotations:
+            =(example): false  # Forbid example: true annotation
+
+  - name: reject-example-from-filename
+    match:
+      resources:
+        kinds:
+        - XNetworkClaim
+        - XClusterClaim
+        - XStorageClaim
+        apiGroups:
+        - xrd.threadforge.io
+    validate:
+      message: "HARD ENFORCEMENT (G3): Example resources cannot be applied. Generated from .example.yaml or example manifest. Reason: Prevents accidental infrastructure provisioning from documentation."
+      pattern:
+        metadata:
+          name: "?*-example*"  # Rejects names matching *example* pattern
+
+---
+# Policy 11: Protect Kyverno Policies from Modification (G3 Hardening)
+# Constraint: Enforcement policies themselves cannot be modified/deleted
+# Failure mode: Any modification to threadforge.io/enforcement: hard policies rejected
+#
+# PHASE G3 ENHANCEMENT: Self-protection, prevents policy modification bypass
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: protect-g3-policies
+  namespace: kyverno
+  labels:
+    threadforge.io/phase: "G3"
+    threadforge.io/enforcement: "hard"
+spec:
+  validationFailureAction: Enforce  # HARD ENFORCEMENT
+  background: true
+  rules:
+  - name: policies-immutable
+    match:
+      resources:
+        kinds:
+        - ClusterPolicy
+        - Policy
+        namespaces:
+        - kyverno
+        selector:
+          matchLabels:
+            threadforge.io/enforcement: "hard"
+    exclude:
+      subjects:
+      - name: kyverno-admission-controller
+        kind: ServiceAccount
+        namespace: kyverno
+    validate:
+      message: "HARD ENFORCEMENT (G3): Phase G3 enforcement policies are immutable. Policy modification bypasses enforcement. Policies managed by GitOps only."
+      pattern:
+        metadata:
+          labels:
+            threadforge.io/enforcement: "hard"

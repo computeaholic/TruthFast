@@ -1,0 +1,204 @@
+---
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: threadforge-test
+  labels:
+    istio-injection: enabled
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: echo
+  namespace: threadforge-test
+---
+# echo Deployment — in-mesh target for zero-trust enforcement tests
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo
+  namespace: threadforge-test
+  labels:
+    app: echo
+    workload: echo-server
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: echo
+  template:
+    metadata:
+      labels:
+        app: echo
+        workload: echo-server
+      annotations:
+        proxy.istio.io/config: |
+          holdApplicationUntilProxyStarts: true
+        sidecar.istio.io/proxyImage: registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+    spec:
+      priorityClassName: threadforge-low
+      serviceAccountName: echo
+      containers:
+        - name: echo
+          image: registry.threadforge.local:30500/hashicorp/http-echo@sha256:3f5c9a5a28daf63a712bbf45f2fa0741be9cd34339ba598a5c13af02959f108d
+          imagePullPolicy: IfNotPresent
+          args: ["-text=ok"]
+          ports:
+            - containerPort: 5678
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+# PeerAuthentication: enforce STRICT mTLS in threadforge-test namespace
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: threadforge-test
+spec:
+  mtls:
+    mode: STRICT
+---
+# Service for echo — required for DNS resolution: echo.threadforge-test.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo
+  namespace: threadforge-test
+  labels:
+    app: echo
+spec:
+  selector:
+    app: echo
+    workload: echo-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5678
+      protocol: TCP
+---
+# DestinationRule: cap connection lifetime so stale mTLS sessions cannot
+# survive past the short proof SVID window during SPIRE outage tests.
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: echo-istio-mtls
+  namespace: threadforge-test
+spec:
+  host: echo.threadforge-test.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    connectionPool:
+      tcp:
+        connectTimeout: 5s
+        maxConnectionDuration: 75s
+      http:
+        idleTimeout: 15s
+---
+# ServiceAccount for test-client
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-client
+  namespace: threadforge-test
+---
+# test-client Deployment — curl container for s2s enforcement testing
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-client
+  namespace: threadforge-test
+  labels:
+    app: test-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-client
+  template:
+    metadata:
+      labels:
+        app: test-client
+      annotations:
+        proxy.istio.io/config: |
+          holdApplicationUntilProxyStarts: true
+        sidecar.istio.io/proxyImage: registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+    spec:
+      priorityClassName: threadforge-low
+      serviceAccountName: test-client
+      containers:
+        - name: test-client
+          image: registry.threadforge.local:30500/curlimages-curl@sha256:56efe57deecfd4145a36b24f1cfd676f8cbda808b5ce56d0f644ca0db6b1c0de
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+---
+# AuthorizationPolicy: namespace default deny
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: threadforge-test
+spec: {}
+---
+# AuthorizationPolicy on echo: ALLOW only from the ingress gateway and test-client by SPIFFE ID
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingress-to-echo
+  namespace: threadforge-test
+spec:
+  selector:
+    matchLabels:
+      app: echo
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway-service-account"
+              - "identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway-service-account"
+              - "spiffe://identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway"
+              - "identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway"
+              - "spiffe://identity.threadforge.local/ns/threadforge-test/sa/test-client"
+              - "identity.threadforge.local/ns/threadforge-test/sa/test-client"
+---
+# DENY policy: block privileged ingress paths at the mesh level.
+# External clients probe /admin and /api/v1/operator/* expecting a 403.
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: echo-deny-operator-api
+  namespace: threadforge-test
+spec:
+  selector:
+    matchLabels:
+      app: echo
+  action: DENY
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "5678"
+            paths:
+              - "/admin"
+              - "/api/v1/operator"
+              - "/api/v1/operator/*"

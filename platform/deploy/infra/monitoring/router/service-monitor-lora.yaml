@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lora-manager
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: lora-manager
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  endpoints:
+    - port: http
+      interval: 15s

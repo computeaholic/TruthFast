@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-promtail
+  namespace: kube-system
+data:
+  promtail.server: |
+    promtail.threadforge.local:53 {
+        errors
+        rewrite name exact promtail.threadforge.local promtail.monitoring.svc.cluster.local
+        forward . /etc/resolv.conf
+    }

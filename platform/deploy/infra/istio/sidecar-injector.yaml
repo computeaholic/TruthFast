@@ -1,0 +1,11 @@
+# Legacy sidecar injector template (minimal stub used for unit tests)
+containers:
+  - name: istio-proxy
+    readinessProbe:
+      initialDelaySeconds: {{ .Values.sidecar.readiness.initialDelaySeconds | int }}
+      periodSeconds: {{ .Values.sidecar.readiness.periodSeconds | int }}
+      failureThreshold: {{ .Values.sidecar.readiness.failureThreshold | int }}
+
+{{ $priv := (eq (annotation .ObjectMeta `sidecar.istio.io/privileged`) "true") }}
+allowPrivilegeEscalation: {{ if $priv }}true{{ else }}false{{ end }}
+privileged: {{ if $priv }}true{{ else }}false{{ end }}

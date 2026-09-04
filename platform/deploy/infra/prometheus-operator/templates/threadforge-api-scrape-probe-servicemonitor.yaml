@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: threadforge-api-scrape-probe
+  namespace: observability
+  labels:
+    threadforge.io/component: api
+    threadforge-monitor: enabled
+    threadforge.monitor/enabled: "true"
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-api
+      threadforge.chaos/scrape-probe: "true"
+  namespaceSelector:
+    matchNames:
+      - default
+      - threadforge
+  endpoints:
+    - port: http
+      interval: 10s
+      scrapeTimeout: 8s
+      path: /metrics
+      relabelings:
+        - action: replace
+          replacement: threadforge-scrape-probe
+          targetLabel: job
+        - action: replace
+          replacement: threadforge-api.threadforge.svc.cluster.local:8080
+          targetLabel: __address__
+      {{- include "prometheus.metricNameAsciiOnly" . | nindent 6 }}

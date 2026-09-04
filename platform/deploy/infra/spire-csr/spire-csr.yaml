@@ -1,0 +1,167 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spire-csr
+  namespace: istio-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: spire-csr-spire-server-reader
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: spire-csr-spire-server-reader
+subjects:
+  - kind: ServiceAccount
+    name: spire-csr
+    namespace: istio-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: spire-csr-spire-server-reader
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spire-csr
+  namespace: istio-system
+spec:
+  type: ClusterIP
+  selector:
+    app: spire-csr
+  ports:
+    - name: grpc
+      port: 443
+      targetPort: 6443
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spire-csr
+  namespace: istio-system
+spec:
+  progressDeadlineSeconds: 180
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spire-csr
+  template:
+    metadata:
+      labels:
+        app: spire-csr
+        sidecar.istio.io/inject: "false"
+    spec:
+      priorityClassName: threadforge-critical
+      serviceAccountName: spire-csr
+      imagePullSecrets:
+        - name: registry-credentials
+      initContainers:
+        - name: wait-for-spire-agent
+          image: registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+          command:
+            - /spire-csr
+            - probe
+          env:
+            - name: SPIFFE_ENDPOINT_SOCKET
+              value: unix:///run/spire/sockets/socket
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /run/spire/sockets
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+      containers:
+        - name: spire-csr
+          image: registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPIRE_CSR_LISTEN_ADDR
+              value: :6443
+            - name: SPIFFE_ENDPOINT_SOCKET
+              value: unix:///run/spire/sockets/socket
+            - name: SPIRE_TRUST_DOMAIN
+              value: identity.threadforge.local
+            - name: SPIRE_CSR_NAMESPACE_TTL_OVERRIDES
+              value: threadforge-test=90
+            - name: SPIRE_CSR_CA_CERT_FILE
+              value: /run/spire-csr/ca/ca.crt
+            - name: SPIRE_CSR_CA_KEY_FILE
+              value: /run/spire-csr/ca/ca.key
+            - name: SPIRE_CSR_SERVING_CERT_FILE
+              value: /run/spire-csr/ca/tls.crt
+            - name: SPIRE_CSR_SERVING_KEY_FILE
+              value: /run/spire-csr/ca/tls.key
+          ports:
+            - containerPort: 6443
+              name: grpc
+              protocol: TCP
+          startupProbe:
+            exec:
+              command:
+                - /proc/1/exe
+                - probe
+            failureThreshold: 30
+            periodSeconds: 2
+            timeoutSeconds: 3
+          readinessProbe:
+            exec:
+              command:
+                - /proc/1/exe
+                - probe
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 6
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+                - /proc/1/exe
+                - probe
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /run/spire/sockets
+              readOnly: true
+            - name: spire-csr-ca
+              mountPath: /run/spire-csr/ca
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1
+              memory: 1Gi
+      securityContext:
+        fsGroup: 0
+      volumes:
+        - name: spire-agent-socket
+          hostPath:
+            path: /run/spire/sockets
+            type: Directory
+        - name: spire-csr-ca
+          secret:
+            secretName: spire-csr-ca

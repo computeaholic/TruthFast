@@ -1,0 +1,114 @@
+{
+  "uid": "tf-minio-hotpath",
+  "title": "Infra — MinIO S3 Hot Path & Slow Path Detector",
+  "description": "Panels render only where underlying metrics are present. Empty panels indicate intentionally uninstrumented components.",
+  "datasource": "Prometheus",
+  "tags": [
+    "threadforge",
+    "minio",
+    "s3",
+    "hot",
+    "slow"
+  ],
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "version": 1,
+  "panels": [
+    {
+      "type": "table",
+      "title": "Top Hot Prefixes (Requests/sec)",
+      "id": 300,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (bucket,prefix) (rate(minio_s3_requests_total[2m])))",
+          "legendFormat": "{{bucket}}/{{prefix}}"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "High-Latency Requests (p95 / p99)",
+      "id": 301,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(minio_s3_ttfb_seconds_bucket[2m])))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(minio_s3_ttfb_seconds_bucket[2m])))",
+          "legendFormat": "p99"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "ms"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Slow Path Detector (Requests > 500ms)",
+      "id": 302,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(minio_s3_ttfb_seconds_bucket{le=\"0.5\"}[1m]))",
+          "legendFormat": "< 500ms"
+        },
+        {
+          "expr": "sum(rate(minio_s3_ttfb_seconds_bucket{le=\"1\"}[1m])) - sum(rate(minio_s3_ttfb_seconds_bucket{le=\"0.5\"}[1m]))",
+          "legendFormat": "500ms–1s"
+        },
+        {
+          "expr": "sum(rate(minio_s3_ttfb_seconds_bucket{le=\"10\"}[1m])) - sum(rate(minio_s3_ttfb_seconds_bucket{le=\"1\"}[1m]))",
+          "legendFormat": "1s–10s"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "table",
+      "title": "Top Slow Requests (Path + Latency)",
+      "id": 303,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 22
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "topk(20, rate(minio_s3_ttfb_seconds_sum[2m]) / rate(minio_s3_ttfb_seconds_count[2m]))",
+          "legendFormat": "{{bucket}}/{{object}}"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    }
+  ]
+}

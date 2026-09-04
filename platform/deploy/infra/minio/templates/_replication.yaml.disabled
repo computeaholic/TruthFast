@@ -1,0 +1,23 @@
+# deploy/infra/minio/templates/replication.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-replication-setup
+  namespace: minio
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: replication-setup
+          image: minio/mc
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              mc alias set local http://minio.minio.svc.cluster.local:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              mc alias set s3 https://s3.amazonaws.com "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+
+              mc replicate add local/operator-ledger s3/operator-ledger --remote-bucket operator-ledger
+              mc replicate add local/operator-replay s3/operator-replay --remote-bucket operator-replay
+              mc replicate add local/vector-shards s3/vector-shards --remote-bucket vector-shards

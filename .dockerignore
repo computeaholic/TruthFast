@@ -1,0 +1,72 @@
+# ============================================
+# THREADFORGE — DOCKERIGNORE
+# ============================================
+
+# --- Git ---
+.git
+.gitignore
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+*.sqlite3
+*.egg-info
+.env
+.env.*
+.venv/
+venv/
+.mcp-venv/
+.mcp-py3.11/
+
+# --- Local data / dangerous large dirs ---
+vault/
+vault/**
+
+rag_data/
+datasets/
+models/
+checkpoints/
+uploads/
+cache/
+tmp/
+local/
+logs/
+log/
+*.log
+
+# --- Alembic local artifacts ---
+migrations/versions/__pycache__/
+
+# --- Frontend / Node ---
+frontend/node_modules/
+frontend/.next/
+frontend/dist/
+node_modules/
+
+# --- Build artifacts ---
+dist/
+build/
+*.tar
+*.zip
+
+# --- Test Caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+coverage/
+
+# --- MacOS ---
+.DS_Store
+
+# --- Kubernetes generated ---
+*.yaml
+*.yml
+
+# --- DO NOT SEND THE WHOLE PROJECT ---
+# Everything not needed for image runtime avoids
+# 20GB+ build context problems.

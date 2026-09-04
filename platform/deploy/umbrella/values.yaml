@@ -1,0 +1,48 @@
+global:
+  threadforge:
+    namespace: threadforge
+    registry: "registry.threadforge.svc.cluster.local"
+    postgres:
+      host: "postgres.threadforge.svc.cluster.local"
+      user: threadforge
+    redis:
+      host: "redis.threadforge.svc.cluster.local"
+
+certManager:
+  enabled: true
+
+istio:
+  enabled: true
+
+registry:
+  enabled: true
+
+qdrant:
+  enabled: true
+
+postgres:
+  enabled: true
+
+# redis:
+#   enabled: true
+
+api:
+  enabled: true
+
+workers:
+  enabled: true
+
+dashboard:
+  enabled: true
+
+gateway:
+  enabled: true
+
+weave:
+  enabled: true
+
+sovereignOperator:
+  enabled: true
+
+runtimeSnapshots:
+  enabled: true

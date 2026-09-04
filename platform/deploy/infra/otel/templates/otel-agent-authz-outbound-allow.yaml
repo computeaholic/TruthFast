@@ -1,0 +1,21 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: otel-agent-outbound-allow
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: otel-agent
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            hosts:
+              - "otel-gateway.observability.svc.cluster.local"
+            ports: ["4317"]
+    - to:
+        - operation:
+            hosts:
+              - "kube-dns.kube-system.svc.cluster.local"
+            ports: ["53"]

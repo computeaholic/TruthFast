@@ -1,0 +1,78 @@
+EDGE_ID	SOURCE_SYSTEM	TARGET_SYSTEM	EDGE_TYPE	TRANSPORT	DATA	IDENTITY	AUTHORITY	MUTATION	EVIDENCE	CONFIDENCE	SOURCE_REFERENCE
+EDGE-001	SYS-001	SYS-002	AUTHORIZES	human/sudo	privileged qualification start	human	human privilege	true	golden_boot preflight	HIGH	scripts/operator/golden_boot.sh
+EDGE-002	SYS-002	SYS-003	DEPLOYS	Make/shell	clean Kind cluster	kubeconfig	cluster admin	true	Golden Boot call graph	HIGH	scripts/operator/golden_boot.sh
+EDGE-003	SYS-002	SYS-004	CALLS	Make/shell	validate-all-full-reset	human	scheduler	true	Make -n	HIGH	Makefile
+EDGE-004	SYS-004	SYS-005	RECONCILES	Docker/CoreDNS	registry listener and name resolution	host/root	bootstrap	true	registry probes	HIGH	scripts/infra/harden_local_registry.sh
+EDGE-005	SYS-004	SYS-006	CALLS	shell/docker	build/preload	human	bootstrap	true	preload summary	HIGH	scripts/infra/bootstrap.sh
+EDGE-006	SYS-006	SYS-005	BUILDS	OCI Registry API	images/manifests	registry auth	build authority	true	registry inventory	HIGH	scripts/infra/preload_registry.sh
+EDGE-007	SYS-007	SYS-006	AUTHORIZES	JSON/source	required image set	Git source	inventory authority	false	inventory tests	HIGH	platform/config/canonical_image_inventory.json
+EDGE-008	SYS-008	SYS-005	SIGNS	cosign/OCI	signed references	cosign key	signing authority	true	signature cache	HIGH	scripts/infra/sign_images.sh
+EDGE-009	SYS-005	SYS-016	READS	HTTPS Registry API	manifest/signature	registry auth+CA	verification input	false	Kyverno probe	HIGH	platform/policy/kyverno
+EDGE-010	SYS-004	SYS-009	DEPLOYS	kubectl/helm	SPIRE server	cluster admin	bootstrap	true	rollout	HIGH	platform/deploy/infra/spire
+EDGE-011	SYS-004	SYS-010	DEPLOYS	kubectl/helm	SPIRE agent	cluster admin	bootstrap	true	rollout	HIGH	platform/deploy/infra/spire
+EDGE-012	SYS-011	SYS-009	REGISTERS	SPIRE CLI/socket	workload entries	SPIRE server admin	registration authority	true	entry list	HIGH	scripts/proof/reconcile_spire_entries.sh
+EDGE-013	SYS-009	SYS-010	ATTESTS	SPIRE protocol	node identity/bundle	PSAT	SPIRE identity	true	agent health	HIGH	spire config
+EDGE-014	SYS-010	SYS-014	ISSUES_IDENTITY	Workload API/socket	Envoy SVID	SPIFFE selectors	SPIRE authority	false	Envoy cert evidence	HIGH	SPIRE entries
+EDGE-015	SYS-009	SYS-013	ISSUES_IDENTITY	SPIRE Workload API	CSR signer identity/root	SPIFFE	SPIRE authority	true	root fingerprints	HIGH	refresh_spire_istio_ca_path.sh
+EDGE-016	SYS-013	SYS-014	ISSUES_IDENTITY	Kubernetes CSR/gRPC	Istio workload certs	spire-csr SVID	CA bridge	true	identity chain	HIGH	platform/identity/spire-csr
+EDGE-017	SYS-012	SYS-013	RECONCILES	files/Kubernetes API	active/bundle trust roots	SPIRE root	trust producer	true	root lifecycle artifact	HIGH	scripts/infra/refresh_spire_istio_ca_path.sh
+EDGE-018	SYS-014	SYS-019	AUTHENTICATES	mTLS/XFCC	URI SAN	Envoy peer identity	transport authority	false	XFCC hostile tests	HIGH	platform/runtime/api/identity_deps.py
+EDGE-019	SYS-019	SYS-020	AUTHORIZES	SMP envelope	IdentityContext/capabilities	attested app identity	application governance	false	API tests	HIGH	platform/runtime/api/router_api.py
+EDGE-020	SYS-020	SYS-022	EMITS	Python call	governed operator event	validated runtime identity	ledger required	true	ledger tests	HIGH	platform/runtime/ai/operator_core.py
+EDGE-021	SYS-020	SYS-021	CALLS	Python call	approved plan	IdentityContext	default-deny gates	true	actuator tests	MEDIUM	platform/runtime/ai/operator_core.py
+EDGE-022	SYS-021	SYS-001	MUTATES	subprocess argv	host commands	process identity	explicit gates	true	static code only	MEDIUM	platform/runtime/actuator/actuator_plane.py
+EDGE-023	SYS-018	SYS-020	CALLS	Python	vector envelope	XFCC-derived identity	application	false	focused tests	HIGH	platform/runtime/api/router_api.py
+EDGE-024	SYS-020	SYS-047	CALLS	Python/backend protocol	vector operation	application identity	governed handler	true	unit tests	MEDIUM	platform/runtime/ai/operator_core.py
+EDGE-025	SYS-024	SYS-022	STORES	PostgreSQL	operator ledger events	database credentials	database	true	integration tests	MEDIUM	platform/runtime/ledger/postgres_writer.py
+EDGE-026	SYS-025	SYS-041	READS	ClickHouse SQL	analytical projections	DB credential	analytical only	true	qualified demo logs	HIGH	scripts/make/civ.mk
+EDGE-027	SYS-042	SYS-021	DENIES	architectural boundary	dormant intent	none	no execution authority	false	boundary tests	HIGH	platform/runtime/civ
+EDGE-028	SYS-041	SYS-042	ROUTES	conceptual only	CIV name/analytical theme	n/a	none	false	source comparison	HIGH	scripts/make/civ.mk
+EDGE-029	SYS-003	SYS-015	ENFORCES	Kubernetes API/CNI	RBAC/network policy	ServiceAccount	Kubernetes	false	live objects	HIGH	kubectl get
+EDGE-030	SYS-003	SYS-016	ENFORCES	admission webhook	admission request	ServiceAccount	Kubernetes admission	false	policy reports	HIGH	Kyverno manifests
+EDGE-031	SYS-014	SYS-015	ENFORCES	Envoy/CNI	L7/L3 boundaries	SPIFFE+namespace	mesh/Kubernetes	false	negative traffic proofs	HIGH	AuthorizationPolicy/NetworkPolicy
+EDGE-032	SYS-016	SYS-007	VERIFIES	admission/registry	digest and signature policy	workload image ref	admission	false	admission proof	HIGH	verify_admission_alignment.sh
+EDGE-033	SYS-046	SYS-015	DENIES	HTTP/TCP/Kubernetes API	negative test requests	test SPIFFE/SA	policy	false	proof logs	HIGH	threadforge-test manifests
+EDGE-034	SYS-038	SYS-015	DENIES	network/API	isolated probes	forgesec SA	policy	true	ForgeSec logs	HIGH	verify_forgesec_enforcement.sh
+EDGE-035	SYS-038	SYS-016	DENIES	admission	unsigned/invalid fixtures	forgesec SA	Kyverno	true	ForgeSec logs	HIGH	verify_forgesec_enforcement.sh
+EDGE-036	SYS-014	SYS-027	EMITS	OTLP/metrics/logs	mesh telemetry	workload SPIFFE	none	false	collector metrics	HIGH	observability manifests
+EDGE-037	SYS-018	SYS-027	EMITS	OTLP	API traces/metrics	API SPIFFE	none	false	static optional path	MEDIUM	runtime telemetry
+EDGE-038	SYS-027	SYS-030	EMITS	OTLP gRPC/HTTP	traces	collector SPIFFE	none	true	Tempo counters	HIGH	collector config
+EDGE-039	SYS-028	SYS-014	OBSERVES	HTTP scrape	Istio metrics	Prometheus SA	read-only	false	22 targets up	HIGH	prometheus config
+EDGE-040	SYS-029	SYS-003	OBSERVES	node/pod logs	Kubernetes logs	promtail SA	read-only	true	103 Loki series	HIGH	promtail manifests
+EDGE-041	SYS-031	SYS-028	READS	HTTP API	metrics	Grafana credential	read-only	false	datasource health	HIGH	grafana provisioning
+EDGE-042	SYS-031	SYS-029	READS	HTTP API	logs	Grafana credential	read-only	false	datasource health	HIGH	grafana provisioning
+EDGE-043	SYS-031	SYS-030	READS	HTTP API	traces	Grafana credential	read-only	false	datasource health	HIGH	grafana provisioning
+EDGE-044	SYS-032	SYS-028	OBSERVES	Prometheus API	alerts/signals	notifier SA	observer	false	closed-loop status	MEDIUM	notifier config
+EDGE-045	SYS-033	SYS-028	OBSERVES	Prometheus API	metrics proof	kubeconfig/pod exec	proof	false	observability logs	HIGH	verify_observability_stack.sh
+EDGE-046	SYS-033	SYS-029	OBSERVES	Loki API	log proof	kubeconfig/pod exec	proof	true	synthetic signal proof	HIGH	verify_observability_stack.sh
+EDGE-047	SYS-033	SYS-030	OBSERVES	Tempo API	trace proof	kubeconfig/pod exec	proof	true	ingest/search proof	HIGH	verify_tempo_ingestion_proof.sh
+EDGE-048	SYS-033	SYS-009	PROVES	SPIRE CLI/API	identity guarantee	SPIRE identity	evidence only	false	identity.log	HIGH	prove_system.sh
+EDGE-049	SYS-033	SYS-014	PROVES	kubectl/Envoy	mesh identity/boundaries	kubeconfig	evidence only	true	verify.log	HIGH	prove_system.sh
+EDGE-050	SYS-033	SYS-016	PROVES	Kubernetes API	admission denial	kubeconfig	evidence only	true	verify.log	HIGH	prove_system.sh
+EDGE-051	SYS-033	SYS-036	CALLS	shell	runtime digest reconciliation	kubeconfig/registry	evidence only	false	registry inventory	HIGH	prove_system.sh
+EDGE-052	SYS-033	SYS-034	EMITS	filesystem	proof artifact set	host process	evidence producer	true	status/hash/signatures	HIGH	prove_system.sh
+EDGE-053	SYS-034	SYS-002	CERTIFIES	filesystem/Make	signed proof result	source SHA	qualification	false	FINAL PASS	HIGH	golden_boot.sh
+EDGE-054	SYS-035	SYS-034	VERIFIES	isolated copy	tamper rejection	host	assurance	true	tamper PASS	HIGH	hostile_validation.sh
+EDGE-055	SYS-035	SYS-009	MUTATES	kubectl scale/delete	controlled SPIRE outage	cluster admin	break-glass test	true	spire-outage artifact	HIGH	prove_spire_outage.sh
+EDGE-056	SYS-037	SYS-023	CALLS	shell	security audit	human	audit	true	audit report	HIGH	run_full_audit.sh
+EDGE-057	SYS-037	SYS-036	CALLS	shell	registry/runtime audit	human	audit	true	audit report	HIGH	run_full_audit.sh
+EDGE-058	SYS-043	SYS-034	VERIFIES	filesystem/Git	commit.sha and proof integrity	Git HEAD	repository integrity	true	verify-main	HIGH	verify_main_integrity.sh
+EDGE-059	SYS-043	SYS-044	VERIFIES	static checks	claim/publication structure	Git	repository quality	false	docs checks	HIGH	GitHub workflows
+EDGE-060	SYS-040	SYS-039	CALLS	Make/shell	containment demo	human/kubeconfig	demo	true	demo run log	HIGH	run_supported_demos.sh
+EDGE-061	SYS-040	SYS-041	CALLS	Make/shell	CIV and authority contrast	DB credential	demo	true	demo logs	HIGH	run_supported_demos.sh
+EDGE-062	SYS-040	SYS-038	CALLS	Make/shell	security boundary demo	kubeconfig	demo	true	demo log	HIGH	run_supported_demos.sh
+EDGE-063	SYS-039	SYS-014	AUTHENTICATES	mTLS	agent identities	SPIFFE	mesh	false	demo logs	HIGH	agents-lab manifests
+EDGE-064	SYS-039	SYS-015	DENIES	HTTP/TCP	lateral/exfil/scan probes	agent identities	policy	false	demo logs	HIGH	scripts/demo
+EDGE-065	SYS-024	SYS-003	STORES	PVC/local-path	Postgres data	pod identity	state	true	PVC evidence	HIGH	postgres manifests
+EDGE-066	SYS-025	SYS-003	STORES	PVC/local-path	ClickHouse data	pod identity	state	true	PVC evidence	HIGH	clickhouse manifests
+EDGE-067	SYS-026	SYS-003	STORES	PVC/local-path	objects	pod identity	state	true	PVC evidence	HIGH	minio manifests
+EDGE-068	SYS-028	SYS-003	STORES	PVC/local-path	TSDB	pod identity	derived state	true	PVC evidence	HIGH	prometheus manifest
+EDGE-069	SYS-029	SYS-003	STORES	PVC/local-path	logs	pod identity	derived state	true	PVC evidence	HIGH	loki manifest
+EDGE-070	SYS-030	SYS-003	STORES	PVC/local-path	traces	pod identity	derived state	true	PVC evidence	HIGH	tempo manifest
+EDGE-071	SYS-009	SYS-003	STORES	PVC/local-path	SPIRE CA/sqlite	spire-server identity	constitutional state	true	PVC evidence	HIGH	SPIRE StatefulSet
+EDGE-072	SYS-050	SYS-020	EMITS	historical evolution	constrained OperatorCore concepts	n/a	none	false	Git history	MEDIUM	git history
+EDGE-073	SYS-050	SYS-042	EMITS	historical evolution	counterfactual/advisory concepts	n/a	none	false	Git history	MEDIUM	git history
+EDGE-074	SYS-051	SYS-003	DEPLOYS	legacy Make/SSH	alternate cluster	human	legacy	true	static only	HIGH	scripts/make/k3*.mk
+EDGE-075	SYS-054	SYS-028	DEPLOYS	external GitOps only	alternate observability config	external controller	not current	true	static only	MEDIUM	platform/deploy/gitops
+EDGE-076	SYS-048	SYS-011	BUILDS	YAML generation	registration declarations	Git source	identity producer	true	generator tests	MEDIUM	platform/identity
+EDGE-077	SYS-017	SYS-003	MUTATES	Kubernetes API	auxiliary certificates	cert-manager SA	certificate controller	true	live resources	HIGH	cert-manager manifests

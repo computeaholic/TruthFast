@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: prometheus-internal-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 9091
+        name: prometheus-https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: prometheus-tls-secret
+      hosts:
+        - "prometheus.threadforge.local"

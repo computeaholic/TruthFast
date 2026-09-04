@@ -1,0 +1,37 @@
+# platform/deploy/infra/prometheus/templates/prometheus-authz-allow.yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-allow-canonical
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+  action: ALLOW
+  rules:
+
+    # --- Read access (Grafana dashboards) ---
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/tier/tier5/cluster-alpha/ns/observability/sa/grafana-sa/role/dashboards"
+      to:
+        - operation:
+            ports: ["9090"]
+
+    # --- Telemetry ingestion (OTel / Blackbox) ---
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/tier/tier5/cluster-alpha/ns/observability/sa/otel-gateway/role/telemetry"
+              - "spiffe://identity.threadforge.local/tier/tier5/cluster-alpha/ns/observability/sa/blackbox/role/synthetic"
+      to:
+        - operation:
+            ports: ["9090"]
+
+    # --- Internal federation / remote write (if used) ---
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/tier/tier4/cluster-alpha/ns/monitoring/sa/prometheus-sa/role/metrics"

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "authority": "platform/config/support_contract.json",
+  "native_profile": "kind",
+  "supported_v1_entrypoints": [
+    "audit",
+    "demo",
+    "demo-all",
+    "demo-authority-contrast",
+    "demo-civ",
+    "demo-security-boundary",
+    "forgesec",
+    "golden-boot",
+    "proof",
+    "prove-spire-outage",
+    "registry-audit",
+    "validate-all",
+    "verify-main"
+  ],
+  "supported_demos": [
+    "demo",
+    "demo-authority-contrast",
+    "demo-civ",
+    "demo-security-boundary"
+  ],
+  "secondary_entrypoints": [
+    {
+      "cold_start_supported": false,
+      "qualification_scope": "SECONDARY_UNQUALIFIED",
+      "target": "runtime-deploy-api"
+    },
+    {
+      "cold_start_supported": false,
+      "qualification_scope": "SOURCE_ONLY",
+      "target": "runtime-health"
+    },
+    {
+      "cold_start_supported": false,
+      "qualification_scope": "SOURCE_ONLY",
+      "target": "runtime-init"
+    },
+    {
+      "cold_start_supported": false,
+      "qualification_scope": "SECONDARY_UNQUALIFIED",
+      "target": "runtime-nuke"
+    }
+  ],
+  "experimental_entrypoints": [],
+  "compatibility_entrypoints": [
+    "k3-down",
+    "k3-install",
+    "k3-reset",
+    "k3-wipe"
+  ],
+  "historical_entrypoints": [],
+  "invariants": {
+    "secondary_api_is_native_v1_qualified": false,
+    "secondary_api_is_cold_start_supported": false,
+    "supported_and_unqualified_tiers_are_disjoint": true
+  }
+}

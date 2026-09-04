@@ -1,0 +1,852 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observability
+data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      uid: prometheus
+      access: proxy
+      editable: false
+      url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+      isDefault: true
+    - name: Loki
+      type: loki
+      uid: loki
+      access: proxy
+      editable: false
+      url: http://loki.loki.svc.cluster.local:3100
+    - name: Tempo
+      type: tempo
+      uid: tempo
+      access: proxy
+      editable: false
+      url: http://tempo.tempo.svc.cluster.local:3100
+      jsonData:
+        httpMethod: GET
+        serviceMap: {}
+        nodeGraph:
+          enabled: true
+        search:
+          hide: false
+        lokiSearch:
+          datasourceUid: loki
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: observability
+data:
+  trust-root-lifecycle.json: |
+    {
+      "title": "ThreadForge - trust-root-lifecycle",
+      "uid": "tf-trust-root-lifecycle",
+      "tags": ["trust-root-lifecycle"],
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Continuity State",
+          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_continuity_state_code)",
+              "legendFormat": "state"
+            }
+          ],
+          "options": {
+            "colorMode": "background",
+            "reduceOptions": { "calcs": ["lastNotNull"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "NO DATA", "color": "gray" },
+                    "1": { "text": "ACTIVE_ONLY", "color": "green" },
+                    "2": { "text": "PREPARE_DUE", "color": "yellow" },
+                    "3": { "text": "ACTIVE_PLUS_PREPARED", "color": "blue" },
+                    "4": { "text": "ROTATING", "color": "cyan" },
+                    "8": { "text": "VIOLATION", "color": "red" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Prepare Due",
+          "gridPos": { "x": 6, "y": 0, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_prepare_due)",
+              "legendFormat": "prepare_due"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "NO", "color": "green" },
+                    "1": { "text": "YES", "color": "red" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Activate Due",
+          "gridPos": { "x": 10, "y": 0, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_activate_due)",
+              "legendFormat": "activate_due"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "NO", "color": "green" },
+                    "1": { "text": "YES", "color": "red" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Active Root Present",
+          "gridPos": { "x": 14, "y": 0, "w": 5, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_spire_active_authority_present)",
+              "legendFormat": "active_root"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "stat",
+          "title": "Prepared Root Present",
+          "gridPos": { "x": 19, "y": 0, "w": 5, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_spire_prepared_authority_present)",
+              "legendFormat": "prepared_root"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "type": "stat",
+          "title": "Prepared Published",
+          "gridPos": { "x": 0, "y": 4, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_spire_prepared_published)",
+              "legendFormat": "prepared_published"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "NO", "color": "red" },
+                    "1": { "text": "YES", "color": "green" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 7,
+          "type": "stat",
+          "title": "Prepared Key Present",
+          "gridPos": { "x": 4, "y": 4, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_spire_prepared_key_present)",
+              "legendFormat": "prepared_key"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "NO", "color": "red" },
+                    "1": { "text": "YES", "color": "green" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 8,
+          "type": "stat",
+          "title": "Successor Count",
+          "gridPos": { "x": 8, "y": 4, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_successor_count)",
+              "legendFormat": "successor_count"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "type": "stat",
+          "title": "Valid Root Count",
+          "gridPos": { "x": 12, "y": 4, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_valid_root_count)",
+              "legendFormat": "valid_root_count"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "none"
+            }
+          }
+        },
+        {
+          "id": 10,
+          "type": "stat",
+          "title": "Continuous Successor Policy",
+          "gridPos": { "x": 16, "y": 4, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_continuous_successor_policy_ok)",
+              "legendFormat": "continuous_successor_policy_ok"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "POLICY UNMET", "color": "red" },
+                    "1": { "text": "POLICY SATISFIED", "color": "green" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 11,
+          "type": "stat",
+          "title": "Coverage Gap",
+          "gridPos": { "x": 20, "y": 4, "w": 4, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_coverage_gap_detected)",
+              "legendFormat": "coverage_gap"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "NO GAP", "color": "green" },
+                    "1": { "text": "GAP", "color": "red" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 12,
+          "type": "stat",
+          "title": "Prepare Window Missing Successor",
+          "gridPos": { "x": 0, "y": 8, "w": 6, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_prepare_window_missing_successor)",
+              "legendFormat": "prepare_window_missing_successor"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "NO GAP", "color": "green" },
+                    "1": { "text": "ALERT", "color": "red" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 13,
+          "type": "stat",
+          "title": "SPIRE Lifecycle OK",
+          "gridPos": { "x": 6, "y": 8, "w": 6, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "max(threadforge_trust_spire_lifecycle_ok)",
+              "legendFormat": "spire_lifecycle_ok"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "LIFECYCLE VIOLATION", "color": "red" },
+                    "1": { "text": "SPIRE HEALTHY", "color": "green" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 14,
+          "type": "timeseries",
+          "title": "Lifecycle Signals",
+          "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_prepare_due",
+              "legendFormat": "prepare_due"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_activate_due",
+              "legendFormat": "activate_due"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_spire_active_authority_present",
+              "legendFormat": "active_root_present"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_spire_prepared_authority_present",
+              "legendFormat": "prepared_root_present"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_spire_prepared_published",
+              "legendFormat": "prepared_published"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_spire_prepared_key_present",
+              "legendFormat": "prepared_key_present"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_successor_count",
+              "legendFormat": "successor_count"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_valid_root_count",
+              "legendFormat": "valid_root_count"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_continuous_successor_policy_ok",
+              "legendFormat": "continuous_successor_policy_ok"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_coverage_gap_detected",
+              "legendFormat": "coverage_gap_detected"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_prepare_window_missing_successor",
+              "legendFormat": "prepare_window_missing_successor"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "threadforge_trust_spire_lifecycle_ok",
+              "legendFormat": "spire_lifecycle_ok"
+            }
+          ]
+        }
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "prom_ds",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": { "text": "Prometheus", "value": "prometheus" },
+            "refresh": 1
+          }
+        ]
+      }
+    }
+
+
+  dashboards-provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: ThreadForge
+        folder: ThreadForge
+        type: file
+        options:
+          path: /etc/grafana/provisioning/dashboards
+
+  service-traffic.json: |
+    {
+      "title": "ThreadForge — Service Traffic & Signals",
+      "uid": "tf-service-traffic",
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Total Istio Requests (last 5m)",
+          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "sum(increase(istio_requests_total[5m]))",
+              "legendFormat": "requests"
+            }
+          ],
+          "options": {
+            "colorMode": "background",
+            "reduceOptions": { "calcs": ["lastNotNull"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": 0 },
+                  { "color": "green", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Istio 4xx/5xx Rate",
+          "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "sum(rate(istio_requests_total{response_code=~\"4..|5..\"}[5m])) or vector(0)",
+              "legendFormat": "error rps"
+            }
+          ],
+          "options": {
+            "colorMode": "background",
+            "reduceOptions": { "calcs": ["lastNotNull"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": 0 },
+                  { "color": "yellow", "value": 0.1 },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Loki Up",
+          "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "up{job=~\"loki.*\"}",
+              "legendFormat": "loki"
+            }
+          ],
+          "options": {
+            "colorMode": "background",
+            "reduceOptions": { "calcs": ["lastNotNull"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "DOWN", "color": "red" },
+                    "1": { "text": "UP", "color": "green" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Tempo Up",
+          "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "up{job=~\"tempo.*\"}",
+              "legendFormat": "tempo"
+            }
+          ],
+          "options": {
+            "colorMode": "background",
+            "reduceOptions": { "calcs": ["lastNotNull"] }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "DOWN", "color": "red" },
+                    "1": { "text": "UP", "color": "green" }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Istio Request Rate by Destination",
+          "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "sum(rate(istio_requests_total[1m])) by (destination_workload, destination_workload_namespace)",
+              "legendFormat": "{{destination_workload_namespace}}/{{destination_workload}}"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "reqps" } }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Istio Request Rate by Response Code",
+          "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "sum(rate(istio_requests_total[1m])) by (response_code)",
+              "legendFormat": "HTTP {{response_code}}"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "reqps" } }
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "Istio P95 Request Latency (ms)",
+          "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "histogram_quantile(0.95, sum(rate(istio_request_duration_milliseconds_bucket[1m])) by (le, destination_workload))",
+              "legendFormat": "p95 {{destination_workload}}"
+            }
+          ],
+          "fieldConfig": { "defaults": { "unit": "ms" } }
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "Istiod Control Plane — CSR Rate",
+          "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "rate(citadel_server_csr_count[1m])",
+              "legendFormat": "cert issuance rate"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${prom_ds}" },
+              "expr": "rate(citadel_server_success_cert_issuance_count[1m])",
+              "legendFormat": "success cert issuance rate"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "type": "logs",
+          "title": "Recent Logs — All Namespaces",
+          "gridPos": { "x": 0, "y": 20, "w": 24, "h": 10 },
+          "datasource": { "type": "loki", "uid": "${loki_ds}" },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "${loki_ds}" },
+              "expr": "{namespace=~\".+\"} | json | line_format \"{{.namespace}}/{{.pod}}: {{.message}}\"",
+              "legendFormat": "",
+              "queryType": "range"
+            }
+          ],
+          "options": {
+            "showLabels": true,
+            "showlabels": false,
+            "wrapLogMessage": true,
+            "sortOrder": "Descending",
+            "dedupStrategy": "none"
+          }
+        },
+        {
+          "id": 10,
+          "type": "traces",
+          "title": "Recent Traces — Tempo",
+          "gridPos": { "x": 0, "y": 30, "w": 24, "h": 10 },
+          "datasource": { "type": "tempo", "uid": "${tempo_ds}" },
+          "targets": [
+            {
+              "datasource": { "type": "tempo", "uid": "${tempo_ds}" },
+              "queryType": "traceql",
+              "query": "{}",
+              "limit": 20
+            }
+          ]
+        }
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "prom_ds",
+            "type": "datasource",
+            "query": "prometheus",
+            "current": {},
+            "hide": 0,
+            "label": "Prometheus"
+          },
+          {
+            "name": "loki_ds",
+            "type": "datasource",
+            "query": "loki",
+            "current": {},
+            "hide": 0,
+            "label": "Loki"
+          },
+          {
+            "name": "tempo_ds",
+            "type": "datasource",
+            "query": "tempo",
+            "current": {},
+            "hide": 0,
+            "label": "Tempo"
+          }
+        ]
+      }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-providers
+  namespace: observability
+data:
+  providers.yaml: |
+    apiVersion: 1
+    providers:
+      - name: threadforge
+        folder: ThreadForge
+        folderUid: threadforge
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards/threadforge
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: observability
+  labels:
+    app: grafana
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    name: http
+  selector:
+    app: grafana
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-sa
+  namespace: observability
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: observability
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+      annotations:
+        sidecar.istio.io/userVolume: '{"istio-custom-root-cert":{"configMap":{"name":"istio-ca-root-cert"}}}'
+        sidecar.istio.io/userVolumeMount: '{"istio-custom-root-cert":{"mountPath":"/etc/certs","readOnly":true}}'
+    spec:
+      serviceAccountName: grafana-sa
+      priorityClassName: threadforge-medium
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        fsGroup: 472
+      containers:
+      - name: grafana
+        image: registry.threadforge.local:30500/mirror/docker.io/grafana/grafana@sha256:8ae0684bf0a3ee176d511443facfcf2af5188f5d28ffc248f3ac2a9f503739c2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-admin
+              key: password
+        - name: GF_INSTALL_PLUGINS
+          value: ""
+        volumeMounts:
+        - name: datasources
+          mountPath: /etc/grafana/provisioning/datasources
+          readOnly: true
+        - name: dashboards
+          mountPath: /var/lib/grafana/dashboards/threadforge
+          readOnly: true
+        - name: dashboard-providers
+          mountPath: /etc/grafana/provisioning/dashboards
+          readOnly: true
+        - name: storage
+          mountPath: /var/lib/grafana
+        - name: istio-custom-root-cert
+          mountPath: /etc/certs
+          readOnly: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: datasources
+        configMap:
+          name: grafana-datasources
+      - name: dashboards
+        configMap:
+          name: grafana-dashboards
+      - name: dashboard-providers
+        configMap:
+          name: grafana-dashboard-providers
+      - name: storage
+        emptyDir: {}
+      - name: istio-custom-root-cert
+        configMap:
+          name: istio-ca-root-cert
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin
+  namespace: observability
+type: Opaque
+data:
+  # PLACEHOLDER: base64-encoded "admin123" (NOT for production)
+  # In production, use external secret manager
+  password: YWRtaW4xMjM=

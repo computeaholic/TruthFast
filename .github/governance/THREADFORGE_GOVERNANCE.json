@@ -1,0 +1,67 @@
+{
+  "version": "2.0",
+  "enforcement_mode": "hard_fail",
+  "branch_policy": {
+    "default_branch": "main",
+    "forbid_direct_commit_to_main": true,
+    "require_feature_branch": true,
+    "require_pull_request": true,
+    "require_linear_history": true,
+    "require_signed_commits": false,
+    "forbid_force_push_to_main": true
+  },
+  "filesystem_policy": {
+    "protect_repo_root": true,
+    "allowed_root_files": [
+      "README.md",
+      "CHANGELOG.md",
+      "SECURITY.md",
+      "LICENSE",
+      "THIRD_PARTY_NOTICES.md",
+      "Makefile",
+      "pyrightconfig.json",
+      "pyproject.toml",
+      "requirements.txt",
+      "mkdocs.yml",
+      ".gitignore",
+      ".pre-commit-config.yaml",
+      "tree.txt"
+    ],
+    "moved_root_files": {
+      "Dockerfile.forgesec": "platform/images/forgesec/Dockerfile.forgesec"
+    },
+    "scratch_directory": "scratch/",
+    "forbid_temp_artifacts_in_root": true,
+    "forbid_generated_artifacts_in_root": true
+  },
+  "schema_governance": {
+    "alembic_is_single_authority": true,
+    "forbid_create_table_outside_alembic": true,
+    "forbid_drop_table_in_schema_sql": true,
+    "require_single_alembic_head": true,
+    "forbid_duplicate_tables": ["operator_ledger_v2", "ingest_cursors"]
+  },
+  "ci_requirements": {
+    "require_strict_authority_audit": true,
+    "require_unit_tests": true,
+    "require_integration_tests": true,
+    "fail_if_integration_skipped": true,
+    "require_single_alembic_head_check": true,
+    "require_schema_duplication_check": true,
+    "require_sbom_generation": true,
+    "required_main_checks": [
+      "pytest",
+      "ci-audit",
+      "governance-bypass-guard",
+      "merge-guard",
+      "block-direct-main-push"
+    ],
+    "forbid_bypass_markers": ["no-verify", "skip hooks", "bypass"]
+  },
+  "agent_rules": {
+    "forbid_silent_refactors": true,
+    "require_diff_preview_before_commit": true,
+    "require_explicit_confirmation_for_main_merge": true,
+    "forbid_unrequested_runtime_changes": true
+  }
+}

@@ -1,0 +1,144 @@
+crds:
+  enabled: false
+
+global:
+  imagePullSecrets:
+    - name: registry-credentials
+
+grafana:
+  enabled: false
+
+## Internal-registry-only policy compliance
+## (ValidatingAdmissionPolicy enforce-internal-registry)
+##
+## All images below MUST be mirrored under registry.threadforge.local:30500/.
+## Tags are pinned to the tags present in the internal registry catalog.
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: prometheus
+      digest: sha256:d82c5a30f98eb9b4cf2f2639af48f9a2a2df3a404c905b418be6278d2a021404
+    retention: 7d
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        memory: 3Gi
+
+    # Use the Helm-managed monitors and rules installed by this chart.
+    serviceMonitorSelectorNilUsesHelmValues: true
+    podMonitorSelectorNilUsesHelmValues: true
+    probeSelectorNilUsesHelmValues: true
+    ruleSelectorNilUsesHelmValues: true
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    podMetadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+    image:
+      registry: registry.threadforge.local:30500
+      repository: alertmanager
+      digest: sha256:235048aacee1c2af6702eeec6291a9979b01870ef9f738e16d5821b2126ef5de
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
+
+  # Placeholder routing (explicit, deterministic). Replace receiver with real email/webhook.
+  config:
+    global: {}
+    route:
+      receiver: "null"
+      group_by: ["alertname"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+    receivers:
+      - name: "null"
+
+prometheusOperator:
+  enabled: true
+  tls:
+    enabled: false
+  podAnnotations:
+    sidecar.istio.io/inject: "false"
+  image:
+    registry: registry.threadforge.local:30500
+    repository: prometheus-operator
+    digest: sha256:3d42c48e4bc312f444a6ca15e5cd8f70e7dd10a26ea2ff654b6e8aabfde93524
+  prometheusConfigReloader:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: prometheus-config-reloader
+      digest: sha256:7ed77f2b7ce6bf2eae4ceb448776d5eaa5c8e130d9f09624e56bbab1ec2935ad
+
+  # Use cert-manager for admission webhook certificates to avoid pre-install hook
+  # jobs (which are blocked by internal-registry-only policy and pre-install RBAC).
+  admissionWebhooks:
+    enabled: false
+    patch:
+      enabled: false
+      image:
+        registry: registry.threadforge.local:30500
+        repository: kube-webhook-certgen
+        digest: sha256:67202a0258c6f81d073f265f449a732c89cc1112a8e80ea27317294df6dce2b5
+      podAnnotations:
+        sidecar.istio.io/inject: "false"
+
+kubeStateMetrics:
+  enabled: true
+
+# Dependency chart image override (required for internal-registry-only admission policy)
+kube-state-metrics:
+  podAnnotations:
+    sidecar.istio.io/inject: "false"
+  image:
+    registry: registry.threadforge.local:30500
+    repository: kube-state-metrics
+    digest: sha256:a9a8d1020ae750bfa6711700546cc979e19ad1b630df3eed20f649bb850f900f
+
+nodeExporter:
+  enabled: false
+
+# Dependency chart image override (required for internal-registry-only admission policy)
+prometheus-node-exporter:
+  image:
+    registry: registry.threadforge.local:30500
+    repository: node-exporter
+    digest: sha256:608e1c9432b358f093a304db957a13d2cff1d6dd7492d50e07f63fb4c4a6afd7
+
+kubeRBACProxy:
+  enabled: true
+  image:
+    registry: registry.threadforge.local:30500
+    repository: kube-rbac-proxy
+    digest: sha256:137be6a7d182ae958582b2c1eed88ff95f61aaad0d2206e172ea06237eecccee

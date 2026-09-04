@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pgvector
+  namespace: observability
+  labels:
+    threadforge.io/component: pgvector
+spec:
+  selector:
+    matchLabels:
+      app: pgvector
+  namespaceSelector:
+    matchNames:
+      - vectordb
+  endpoints:
+    - port: metrics
+      interval: 10s
+      path: /metrics

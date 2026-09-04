@@ -1,0 +1,12 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: tier1-runtime-allow-internal
+  namespace: threadforge-system
+spec:
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - spiffe://identity.threadforge.local/ns/threadforge-system/*

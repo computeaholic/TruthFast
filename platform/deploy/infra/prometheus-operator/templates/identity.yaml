@@ -1,0 +1,97 @@
+# ==========================================================
+# ThreadForge — Prometheus Operator Identity Bundle
+# Namespace: observability
+# Zero-Trust Enforcement (SPIFFE, mTLS, RBAC)
+# ==========================================================
+
+---
+# ==========================================================
+# 1. ServiceAccount
+# ==========================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-operator
+  namespace: observability
+  labels:
+    app: prometheus-operator
+
+---
+# ==========================================================
+# 2. WorkloadEntry (SPIFFE identity binding)
+# ==========================================================
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: prometheus-operator-we
+  namespace: observability
+spec:
+  serviceAccount: prometheus-operator
+  address: "127.0.0.1"
+
+---
+# ==========================================================
+# 3. PeerAuthentication (STRICT mTLS)
+# ==========================================================
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: prometheus-operator-mtls
+  namespace: observability
+spec:
+  mtls:
+    mode: STRICT
+
+---
+# ==========================================================
+# 4. AuthorizationPolicy — INBOUND
+# Allow scrape + cluster metrics ONLY from:
+#   • kube-state-metrics
+#   • node-exporter
+#   • OTel gateway (optional future)
+# ==========================================================
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-operator-inbound
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: prometheus-operator
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              # kube-state-metrics identity
+              - "spiffe://identity.threadforge.local/ns/observability/sa/kube-state-metrics"
+              # node exporter identity
+              - "spiffe://identity.threadforge.local/ns/observability/sa/node-exporter"
+              # otel gateway for remote write signals
+              - "spiffe://identity.threadforge.local/ns/observability/sa/otel-gateway"
+
+---
+# ==========================================================
+# 5. AuthorizationPolicy — OUTBOUND
+# Allow Prometheus Operator to:
+#   • Manage CRDs
+#   • Talk to Kubernetes API
+# ==========================================================
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-operator-outbound
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: prometheus-operator
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            hosts:
+              - "kubernetes.default.svc.cluster.local"
+
+---

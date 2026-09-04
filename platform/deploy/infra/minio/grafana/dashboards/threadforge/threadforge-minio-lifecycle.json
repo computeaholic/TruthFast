@@ -1,0 +1,88 @@
+{
+  "uid": "tf-minio-lifecycle",
+  "title": "Infra — MinIO Lifecycle & Versioning",
+  "datasource": "Prometheus",
+  "tags": [
+    "threadforge",
+    "minio",
+    "lifecycle",
+    "versioning"
+  ],
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "version": 1,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Version Count by Bucket",
+      "id": 600,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum by (bucket) (minio_object_versions_total)",
+          "legendFormat": "{{bucket}}"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Delete Markers (Versioned Buckets)",
+      "id": 601,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 7
+      },
+      "targets": [
+        {
+          "expr": "sum by (bucket) (minio_object_delete_markers_total)",
+          "legendFormat": "{{bucket}}"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Lifecycle Expiration Queue",
+      "id": 602,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 14
+      },
+      "targets": [
+        {
+          "expr": "rate(minio_lifecycle_expired_objects_total[2m])",
+          "legendFormat": "Expired"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "ILM Processing Time (p95)",
+      "id": 603,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(minio_lifecycle_timing_seconds_bucket[5m])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    }
+  ]
+}

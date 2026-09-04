@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-server-config
+  namespace: {{ .Release.Namespace }}
+data:
+  server.conf: |
+    server {
+      bind_address = "0.0.0.0"
+      bind_port    = "8081"
+      trust_domain = "{{ .Values.trustDomain }}"
+
+      data_dir    = "/run/spire/data"
+      ca_key_type = "ec-p256"
+      log_level   = "INFO"
+
+      socket_path = "{{ .Values.spireServer.admin_socket_path }}"
+    }
+
+    health_checks {
+      listener_enabled = true
+      bind_address = "0.0.0.0"
+      bind_port = "8080"
+      live_path = "/live"
+      ready_path = "/ready"
+    }
+
+      {{- if .Values.spireServer.metrics.enabled }}
+      # Telemetry configuration for Prometheus scraping (placed before plugins for robust parsing)
+      telemetry {
+        prometheus {
+          host = {{ .Values.spireServer.metrics.prometheus.host | default "0.0.0.0" | quote }}
+          port = {{ .Values.spireServer.metrics.prometheus.port | default 9091 }}
+        }
+        # Enable addition of hostname label to metrics for identification
+        EnableHostnameLabel = true
+      }
+      {{- end }}
+
+    upstream_authority "disk" {
+      directory = "/run/spire/data/ca"
+    }
+
+    plugins {
+      KeyManager "disk" {
+        plugin_data {
+          keys_path = "/run/spire/data/keys.json"
+        }
+      }
+
+{{- if .Values.spireServer.sql.enabled }}
+      DataStore "sql" {
+        plugin_data {
+          database_type     = "postgres"
+          connection_string = "/var/spire/sql/connection_string"
+        }
+      }
+{{- else }}
+      DataStore "sql" {
+        plugin_data {
+          database_type     = "sqlite3"
+          connection_string = "/run/spire/data/datastore.sqlite3"
+        }
+      }
+{{- end }}
+
+      NodeAttestor "k8s_psat" {
+        plugin_data {
+          clusters = {
+            "threadforge" = {
+              service_account_allow_list = ["spire-system:spire-agent"]
+            }
+          }
+        }
+      }
+    }
+
+      {{- if .Values.spireServer.metrics.enabled }}
+
+      {{- end }}
+
+# TLS CONFIGURATION GUARD
+# SPIRE 1.14.0 does not support 'tls {}' configuration blocks.
+# Adding TLS config will cause server crash: "Unknown configuration detected"
+# Agent-server communication is secured via network controls and workload mTLS.
+# DO NOT add TLS configuration here.

@@ -1,0 +1,113 @@
+# platform/deploy/infra/qdrant/templates/statefulset.yaml
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: qdrant
+  namespace: qdrant
+  labels:
+    app: qdrant
+spec:
+  serviceName: qdrant
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qdrant
+
+  template:
+    metadata:
+      labels:
+        app: qdrant
+        sidecar.istio.io/inject: "true"
+      annotations:
+        forge.sec/profile: "vectordb"
+        ella-core.io/backend-mode: "{{ .Values.operatorAI.routing.mode }}"
+        ella-core.io/backend-order: "{{ join "," .Values.operatorAI.routing.preferredOrder }}"
+        sidecar.opentelemetry.io/inject: "true"
+        otel.threadforge.io/enabled: "true"
+
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Backend selection: CPU / GPU / ANE (Platform Adapter + Operator AI)
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+
+                # Operator-AI + Platform Adapter will patch this at runtime.
+                - key: accelerator
+                  operator: In
+                  values:
+                    - "{{ .Values.backend.target }}"
+
+      tolerations:
+        {{- toYaml .Values.backend.tolerations | nindent 8 }}
+
+      containers:
+        - name: qdrant
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+            - name: grpc
+              containerPort: {{ .Values.service.grpcPort }}
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+
+          env:
+            - name: QDRANT__SERVICE__API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qdrant-api-key
+                  key: apiKey
+
+            # Enables memory-map optimizations automatically when GPU/ANE selected
+            - name: QDRANT__STORAGE__USE_MEMORY_MAPPING
+              value: "{{ if ne .Values.backend.target "cpu" }}true{{ else }}false{{ end }}"
+
+            # GPU enablement
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "{{ if eq .Values.backend.target "gpu" }}all{{ else }}void{{ end }}"
+
+            # ANE enablement
+            - name: METAL_DEVICE_WRAPPER_TYPE
+              value: "{{ if eq .Values.backend.target "ane" }}1{{ else }}0{{ end }}"
+
+          volumeMounts:
+            - name: qdrant-data
+              mountPath: /qdrant/storage
+
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: qdrant-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+        {{- if .Values.persistence.storageClass }}
+        storageClassName: "{{ .Values.persistence.storageClass }}"
+        {{- end }}

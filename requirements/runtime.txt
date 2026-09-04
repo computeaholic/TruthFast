@@ -1,0 +1,52 @@
+# ------------------------------------------------------------
+# ThreadForge — Runtime Dependencies (Production)
+# ------------------------------------------------------------
+# This file defines ONLY what the application imports at runtime.
+#
+# It is expected to be installed:
+# - inside containers
+# - inside controlled deployment environments
+#
+# It MUST NOT be used by CI lint/test jobs.
+# ------------------------------------------------------------
+
+# Web framework
+fastapi==0.111.0
+uvicorn==0.30.1
+
+# Data & validation
+pydantic==2.8.2
+orjson==3.10.7
+
+# Database ORM (PostgreSQL)
+sqlalchemy==2.0.32
+psycopg[binary]>=3.0.7
+# Database driver (legacy psycopg2 for backward compat)
+psycopg2-binary>=2.9.0
+
+
+# HTTP clients (runtime use only)
+httpx==0.27.0
+
+# Reliability / retries
+tenacity==8.5.0
+
+# Security / crypto
+cryptography>=41.0.0
+
+# SPIRE / SPIFFE gRPC workload API
+grpcio>=1.60.0
+protobuf>=4.25.0
+spiffe>=0.2.0
+
+# System introspection (optional but safe)
+psutil==6.1.0
+
+# Observability
+prometheus-client>=0.20.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-otlp-proto-grpc>=1.20.0
+
+# Object storage (MinIO / S3-compatible)
+minio>=7.0.0

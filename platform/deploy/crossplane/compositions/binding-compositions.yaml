@@ -1,0 +1,180 @@
+# ==============================================================================
+# PHASE X: Compositions (Binding-Only, No Infrastructure Creation)
+# ==============================================================================
+#
+# Purpose:
+#   Bind claims to pre-existing infrastructure from OpenTofu.
+#   Compositions reference existing resources ONLY.
+#   No patches that create, delete, or modify infrastructure.
+#
+# Critical Design: ConfigMap-Only
+#   Only metadata resource created: ConfigMap
+#   Compositions never create cloud primitives
+#   Compositions never patch infrastructure
+#   This enforces binding-only semantics
+#
+# Authority:
+#   Compositions are wiring, labeling, and referencing only.
+#   Compositions do NOT provision.
+#   Compositions do NOT patch infrastructure existence.
+#
+# ==============================================================================
+#
+# ==============================================================================
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xnetwork-binding-composition
+  namespace: crossplane-system
+spec:
+  compositeTypeRef:
+    apiVersion: threadforge.local/v1
+    kind: XNetwork
+
+  # Binding-only mode: reference existing, don't create
+  mode: Resources
+
+  resources:
+  - name: network-binding
+    base:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        namespace: crossplane-system
+        name: network-binding
+      data:
+        # Bindings are simple references (no mutations)
+        environment: ""
+        vpcId: ""
+        status: "bound"
+
+    patches:
+    # Accept environment from claim
+    - fromFieldPath: "spec.environment"
+      toFieldPath: "data.environment"
+
+    # Accept VPC ID from claim (must exist in OpenTofu outputs)
+    - fromFieldPath: "spec.vpcId"
+      toFieldPath: "data.vpcId"
+
+    # No patches that modify infrastructure
+    # No patches that create resources
+    # Binding is read-only reference only
+
+---
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xcluster-binding-composition
+  namespace: crossplane-system
+spec:
+  compositeTypeRef:
+    apiVersion: threadforge.local/v1
+    kind: XCluster
+
+  mode: Resources
+
+  resources:
+  - name: cluster-binding
+    base:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        namespace: crossplane-system
+        name: cluster-binding
+      data:
+        # Bindings are simple references (no mutations)
+        environment: ""
+        clusterId: ""
+        kubeconfig: ""
+        status: "bound"
+
+    patches:
+    # Accept environment from claim
+    - fromFieldPath: "spec.environment"
+      toFieldPath: "data.environment"
+
+    # Accept cluster ID from claim (must exist in OpenTofu outputs)
+    - fromFieldPath: "spec.clusterId"
+      toFieldPath: "data.clusterId"
+
+    # Accept kubeconfig reference from claim
+    - fromFieldPath: "spec.kubeconfig"
+      toFieldPath: "data.kubeconfig"
+
+    # No patches that modify infrastructure
+    # No patches that create resources
+    # Binding is read-only reference only
+
+---
+
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xstorage-binding-composition
+  namespace: crossplane-system
+spec:
+  compositeTypeRef:
+    apiVersion: threadforge.local/v1
+    kind: XStorage
+
+  mode: Resources
+
+  resources:
+  - name: storage-binding
+    base:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        namespace: crossplane-system
+        name: storage-binding
+      data:
+        # Bindings are simple references (no mutations)
+        environment: ""
+        storageClass: ""
+        status: "bound"
+
+    patches:
+    # Accept environment from claim
+    - fromFieldPath: "spec.environment"
+      toFieldPath: "data.environment"
+
+    # Accept storage class from claim (must exist in OpenTofu outputs)
+    - fromFieldPath: "spec.storageClass"
+      toFieldPath: "data.storageClass"
+
+    # No patches that modify infrastructure
+    # No patches that create resources
+    # Binding is read-only reference only
+
+---
+
+# ==============================================================================
+# CRITICAL DESIGN NOTES
+# ==============================================================================
+#
+# These compositions are INTENTIONALLY MINIMAL.
+#
+# Purpose: Establish binding pattern without provisioning authority
+#
+# What they DO:
+#   ✓ Accept claim parameters
+#   ✓ Reference existing infrastructure
+#   ✓ Expose bindings for downstream use
+#   ✓ Label and organize resources
+#
+# What they DO NOT:
+#   ✗ Create VPCs
+#   ✗ Create clusters
+#   ✗ Create storage
+#   ✗ Modify infrastructure
+#   ✗ Patch cloud resources
+#   ✗ Reconcile workloads
+#
+# Future Evolution (Phase X+):
+#   When Civ Engine integration is needed, these compositions
+#   will be extended with claims validation (not provisioning).
+#
+# ==============================================================================

@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: istio-custom-access-logs
+  namespace: istio-system
+data:
+  envoy-access-log-format: |
+    {
+      "source_spiffe": "%DOWNSTREAM_PEER_URI_SAN%",
+      "destination_spiffe": "%UPSTREAM_PEER_URI_SAN%",
+      "source_workload": "%DOWNSTREAM_PEER_SUBJECT%",
+      "destination_service": "%UPSTREAM_HOST%",
+      "method": "%REQ(:METHOD)%",
+      "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+      "response_code": "%RESPONSE_CODE%",
+      "denied": "%RESPONSE_FLAGS%",
+      "timestamp": "%START_TIME%"
+    }

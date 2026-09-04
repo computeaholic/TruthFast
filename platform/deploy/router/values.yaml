@@ -1,0 +1,16 @@
+replicaCount: 2
+
+image:
+  repository: registry.threadforge.local:30500/threadforge/router-go
+  digest: sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f
+
+otel:
+  endpoint: "http://tempo.otel:4318"
+
+resources:
+  limits:
+    cpu: "1000m"
+    memory: "1Gi"
+  requests:
+    cpu: "200m"
+    memory: "256Mi"

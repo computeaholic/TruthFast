@@ -1,0 +1,333 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: forgesec-continuity-check
+  namespace: forgesec
+  labels:
+    app.kubernetes.io/name: forgesec-continuity-check
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: forgesec-continuity-check
+  namespace: forgesec
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: forgesec-continuity-check
+  namespace: forgesec
+subjects:
+  - kind: ServiceAccount
+    name: forgesec-continuity-check
+    namespace: forgesec
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: forgesec-continuity-check
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgesec-continuity-check-script
+  namespace: forgesec
+data:
+  run.sh: |
+    #!/bin/sh
+    set -eu
+
+    PUSH_URL="http://forgesec-pushgateway.forgesec.svc.cluster.local:9091/metrics/job/forgesec-continuity"
+
+    log_suite() {
+      suite="$1"
+      status="$2"
+      violations="$3"
+      printf '{"component":"forgesec","suite":"%s","status":"%s","violations":%s}\n' "$suite" "$status" "$violations"
+    }
+
+    log_event() {
+      level="$1"
+      event="$2"
+      message="$3"
+      printf '{"component":"forgesec","suite":"all","status":"%s","violations":0,"event":"%s","message":"%s"}\n' "$level" "$event" "$message"
+    }
+
+    push_metrics() {
+      identity_pass="$1"
+      surface_pass="$2"
+      violation_count="$3"
+      last_run_timestamp="$4"
+
+      if ! command -v curl >/dev/null 2>&1; then
+        printf '{"component":"forgesec","suite":"all","status":"fail","violations":%s,"event":"metrics_push_failed","message":"curl_not_found"}\n' "$violation_count"
+        return 1
+      fi
+
+      if ! {
+        printf '# TYPE forgesec_identity_pass gauge\nforgesec_identity_pass %s\n' "$identity_pass"
+        printf '# TYPE forgesec_surface_pass gauge\nforgesec_surface_pass %s\n' "$surface_pass"
+        printf '# TYPE forgesec_violation_count gauge\nforgesec_violation_count %s\n' "$violation_count"
+        printf '# TYPE forgesec_last_run_timestamp gauge\nforgesec_last_run_timestamp %s\n' "$last_run_timestamp"
+      } | curl -fsS --retry 3 --retry-delay 2 --data-binary @- "$PUSH_URL" >/dev/null; then
+        printf '{"component":"forgesec","suite":"all","status":"fail","violations":%s,"event":"metrics_push_failed","message":"pushgateway_unreachable"}\n' "$violation_count"
+        return 1
+      fi
+
+      printf '{"component":"forgesec","suite":"all","status":"pass","violations":%s,"event":"metrics_pushed"}\n' "$violation_count"
+      return 0
+    }
+
+    run_suite() {
+      suite="$1"
+      ts="$(date +%s)"
+      job_name="forgesec-${suite}-continuity-${ts}"
+
+      SUITE_VIOLATIONS="0"
+      SUITE_STATUS="fail"
+      log_suite "$suite" "running" "0"
+
+      if [ "$suite" = "identity" ]; then
+        strict_surface="0"
+      else
+        strict_surface="1"
+      fi
+
+      cat <<EOF | kubectl apply -f - >/dev/null
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: ${job_name}
+      namespace: forgesec
+      labels:
+        app: forgesec
+        forgesec.threadforge.local/suite: ${suite}
+        forgesec.threadforge.local/source: continuity-check
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 900
+      template:
+        metadata:
+          annotations:
+            traffic.sidecar.istio.io/excludeOutboundPorts: "30500"
+          labels:
+            app: forgesec
+            forgesec.threadforge.local/suite: ${suite}
+            sidecar.istio.io/inject: "true"
+        spec:
+          serviceAccountName: forgesec-sa
+          restartPolicy: OnFailure
+          automountServiceAccountToken: true
+          containers:
+            - name: forgesec
+              image: registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50
+              imagePullPolicy: IfNotPresent
+              args:
+                - suite
+                - ${suite}
+              env:
+                - name: FORGESEC_API_HOST
+                  value: "threadforge-notifier.threadforge-system.svc.cluster.local"
+                - name: FORGESEC_API_PORT
+                  value: "8080"
+                - name: FORGESEC_PG_HOST
+                  value: "postgres.threadforge-system.svc.cluster.local"
+                - name: FORGESEC_PG_PORT
+                  value: "5432"
+                - name: FORGESEC_CLICKHOUSE_HOST
+                  value: "clickhouse.threadforge-system.svc.cluster.local"
+                - name: FORGESEC_CLICKHOUSE_PORT
+                  value: "9000"
+                - name: FORGESEC_MINIO_HOST
+                  value: "minio.minio.svc.cluster.local"
+                - name: FORGESEC_MINIO_PORT
+                  value: "9000"
+                - name: FORGESEC_REGISTRY_HOST
+                  value: "registry.threadforge.local"
+                - name: FORGESEC_REGISTRY_PORT
+                  value: "30500"
+                - name: FORGESEC_GRAFANA_HOST
+                  value: "grafana.observability.svc.cluster.local"
+                - name: FORGESEC_GRAFANA_PORT
+                  value: "3000"
+                - name: FORGESEC_TEMPO_HOST
+                  value: "tempo.observability.svc.cluster.local"
+                - name: FORGESEC_TEMPO_PORT
+                  value: "3100"
+                - name: FORGESEC_REQUIRE_REGISTRY_TLS
+                  value: "1"
+                - name: FORGESEC_REQUIRE_STRICT_MTLS
+                  value: "1"
+                - name: FORGESEC_STRICT_SURFACE
+                  value: "${strict_surface}"
+                - name: FORGESEC_EXPECT_NO_HTTP
+                  value: "1"
+                - name: FORGESEC_REGISTRY_CA_FILE
+                  value: /etc/registry-ca/threadforge-ingress-ca.crt
+                - name: SSL_CERT_FILE
+                  value: /etc/registry-ca/threadforge-ingress-ca.crt
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "64Mi"
+                limits:
+                  cpu: "250m"
+                  memory: "256Mi"
+              volumeMounts:
+                - name: registry-ca
+                  mountPath: /etc/registry-ca
+                  readOnly: true
+          volumes:
+            - name: registry-ca
+              configMap:
+                name: registry-ca
+    EOF
+
+      if kubectl wait -n forgesec --for=condition=complete "job/${job_name}" --timeout=240s >/dev/null 2>&1; then
+        failed_count="$(kubectl get job "${job_name}" -n forgesec -o jsonpath='{.status.failed}' 2>/dev/null || true)"
+        logs="$(kubectl logs -n forgesec "job/${job_name}" --tail=200 2>/dev/null || true)"
+        printf '%s\n' "$logs"
+        parsed_violations="$(printf '%s\n' "$logs" | sed -n 's/.*"violations":[[:space:]]*\([0-9][0-9]*\).*/\1/p' | tail -n1 || true)"
+        if [ -n "$parsed_violations" ]; then
+          SUITE_VIOLATIONS="$parsed_violations"
+        elif [ -n "$failed_count" ] && [ "$failed_count" != "0" ]; then
+          SUITE_VIOLATIONS="$failed_count"
+        else
+          SUITE_VIOLATIONS="0"
+        fi
+        if [ -n "$failed_count" ] && [ "$failed_count" != "0" ]; then
+          SUITE_STATUS="fail"
+          log_suite "$suite" "$SUITE_STATUS" "$SUITE_VIOLATIONS"
+          return 1
+        fi
+        SUITE_STATUS="pass"
+        log_suite "$suite" "$SUITE_STATUS" "$SUITE_VIOLATIONS"
+        return 0
+      fi
+
+      failed_count="$(kubectl get job "${job_name}" -n forgesec -o jsonpath='{.status.failed}' 2>/dev/null || true)"
+      logs="$(kubectl logs -n forgesec "job/${job_name}" --tail=200 2>/dev/null || true)"
+      printf '%s\n' "$logs"
+      if [ -n "$failed_count" ] && [ "$failed_count" != "0" ]; then
+        SUITE_VIOLATIONS="$failed_count"
+      else
+        SUITE_VIOLATIONS="1"
+      fi
+      SUITE_STATUS="fail"
+      log_suite "$suite" "$SUITE_STATUS" "$SUITE_VIOLATIONS"
+      printf '{"component":"forgesec","suite":"%s","status":"fail","violations":%s,"event":"suite_timeout_or_failed"}\n' "$suite" "$SUITE_VIOLATIONS"
+      kubectl logs -n forgesec "job/${job_name}" --tail=200 || true
+      return 1
+    }
+
+    log_event "running" "continuity_start" "running identity and surface suites"
+    identity_pass="0"
+    surface_pass="0"
+    total_violations="0"
+    last_run_timestamp="$(date +%s)"
+
+    if run_suite identity; then
+      identity_pass="1"
+    else
+      total_violations="$((total_violations + SUITE_VIOLATIONS))"
+    fi
+
+    if [ "$identity_pass" = "1" ]; then
+      total_violations="$((total_violations + SUITE_VIOLATIONS))"
+    fi
+
+    if run_suite surface; then
+      surface_pass="1"
+    else
+      total_violations="$((total_violations + SUITE_VIOLATIONS))"
+    fi
+
+    if [ "$surface_pass" = "1" ]; then
+      total_violations="$((total_violations + SUITE_VIOLATIONS))"
+    fi
+
+    if ! push_metrics "$identity_pass" "$surface_pass" "$total_violations" "$last_run_timestamp"; then
+      log_event "fail" "continuity_failed" "metrics push failed"
+      echo "[ADVISORY-FAIL] non-authoritative path"; exit 0
+    fi
+
+    if [ "$identity_pass" != "1" ] || [ "$surface_pass" != "1" ]; then
+      log_event "fail" "continuity_failed" "one or more suites failed"
+      echo "[ADVISORY-FAIL] non-authoritative path"; exit 0
+    fi
+
+    log_event "pass" "continuity_pass" "all suites passed"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: forgesec-continuity-check
+  namespace: forgesec
+  labels:
+    app.kubernetes.io/name: forgesec-continuity-check
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 4
+  failedJobsHistoryLimit: 8
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: forgesec-continuity-check
+        spec:
+          serviceAccountName: forgesec-continuity-check
+          restartPolicy: OnFailure
+          activeDeadlineSeconds: 600
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: continuity-check
+              image: registry.threadforge.local:30500/mirror/docker.io/bitnami/kubectl@sha256:a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - /scripts/run.sh
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                runAsNonRoot: true
+                readOnlyRootFilesystem: true
+                seccompProfile:
+                  type: RuntimeDefault
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 64Mi
+                limits:
+                  cpu: 250m
+                  memory: 256Mi
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: script
+              configMap:
+                name: forgesec-continuity-check-script
+                defaultMode: 0555
+            - name: tmp
+              emptyDir: {}

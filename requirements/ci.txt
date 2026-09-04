@@ -1,0 +1,13 @@
+# requirements/ci.txt
+# CI = lint + unit tests ONLY
+# No database drivers that require system headers
+
+# Tooling
+ruff==0.4.10
+black==24.4.2
+pytest==8.3.2
+pytest-cov==5.0.0
+
+# Minimal runtime deps required by imports
+tenacity>=8.2.3
+pydantic>=2.7.0

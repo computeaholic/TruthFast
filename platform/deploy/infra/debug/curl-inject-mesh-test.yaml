@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: curl-inject-mesh-test
+  namespace: mesh-test
+  labels:
+    app: curl-inject-mesh-test
+    sidecar.istio.io/inject: "true"
+spec:
+  restartPolicy: Never
+  containers:
+    - name: curl
+      image: registry.threadforge.local:30500/mirror/docker.io/curlimages/curl@sha256:846c5f0324b40f833b9a1fa3d5a667ac0f2b4712c9a39cae8cafe890286c52f2
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: 25m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi

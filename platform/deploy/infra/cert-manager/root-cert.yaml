@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: threadforge-root
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: threadforge-root
+  secretName: threadforge-root-ca
+  privateKey:
+    rotationPolicy: Always
+  issuerRef:
+    name: threadforge-root-ca
+    kind: ClusterIssuer

@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ThreadForge Evidence Contract (snapshot for Big Bang PAP)",
+  "type": "object",
+  "required": [
+    "id",
+    "version",
+    "producer",
+    "timestamp",
+    "nonce",
+    "type",
+    "schema_version",
+    "digest",
+    "provenance"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique evidence contract identifier (ec:namespace-name)"
+    },
+    "version": { "type": "string" },
+    "producer": {
+      "type": "object",
+      "properties": {
+        "provider_id": { "type": "string" },
+        "instance_id": { "type": "string" }
+      },
+      "required": ["provider_id"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "nonce": {
+      "type": "string",
+      "description": "Run nonce or invocation id to bind reproducibility"
+    },
+    "type": {
+      "type": "string",
+      "description": "High-level type (capture, manifest, signature, bundle)"
+    },
+    "schema_version": { "type": "string" },
+    "digest": {
+      "type": "string",
+      "description": "Canonical digest of the artifact captured (sha256:...)"
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Provenance metadata",
+      "properties": {
+        "source_uri": { "type": "string" },
+        "git_commit": { "type": "string" },
+        "build_id": { "type": "string" }
+      }
+    },
+    "signatures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sig": { "type": "string" },
+          "key_id": { "type": "string" }
+        }
+      }
+    },
+    "payload": { "type": "object", "description": "Contract-specific payload" }
+  },
+  "additionalProperties": true
+}

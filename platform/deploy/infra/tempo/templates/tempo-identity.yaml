@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tempo-sa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: tempo
+---
+# Dedicated service account for the bootstrap/proof seed job.
+# SPIFFE principal: spiffe://identity.threadforge.local/ns/observability/sa/observability-seed-sa
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: observability-seed-sa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: tempo
+    threadforge.io/component: seed-proof
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: tempo-mtls
+  namespace: {{ .Release.Namespace }}
+spec:
+  mtls:
+    mode: STRICT

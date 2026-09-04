@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: runtime-ledger-snapshot
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: runtime
+    agent: Ella
+spec:
+  schedule: "{{ default "*/30 * * * *" .Values.schedule.snapshot }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: snapshot
+              image: "{{ include "runtime.image" (dict "Values" .Values "repository" (default "localhost:5000/runtime-snapshot" .Values.image.snapshot.repository) "tag" (default "rebuild-20260215" .Values.image.snapshot.tag)) }}"
+              volumeMounts:
+                - name: ledger
+                  mountPath: /logs/operator/ledger
+                - name: snaps
+                  mountPath: /snapshots
+          volumes:
+            - name: ledger
+              persistentVolumeClaim:
+                claimName: {{ default "operator-ledger-pvc" .Values.pvc.ledger }}
+            - name: snaps
+              persistentVolumeClaim:
+                claimName: {{ default "operator-snapshots-pvc" .Values.pvc.snapshots }}

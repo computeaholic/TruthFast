@@ -1,0 +1,54 @@
+# Default values for identity-controller.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+identityController:
+  initImage:
+    repository: registry.threadforge.local:30500/mirror/docker.io/library/busybox
+    digest: sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+
+  image:
+    repository: registry.threadforge.local:30500/identity-controller
+    digest: sha256:b67cf4e7993008c1bbf4cfcc107c50d09ea6ad0beeda70a11920ea62a5c5e475
+    pullPolicy: IfNotPresent
+
+  args:
+    - --metrics-bind-address=:8080
+    - --health-probe-bind-address=:8081
+
+  env:
+    - name: SPIRE_SERVER_ADDR
+      value: "/run/spire/private/spire-server.sock"
+    - name: SPIFFE_ENDPOINT_SOCKET
+      value: unix:///run/spire/sockets/socket
+    - name: SPIFFE_WORKLOAD_API_RETRY_MAX
+      value: "0"
+
+  podSecurityContext:
+    fsGroup: 1000
+
+  containerSecurityContext:
+    runAsNonRoot: true
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+
+  volumes:
+    - name: spire-agent-socket
+      hostPath:
+        path: /run/spire/sockets
+        type: Directory
+    - name: spire-admin-socket
+      hostPath:
+        path: /run/spire/private
+        type: Directory
+
+  volumeMounts:
+    - name: spire-agent-socket
+      mountPath: /run/spire/sockets
+      readOnly: true
+    - name: spire-admin-socket
+      mountPath: /run/spire/private
+      readOnly: true
+
+  istio:
+    inject: false

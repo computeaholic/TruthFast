@@ -1,0 +1,7 @@
+# platform/deploy/infra/loki/Chart.yaml
+apiVersion: v2
+name: loki
+description: ThreadForge — Loki SingleZero Mode (LZ)
+type: application
+version: 0.2.0
+appVersion: "2.9.3"

@@ -1,0 +1,542 @@
+[
+  {
+    "SYSTEM_ID": "SYS-001",
+    "NAME": "Host/native contract",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Human operator + sudo boundary",
+    "AUTHORITY_LEVEL": "Host mutation authority",
+    "MUTATION_CAPABILITY": "Docker trust, /etc/hosts/CA, tools",
+    "TRUST_BOUNDARY": "Host mutation authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-002",
+    "NAME": "Golden Boot qualification",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Human operator",
+    "AUTHORITY_LEVEL": "Release qualification scheduler",
+    "MUTATION_CAPABILITY": "Cluster reset and full bootstrap",
+    "TRUST_BOUNDARY": "Release qualification scheduler"
+  },
+  {
+    "SYSTEM_ID": "SYS-003",
+    "NAME": "Kind cluster lifecycle",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Kubernetes admin kubeconfig",
+    "AUTHORITY_LEVEL": "Cluster lifecycle authority",
+    "MUTATION_CAPABILITY": "Create/delete cluster, node config",
+    "TRUST_BOUNDARY": "Cluster lifecycle authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-004",
+    "NAME": "Bootstrap reconciler",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Kubernetes admin",
+    "AUTHORITY_LEVEL": "Producer authority for cluster state",
+    "MUTATION_CAPABILITY": "kubectl/helm/create/patch/rollout",
+    "TRUST_BOUNDARY": "Producer authority for cluster state"
+  },
+  {
+    "SYSTEM_ID": "SYS-005",
+    "NAME": "Local registry and TLS",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "registry.threadforge.local, basic auth, CA trust",
+    "AUTHORITY_LEVEL": "Artifact distribution authority, not signing authority",
+    "MUTATION_CAPABILITY": "Registry push/read; CoreDNS reconciliation",
+    "TRUST_BOUNDARY": "Artifact distribution authority, not signing authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-006",
+    "NAME": "Image builder/preloader",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Human operator/buildx builder",
+    "AUTHORITY_LEVEL": "Build authority only on trusted host",
+    "MUTATION_CAPABILITY": "docker buildx, skopeo copy",
+    "TRUST_BOUNDARY": "Build authority only on trusted host"
+  },
+  {
+    "SYSTEM_ID": "SYS-007",
+    "NAME": "Canonical image inventory and pin map",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Git source authority",
+    "AUTHORITY_LEVEL": "Canonical image-set authority",
+    "MUTATION_CAPABILITY": "Generate/reconcile digest-bearing manifests",
+    "TRUST_BOUNDARY": "Canonical image-set authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-008",
+    "NAME": "Cosign/Rekor signing",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Cosign key identity; Rekor endpoint",
+    "AUTHORITY_LEVEL": "Signature production and verification",
+    "MUTATION_CAPABILITY": "cosign sign/verify",
+    "TRUST_BOUNDARY": "Signature production and verification"
+  },
+  {
+    "SYSTEM_ID": "SYS-009",
+    "NAME": "SPIRE server",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "spiffe://identity.threadforge.local/spire/server",
+    "AUTHORITY_LEVEL": "Root/issuance identity authority",
+    "MUTATION_CAPABILITY": "Issue SVIDs; manage entries via CLI",
+    "TRUST_BOUNDARY": "Root/issuance identity authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-010",
+    "NAME": "SPIRE agent and node attestation",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "spiffe://identity.threadforge.local/spire/agent/k8s_psat/threadforge/*",
+    "AUTHORITY_LEVEL": "Node/workload attestation mediator",
+    "MUTATION_CAPABILITY": "Workload API socket and SVID delivery",
+    "TRUST_BOUNDARY": "Node/workload attestation mediator"
+  },
+  {
+    "SYSTEM_ID": "SYS-011",
+    "NAME": "SPIRE registration reconciler",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Kubernetes admin plus SPIRE server socket",
+    "AUTHORITY_LEVEL": "Registration producer",
+    "MUTATION_CAPABILITY": "entry create/update/delete to declared set",
+    "TRUST_BOUNDARY": "Registration producer"
+  },
+  {
+    "SYSTEM_ID": "SYS-012",
+    "NAME": "Trust authority lifecycle",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "SPIRE root fingerprints/serials",
+    "AUTHORITY_LEVEL": "Trust-state classification authority",
+    "MUTATION_CAPABILITY": "Publish derived trust artifacts and lifecycle state",
+    "TRUST_BOUNDARY": "Trust-state classification authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-013",
+    "NAME": "SPIRE CSR / Istio CA bridge",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "spiffe://.../ns/istio-system/sa/spire-csr",
+    "AUTHORITY_LEVEL": "Istio CSR signing bridge",
+    "MUTATION_CAPABILITY": "CSR signing and CA path refresh",
+    "TRUST_BOUNDARY": "Istio CSR signing bridge"
+  },
+  {
+    "SYSTEM_ID": "SYS-014",
+    "NAME": "Istio mesh and ingress",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "SPIFFE SVID via Envoy",
+    "AUTHORITY_LEVEL": "Transport identity and L7 policy authority",
+    "MUTATION_CAPABILITY": "Route/filter traffic; SANITIZE_SET XFCC",
+    "TRUST_BOUNDARY": "Transport identity and L7 policy authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-015",
+    "NAME": "Kubernetes RBAC and network policy",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "ServiceAccount token/RBAC identity",
+    "AUTHORITY_LEVEL": "Kubernetes control authority",
+    "MUTATION_CAPABILITY": "Allow/deny API and network operations",
+    "TRUST_BOUNDARY": "Kubernetes control authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-016",
+    "NAME": "Kyverno admission",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Kyverno service accounts",
+    "AUTHORITY_LEVEL": "Admission policy authority",
+    "MUTATION_CAPABILITY": "Admission allow/deny; registry signature reads",
+    "TRUST_BOUNDARY": "Admission policy authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-017",
+    "NAME": "cert-manager",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "cert-manager service accounts",
+    "AUTHORITY_LEVEL": "Auxiliary certificate authority only",
+    "MUTATION_CAPABILITY": "Create/update cert-manager resources",
+    "TRUST_BOUNDARY": "Auxiliary certificate authority only"
+  },
+  {
+    "SYSTEM_ID": "SYS-018",
+    "NAME": "ThreadForge FastAPI service",
+    "SUPPORT_TIER": "SECONDARY",
+    "QUALIFICATION_SCOPE": "SECONDARY_UNQUALIFIED",
+    "RUNTIME_IDENTITY": "Intended spiffe://.../ns/threadforge/sa/threadforge-api",
+    "AUTHORITY_LEVEL": "Application ingress authority only",
+    "MUTATION_CAPABILITY": "Request handling; local evidence writes; indirect vector operations",
+    "TRUST_BOUNDARY": "Application ingress authority only"
+  },
+  {
+    "SYSTEM_ID": "SYS-019",
+    "NAME": "API identity/capability/AAS boundary",
+    "SUPPORT_TIER": "SECONDARY",
+    "QUALIFICATION_SCOPE": "SECONDARY_UNQUALIFIED",
+    "RUNTIME_IDENTITY": "Proxy-bound XFCC URI SAN",
+    "AUTHORITY_LEVEL": "Application authorization mediator",
+    "MUTATION_CAPABILITY": "Deny requests; derive capability set",
+    "TRUST_BOUNDARY": "Application authorization mediator"
+  },
+  {
+    "SYSTEM_ID": "SYS-020",
+    "NAME": "OperatorCore/SMP mediation",
+    "SUPPORT_TIER": "SECONDARY",
+    "QUALIFICATION_SCOPE": "SECONDARY_UNQUALIFIED",
+    "RUNTIME_IDENTITY": "Attested IdentityContext from API envelope",
+    "AUTHORITY_LEVEL": "Process-local authority plus governance",
+    "MUTATION_CAPABILITY": "Vector handlers; latent gated actuation plan handoff",
+    "TRUST_BOUNDARY": "Process-local authority plus governance"
+  },
+  {
+    "SYSTEM_ID": "SYS-021",
+    "NAME": "Actuator/actuation layers",
+    "SUPPORT_TIER": "EXPERIMENTAL",
+    "QUALIFICATION_SCOPE": "SOURCE_ONLY",
+    "RUNTIME_IDENTITY": "Plan-carried identity plus process-local gates",
+    "AUTHORITY_LEVEL": "Potential command execution if explicitly enabled",
+    "MUTATION_CAPABILITY": "subprocess list execution",
+    "TRUST_BOUNDARY": "Potential command execution if explicitly enabled"
+  },
+  {
+    "SYSTEM_ID": "SYS-022",
+    "NAME": "Operator ledger",
+    "SUPPORT_TIER": "SECONDARY",
+    "QUALIFICATION_SCOPE": "SECONDARY_UNQUALIFIED",
+    "RUNTIME_IDENTITY": "Validated runtime identity",
+    "AUTHORITY_LEVEL": "Ledger acceptance authority",
+    "MUTATION_CAPABILITY": "Database or in-memory append",
+    "TRUST_BOUNDARY": "Ledger acceptance authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-023",
+    "NAME": "Security audit chain",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "OPERATOR_TOOLING",
+    "RUNTIME_IDENTITY": "Audit signing key identity",
+    "AUTHORITY_LEVEL": "Evidentiary, not runtime execution authority",
+    "MUTATION_CAPABILITY": "Append/sign local audit artifacts",
+    "TRUST_BOUNDARY": "Evidentiary, not runtime execution authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-024",
+    "NAME": "Postgres state plane",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "postgres service account/database credentials",
+    "AUTHORITY_LEVEL": "Database write authority scoped by credentials",
+    "MUTATION_CAPABILITY": "SQL writes",
+    "TRUST_BOUNDARY": "Database write authority scoped by credentials"
+  },
+  {
+    "SYSTEM_ID": "SYS-025",
+    "NAME": "ClickHouse value plane",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Service account plus DB credentials/mTLS policy",
+    "AUTHORITY_LEVEL": "Analytical state authority for its tables, not execution authority",
+    "MUTATION_CAPABILITY": "SQL inserts/schema/query",
+    "TRUST_BOUNDARY": "Analytical state authority for its tables, not execution authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-026",
+    "NAME": "MinIO object store",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "minio service account and mesh identity",
+    "AUTHORITY_LEVEL": "Object storage authority",
+    "MUTATION_CAPABILITY": "Object writes via authenticated API",
+    "TRUST_BOUNDARY": "Object storage authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-027",
+    "NAME": "OpenTelemetry collector",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "collector service account/mesh identity",
+    "AUTHORITY_LEVEL": "Signal transport only",
+    "MUTATION_CAPABILITY": "Receive/export telemetry",
+    "TRUST_BOUNDARY": "Signal transport only"
+  },
+  {
+    "SYSTEM_ID": "SYS-028",
+    "NAME": "Prometheus",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "prometheus service account/mesh policy",
+    "AUTHORITY_LEVEL": "Observational only",
+    "MUTATION_CAPABILITY": "TSDB writes and queries",
+    "TRUST_BOUNDARY": "Observational only"
+  },
+  {
+    "SYSTEM_ID": "SYS-029",
+    "NAME": "Loki and Promtail",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "service accounts and mesh policy",
+    "AUTHORITY_LEVEL": "Observational only",
+    "MUTATION_CAPABILITY": "Log append/query",
+    "TRUST_BOUNDARY": "Observational only"
+  },
+  {
+    "SYSTEM_ID": "SYS-030",
+    "NAME": "Tempo",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "tempo service account/mesh identity",
+    "AUTHORITY_LEVEL": "Observational only",
+    "MUTATION_CAPABILITY": "Trace ingest/query",
+    "TRUST_BOUNDARY": "Observational only"
+  },
+  {
+    "SYSTEM_ID": "SYS-031",
+    "NAME": "Grafana",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Grafana credentials/service account",
+    "AUTHORITY_LEVEL": "Read-only visualization authority",
+    "MUTATION_CAPABILITY": "Local dashboard/config state",
+    "TRUST_BOUNDARY": "Read-only visualization authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-032",
+    "NAME": "Notifier/closed-loop observer",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "notifier service account",
+    "AUTHORITY_LEVEL": "Observer only",
+    "MUTATION_CAPABILITY": "Notification/event writes",
+    "TRUST_BOUNDARY": "Observer only"
+  },
+  {
+    "SYSTEM_ID": "SYS-033",
+    "NAME": "Proof orchestrator",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Human/kubeconfig with guarded mutation semantics",
+    "AUTHORITY_LEVEL": "Assurance scheduler only",
+    "MUTATION_CAPABILITY": "Evidence files; controlled active-negative tests",
+    "TRUST_BOUNDARY": "Assurance scheduler only"
+  },
+  {
+    "SYSTEM_ID": "SYS-034",
+    "NAME": "Proof integrity/determinism",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Cosign/audit keys plus Git HEAD binding",
+    "AUTHORITY_LEVEL": "Evidence acceptance authority",
+    "MUTATION_CAPABILITY": "Write manifests/signatures/commit.sha",
+    "TRUST_BOUNDARY": "Evidence acceptance authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-035",
+    "NAME": "Active assurance/outage proofs",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "OPERATOR_TOOLING",
+    "RUNTIME_IDENTITY": "Human/kubeconfig",
+    "AUTHORITY_LEVEL": "Negative-test mutation authority",
+    "MUTATION_CAPABILITY": "Scale/delete/tamper isolated state with rollback",
+    "TRUST_BOUNDARY": "Negative-test mutation authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-036",
+    "NAME": "Registry audit/runtime drift",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "OPERATOR_TOOLING",
+    "RUNTIME_IDENTITY": "Kubeconfig + registry verification identity",
+    "AUTHORITY_LEVEL": "Evidentiary only",
+    "MUTATION_CAPABILITY": "Writes audit projections",
+    "TRUST_BOUNDARY": "Evidentiary only"
+  },
+  {
+    "SYSTEM_ID": "SYS-037",
+    "NAME": "Canonical audit aggregate",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "OPERATOR_TOOLING",
+    "RUNTIME_IDENTITY": "Human/kubeconfig",
+    "AUTHORITY_LEVEL": "Audit scheduler only",
+    "MUTATION_CAPABILITY": "Audit artifacts",
+    "TRUST_BOUNDARY": "Audit scheduler only"
+  },
+  {
+    "SYSTEM_ID": "SYS-038",
+    "NAME": "ForgeSec enforcement suite",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "forgesec service accounts",
+    "AUTHORITY_LEVEL": "Negative-test authority only",
+    "MUTATION_CAPABILITY": "Create probes/fixtures and clean them",
+    "TRUST_BOUNDARY": "Negative-test authority only"
+  },
+  {
+    "SYSTEM_ID": "SYS-039",
+    "NAME": "Agent containment lab",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "SUPPORTED_DEMO",
+    "RUNTIME_IDENTITY": "Distinct service accounts/SPIRE identities",
+    "AUTHORITY_LEVEL": "Demo-only workload authority",
+    "MUTATION_CAPABILITY": "Deploy fixtures/send traffic",
+    "TRUST_BOUNDARY": "Demo-only workload authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-040",
+    "NAME": "Supported demo aggregate",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "SUPPORTED_DEMO",
+    "RUNTIME_IDENTITY": "Human/kubeconfig",
+    "AUTHORITY_LEVEL": "Demo scheduler",
+    "MUTATION_CAPABILITY": "Runtime fixture mutation with cleanup",
+    "TRUST_BOUNDARY": "Demo scheduler"
+  },
+  {
+    "SYSTEM_ID": "SYS-041",
+    "NAME": "CIV analytical lenses",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "SUPPORTED_DEMO",
+    "RUNTIME_IDENTITY": "DB credential; no execution identity",
+    "AUTHORITY_LEVEL": "Analytical only",
+    "MUTATION_CAPABILITY": "Demo table inserts/queries",
+    "TRUST_BOUNDARY": "Analytical only"
+  },
+  {
+    "SYSTEM_ID": "SYS-042",
+    "NAME": "CIV advisory library",
+    "SUPPORT_TIER": "ADVISORY",
+    "QUALIFICATION_SCOPE": "SOURCE_ONLY",
+    "RUNTIME_IDENTITY": "Artifact signer identity where invoked",
+    "AUTHORITY_LEVEL": "NONE; enforcement_prohibited",
+    "MUTATION_CAPABILITY": "Write advisory artifacts only when caller invokes writer",
+    "TRUST_BOUNDARY": "NONE; enforcement_prohibited"
+  },
+  {
+    "SYSTEM_ID": "SYS-043",
+    "NAME": "CI/governance/verify-main",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "OPERATOR_TOOLING",
+    "RUNTIME_IDENTITY": "Git commit and workflow identity",
+    "AUTHORITY_LEVEL": "Repository integrity authority; remote checks non-blocking",
+    "MUTATION_CAPABILITY": "Local report/artifact writes",
+    "TRUST_BOUNDARY": "Repository integrity authority; remote checks non-blocking"
+  },
+  {
+    "SYSTEM_ID": "SYS-044",
+    "NAME": "Documentation/publication",
+    "SUPPORT_TIER": "ADVISORY",
+    "QUALIFICATION_SCOPE": "SOURCE_ONLY",
+    "RUNTIME_IDENTITY": "Git authorship",
+    "AUTHORITY_LEVEL": "No runtime authority",
+    "MUTATION_CAPABILITY": "Tracked documentation writes by maintainers",
+    "TRUST_BOUNDARY": "No runtime authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-045",
+    "NAME": "Labs/experimental surfaces",
+    "SUPPORT_TIER": "EXPERIMENTAL",
+    "QUALIFICATION_SCOPE": "SOURCE_ONLY",
+    "RUNTIME_IDENTITY": "Varies",
+    "AUTHORITY_LEVEL": "No release authority",
+    "MUTATION_CAPABILITY": "Lab-only mutation",
+    "TRUST_BOUNDARY": "No release authority"
+  },
+  {
+    "SYSTEM_ID": "SYS-046",
+    "NAME": "Proof/test workloads",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "test-client and echo SPIFFE/service accounts",
+    "AUTHORITY_LEVEL": "Test-only",
+    "MUTATION_CAPABILITY": "Create requests and negative probes",
+    "TRUST_BOUNDARY": "Test-only"
+  },
+  {
+    "SYSTEM_ID": "SYS-047",
+    "NAME": "Vector/Qdrant backend stack",
+    "SUPPORT_TIER": "COMPATIBILITY",
+    "QUALIFICATION_SCOPE": "SOURCE_ONLY",
+    "RUNTIME_IDENTITY": "Application/backend credentials",
+    "AUTHORITY_LEVEL": "Data operation authority if deployed",
+    "MUTATION_CAPABILITY": "Vector insert/search/delete",
+    "TRUST_BOUNDARY": "Data operation authority if deployed"
+  },
+  {
+    "SYSTEM_ID": "SYS-048",
+    "NAME": "Identity compiler/controller",
+    "SUPPORT_TIER": "SUPPORTED_V1",
+    "QUALIFICATION_SCOPE": "NATIVE_V1_QUALIFIED",
+    "RUNTIME_IDENTITY": "Controller/service account when deployed",
+    "AUTHORITY_LEVEL": "Identity declaration producer only",
+    "MUTATION_CAPABILITY": "Generate manifests/entries",
+    "TRUST_BOUNDARY": "Identity declaration producer only"
+  },
+  {
+    "SYSTEM_ID": "SYS-049",
+    "NAME": "Advisory observability validators",
+    "SUPPORT_TIER": "ADVISORY",
+    "QUALIFICATION_SCOPE": "SOURCE_ONLY",
+    "RUNTIME_IDENTITY": "Varies; mesh client after recent repair",
+    "AUTHORITY_LEVEL": "Diagnostic only",
+    "MUTATION_CAPABILITY": "May mutate controlled runtime when explicitly invoked",
+    "TRUST_BOUNDARY": "Diagnostic only"
+  },
+  {
+    "SYSTEM_ID": "SYS-050",
+    "NAME": "Ironman/autonomous operator concept",
+    "SUPPORT_TIER": "HISTORICAL",
+    "QUALIFICATION_SCOPE": "HISTORICAL",
+    "RUNTIME_IDENTITY": "Historical",
+    "AUTHORITY_LEVEL": "NONE in release",
+    "MUTATION_CAPABILITY": "No supported autonomous mutation",
+    "TRUST_BOUNDARY": "NONE in release"
+  },
+  {
+    "SYSTEM_ID": "SYS-051",
+    "NAME": "Legacy K3/VM bootstrap",
+    "SUPPORT_TIER": "COMPATIBILITY",
+    "QUALIFICATION_SCOPE": "SOURCE_ONLY",
+    "RUNTIME_IDENTITY": "Legacy kubeconfig/SSH",
+    "AUTHORITY_LEVEL": "Compatibility only",
+    "MUTATION_CAPABILITY": "May mutate legacy cluster if invoked",
+    "TRUST_BOUNDARY": "Compatibility only"
+  },
+  {
+    "SYSTEM_ID": "SYS-052",
+    "NAME": "Archived documentation/artifacts",
+    "SUPPORT_TIER": "HISTORICAL",
+    "QUALIFICATION_SCOPE": "HISTORICAL",
+    "RUNTIME_IDENTITY": "n/a",
+    "AUTHORITY_LEVEL": "NONE",
+    "MUTATION_CAPABILITY": "None unless a user explicitly copies/executes",
+    "TRUST_BOUNDARY": "NONE"
+  },
+  {
+    "SYSTEM_ID": "SYS-053",
+    "NAME": "Retired ledger HTTP API",
+    "SUPPORT_TIER": "DEAD",
+    "QUALIFICATION_SCOPE": "NONE",
+    "RUNTIME_IDENTITY": "n/a",
+    "AUTHORITY_LEVEL": "NONE",
+    "MUTATION_CAPABILITY": "None",
+    "TRUST_BOUNDARY": "NONE"
+  },
+  {
+    "SYSTEM_ID": "SYS-054",
+    "NAME": "GitOps/alternate manifest mirrors",
+    "SUPPORT_TIER": "HISTORICAL",
+    "QUALIFICATION_SCOPE": "HISTORICAL",
+    "RUNTIME_IDENTITY": "GitOps controller identity if externally installed",
+    "AUTHORITY_LEVEL": "No current release authority",
+    "MUTATION_CAPABILITY": "Could deploy if external GitOps system chooses it",
+    "TRUST_BOUNDARY": "No current release authority"
+  }
+]

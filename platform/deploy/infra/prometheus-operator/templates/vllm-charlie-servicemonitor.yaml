@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vllm-charlie
+  namespace: observability
+  labels:
+    threadforge.io/component: vllm-charlie
+spec:
+  selector:
+    matchLabels:
+      app: vllm-charlie
+  namespaceSelector:
+    matchNames:
+      - vllm-charlie
+  endpoints:
+    - port: metrics
+      interval: 10s
+      path: /metrics

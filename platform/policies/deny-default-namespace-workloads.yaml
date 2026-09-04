@@ -1,0 +1,93 @@
+---
+# ── Policy: Deny workloads in default namespace ──
+# F4 Fix: The 'default' namespace has no sidecar, SPIFFE-identity, or SA enforcement.
+# This policy denies ALL pod creation in default unless the pod carries an explicit
+# allow annotation (threadforge.io/allow-default-namespace: "true") AND the workload
+# is signed and digest-pinned. The intent is to make 'default' non-workload-bearing.
+#
+# Phased enforcement:
+#   Phase 1 (this policy): Deny pods without the explicit allow annotation.
+#   Phase 2 (future): Migrate any legitimate workloads out of default entirely.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-default-namespace-workloads
+  labels:
+    threadforge.io/phase: hardening
+    threadforge.io/enforcement: hard
+    threadforge.io/finding: F4
+  annotations:
+    policies.kyverno.io/title: ThreadForge Deny Default Namespace Workloads
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: high
+    policies.kyverno.io/description: >-
+      The default namespace has no mesh identity enforcement (no sidecar, no SPIFFE-SA policy).
+      All workloads must be deployed into an identity-enforced namespace. Only explicitly
+      annotated system workloads may exist in default.
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 25
+  rules:
+    - name: deny-pods-in-default-namespace
+      match:
+        any:
+          - resources:
+              operations:
+                - CREATE
+                - UPDATE
+              kinds:
+                - Pod
+              namespaces:
+                - default
+      exclude:
+        any:
+          # Allow pods with explicit operator approval annotation
+          - resources:
+              annotations:
+                threadforge.io/allow-default-namespace: "true"
+      validate:
+        message: >-
+          [DENIED_POLICY F4] Pod creation in the 'default' namespace is prohibited.
+          The default namespace has no mesh identity enforcement (no sidecar injection,
+          no SPIFFE identity, no SA policy). Deploy workloads into threadforge-test or
+          threadforge-system. If this workload requires default namespace for a system
+          reason, annotate it with: threadforge.io/allow-default-namespace=true
+          and obtain approval. All bypass attempts are audited.
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.metadata.annotations.\"threadforge.io/allow-default-namespace\" || 'false' }}"
+                operator: NotEquals
+                value: "true"
+    - name: deny-deployments-in-default-namespace
+      match:
+        any:
+          - resources:
+              operations:
+                - CREATE
+                - UPDATE
+              kinds:
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+                - CronJob
+              namespaces:
+                - default
+      exclude:
+        any:
+          - resources:
+              annotations:
+                threadforge.io/allow-default-namespace: "true"
+      validate:
+        message: >-
+          [DENIED_POLICY F4] Workload controller creation in the 'default' namespace is
+          prohibited. Deploy into threadforge-test or threadforge-system. Annotate with
+          threadforge.io/allow-default-namespace=true for explicit system use.
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.metadata.annotations.\"threadforge.io/allow-default-namespace\" || 'false' }}"
+                operator: NotEquals
+                value: "true"

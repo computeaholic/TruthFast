@@ -1,0 +1,77 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: threadforge-collector
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-collector
+  action: ALLOW
+  rules:
+    # Allow OTLP from the live runtime namespaces that emit telemetry.
+    - from:
+        - source:
+            namespaces: ["threadforge-system", "threadforge-test"]
+      to:
+        - operation:
+            ports: ["4317", "4318"]
+            methods: ["POST", "GET"]
+
+    # Allow OTLP from observability-plane emitters.
+    - from:
+        - source:
+            namespaces: ["observability"]
+      to:
+        - operation:
+            ports: ["4317", "4318"]
+            methods: ["POST", "GET"]
+    # Allow health checks (from any source in cluster)
+    - from:
+        - source:
+            namespaces: ["*"]
+      to:
+        - operation:
+            ports: ["13133"]
+            methods: ["GET"]
+    # Allow metrics scraping from Prometheus
+    - from:
+        - source:
+            namespaces: ["observability"]
+            principals: ["identity.threadforge.local/ns/observability/sa/prometheus"]
+      to:
+        - operation:
+            ports: ["8888"]
+            methods: ["GET"]
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: threadforge-collector
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-collector
+  jwtRules: []
+  # mTLS is enforced via AuthorizationPolicy + Istio sidecar
+  # No JWT required; mutual TLS (SPIFFE) is the authentication mechanism
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: threadforge-collector
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-collector
+  mtls:
+    mode: STRICT
+  # STRICT enforces mTLS for all traffic to this workload
+  # Plaintext connections are rejected
+  portLevelMtls:
+    "4317":
+      mode: STRICT
+    "4318":
+      mode: STRICT

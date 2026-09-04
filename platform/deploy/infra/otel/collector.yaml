@@ -1,0 +1,3 @@
+# ARCHIVAL — ConfigMap-based collector config removed
+# Collector configuration must now live inside OpenTelemetryCollector CRs (spec.config)
+# See platform/deploy/infra/otel/policy.yaml (otel-agent, otel-gateway) for operator-managed config

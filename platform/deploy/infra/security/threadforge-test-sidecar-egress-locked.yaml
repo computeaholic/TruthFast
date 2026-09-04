@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: test-client-egress-locked
+  namespace: threadforge-test
+spec:
+  workloadSelector:
+    labels:
+      app: test-client
+  outboundTrafficPolicy:
+    mode: REGISTRY_ONLY
+  egress:
+    - hosts:
+        - "./*"
+        - "istio-system/*"
+        - "threadforge-system/*"
+        - "observability/*"

@@ -1,0 +1,57 @@
+# platform/deploy/infra/loki/values.yaml
+loki:
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  storage:
+    type: filesystem
+
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+  limits_config:
+    # CURRENT SAFE DEFAULTS: Conservative ingestion limits to protect the cluster.
+    # Raise only after controlled load-testing and capacity validation.
+    ingestion_rate_mb: 8
+    ingestion_burst_size_mb: 16
+    max_concurrent_tail_requests: 20
+
+  chunk_target_size: 1536000
+
+  ruler:
+    alertmanager_url: http://alertmanager.monitoring.svc.cluster.local
+
+  compactor:
+    working_directory: /data/compactor
+    shared_store: filesystem
+
+singleBinary:
+  replicas: 1
+  priorityClassName: threadforge-medium
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+service:
+  type: ClusterIP
+  port: 3100
+
+serviceMonitor:
+  enabled: true

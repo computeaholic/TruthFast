@@ -1,0 +1,9 @@
+[Unit]
+Description=Socket for K3s Audit Metrics Exporter
+
+[Socket]
+ListenStream=127.0.0.1:9108
+BindIPv6Only=both
+
+[Install]
+WantedBy=sockets.target

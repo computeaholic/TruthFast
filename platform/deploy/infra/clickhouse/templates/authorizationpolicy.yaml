@@ -1,0 +1,13 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: clickhouse-internal-only
+  namespace: threadforge-system
+spec:
+  selector:
+    matchLabels:
+      app: clickhouse
+  rules:
+    - from:
+        - source:
+            namespaces: ["threadforge-system", "forgesec"]

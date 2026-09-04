@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-minio-blackbox-probe
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  minio-blackbox-probe.json: |
+    {
+      "annotations": {"list": []},
+      "title": "MinIO probe (blackbox)",
+      "uid": "blackbox-minio-probe",
+      "panels": [
+        {
+          "type": "stat",
+          "title": "Probe success",
+          "targets": [
+            {"expr": "probe_success{job=\"blackbox-minio\"}", "refId": "A"}
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+        },
+        {
+          "type": "timeseries",
+          "title": "Probe duration",
+          "targets": [
+            {"expr": "probe_duration_seconds{job=\"blackbox-minio\"}", "refId": "A"}
+          ],
+          "gridPos": {"h": 6, "w": 12, "x": 0, "y": 4}
+        }
+      ],
+      "schemaVersion": 30
+    }

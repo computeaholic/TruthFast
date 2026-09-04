@@ -1,0 +1,60 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingressgateway-threadforge-api
+  namespace: threadforge
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-api
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - spiffe://identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway
+    to:
+    - operation:
+        ports:
+        - "8080"
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingressgateway-minio
+  namespace: minio
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - spiffe://identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway
+    to:
+    - operation:
+        ports:
+        - "9000"
+        - "9001"
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingressgateway-grafana
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - spiffe://identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway
+    to:
+    - operation:
+        ports:
+        - "3000"

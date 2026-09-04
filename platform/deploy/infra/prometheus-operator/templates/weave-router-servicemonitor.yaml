@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: weave-router
+  namespace: observability
+  labels:
+    threadforge.io/component: weave-router
+spec:
+  selector:
+    matchLabels:
+      app: weave-router
+  namespaceSelector:
+    matchNames:
+      - weave
+  endpoints:
+    - port: http
+      interval: 10s
+      path: /metrics

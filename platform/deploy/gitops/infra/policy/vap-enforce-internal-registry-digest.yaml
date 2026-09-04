@@ -1,0 +1,48 @@
+# GENERATED FROM platform/deploy/base/policy/vap-enforce-internal-registry-digest.yaml — DO NOT EDIT
+
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: enforce-internal-registry
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  validations:
+    - expression: |
+        (has(object.spec.containers) ? object.spec.containers.all(c,
+          c.image.startsWith("registry.threadforge.local:30500/") &&
+          c.image.matches("^registry\\.threadforge\\.local:30500/.+@sha256:[a-f0-9]{64}$")
+        ) : true) &&
+        (has(object.spec.initContainers) ? object.spec.initContainers.all(c,
+          c.image.startsWith("registry.threadforge.local:30500/") &&
+          c.image.matches("^registry\\.threadforge\\.local:30500/.+@sha256:[a-f0-9]{64}$")
+        ) : true) &&
+        (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.all(c,
+          c.image.startsWith("registry.threadforge.local:30500/") &&
+          c.image.matches("^registry\\.threadforge\\.local:30500/.+@sha256:[a-f0-9]{64}$")
+        ) : true)
+      message: "All images must use registry.threadforge.local:30500/ and be digest-pinned (@sha256:...)."
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: enforce-internal-registry-binding
+spec:
+  policyName: enforce-internal-registry
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values:
+            - threadforge
+            - threadforge-system
+            - forgesec
+            - workers
+            - redteam-test

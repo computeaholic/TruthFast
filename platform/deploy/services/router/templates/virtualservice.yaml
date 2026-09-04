@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: router
+  namespace: router
+spec:
+  hosts:
+    - router.router.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: router.router.svc.cluster.local
+            port:
+              number: 8080

@@ -1,0 +1,18 @@
+# Accelerator Profile V2 — used by VectorRouterV2
+
+profiles:
+  - model: "*"
+    dimension_max: 1024
+    accel: cpu
+
+  - model: "qwen_*"
+    dimension_max: 4096
+    accel: gpu
+
+  - model: "mistral_*"
+    dimension_max: 4096
+    accel: gpu
+
+  - model: "apple_*"
+    dimension_max: 2048
+    accel: ane

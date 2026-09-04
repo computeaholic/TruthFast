@@ -1,0 +1,35 @@
+# ==============================================================================
+# OpenTofu State & Plan Files (Do Not Commit)
+# ==============================================================================
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Terraform plan files
+*.tfplan
+*.json
+
+# Terraform working directory
+.terraform/
+
+# Local .terraform directories
+**/.terraform/*
+
+# State locking
+.terraform.tfstate.lock.hcl
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Intent files (generated during plan)
+**/intent.yaml
+**/intent.json
+
+# Temporary files
+/tmp/
+*.log

@@ -1,0 +1,136 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  annotations: {}
+  finalizers:
+    - opentelemetrycollector.opentelemetry.io/finalizer
+  name: threadforge-collector
+  namespace: observability
+spec:
+  config:
+    exporters:
+      debug: {}
+      otlphttp:
+        endpoint: http://tempo.observability.svc.cluster.local:4318
+        tls:
+          insecure: true
+        # ===== BOUNDED NON-CLAIM: OBSERVABILITY PLANE =====
+        # OTLP collector <-> Tempo: HTTP (plaintext, unencrypted)
+        # NO transport encryption, NO identity binding / mTLS
+        # Reason: OpenTelemetryCollector Operator blocks Istio sidecars
+        #   (pod annotation sidecar.istio.io/inject: "false")
+        # Native TLS attempted but causes exporter initialization failure
+        # Workaround: Deploy collector outside Operator (architecture change)
+        # Status: OBSERVABILITY UNENCRYPTED BY DESIGN
+        # This is honest documentation, not aspirational
+        # ===== END BOUNDED NON-CLAIM ====="
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+        path: /
+    processors:
+      batch: {}
+      tail_sampling:
+        policies:
+          - name: always_keep_system
+            string_attribute:
+              key: slo.category
+              values:
+                - safety
+                - capsule
+            type: string_attribute
+          - name: drift_high
+            numeric_attribute:
+              key: drift.score
+              # Use integer semantics for min_value to ensure evaluator is created correctly
+              # and avoid nil evaluator dereferences in tail_sampling.
+              min_value: 1
+            type: numeric_attribute
+          - name: slow
+            numeric_attribute:
+              key: slo.duration_ms
+              min_value: 250
+            type: numeric_attribute
+          - name: storage
+            string_attribute:
+              key: slo.category
+              values:
+                - storage
+            type: string_attribute
+          - name: reservoir
+            probabilistic:
+              sampling_percentage: 20
+            type: probabilistic
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    service:
+      extensions:
+        - health_check
+      pipelines:
+        traces:
+          exporters:
+            - otlphttp
+            - debug
+          processors:
+            - batch
+            - tail_sampling
+          receivers:
+            - otlp
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+  configVersions: 3
+  daemonSetUpdateStrategy: {}
+  deploymentUpdateStrategy: {}
+  image: registry.threadforge.local:30500/opentelemetry-collector-contrib@sha256:020daa1130d84af199dc2060d6dc3867f350e438f36629a640a7f4a0d0ffbfb8
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+    runAsNonRoot: true
+  securityContext:
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    seccompProfile:
+      type: RuntimeDefault
+  ingress:
+    route: {}
+  ipFamilyPolicy: SingleStack
+  managementState: managed
+  mode: deployment
+  networkPolicy: {}
+  observability:
+    metrics: {}
+  podDnsConfig: {}
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  targetAllocator:
+    allocationStrategy: consistent-hashing
+    collectorNotReadyGracePeriod: 30s
+    collectorTargetReloadInterval: 30s
+    filterStrategy: relabel-config
+    observability:
+      metrics: {}
+    prometheusCR:
+      podMonitorSelector: {}
+      scrapeInterval: 30s
+      serviceMonitorSelector: {}
+    resources: {}
+  upgradeStrategy: automatic

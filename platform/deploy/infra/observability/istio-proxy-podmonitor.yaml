@@ -1,0 +1,31 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: istio-proxy
+  namespace: observability
+  labels:
+    release: tf-observability
+    threadforge.io/component: istio-proxy
+spec:
+  # Select all Envoy proxy sidecars across injection-enabled namespaces.
+  # Envoy exposes Prometheus metrics on port 15090.
+  selector:
+    matchLabels:
+      security.istio.io/tlsMode: istio
+  namespaceSelector:
+    matchNames:
+      - agents-lab
+      - threadforge-system
+      - postgres
+  podMetricsEndpoints:
+    - port: http-envoy-prom
+      path: /stats/prometheus
+      interval: 15s
+      scrapeTimeout: 10s
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_pod_label_app]
+          targetLabel: app

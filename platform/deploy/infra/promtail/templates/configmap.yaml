@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+data:
+  promtail.yaml: |
+    server:
+      http_listen_port: 3101
+
+    positions:
+      filename: /var/log/positions.yaml
+
+    # LOCKED: Promtail client settings are locked.
+    # Reason: Ensure stable timeout and backoff behavior in production —
+    # change only with explicit approval and controlled testing.
+    clients:
+      - url: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push
+        timeout: 10s
+        backoff_config:
+          min_period: 100ms
+          max_period: 5s
+
+    scrape_configs:
+      - job_name: kubernetes-pods
+        kubernetes_sd_configs:
+          - role: pod
+        # LOCKED: JSON parsing pipeline is locked.
+        # It extracts a JSON substring into `msg` and parses fields used by downstream systems.
+        # The `capsule_sha` label promotion is also locked to ensure queries remain stable.
+        pipeline_stages:
+          - regex:
+              expression: '(?P<msg>{.*$)'
+
+          # If no top-line timestamp parsing works consistently, also attempt to extract any JSON substring directly
+          - regex:
+              expression: '(?P<msg>{.*)'
+
+          - match:
+              selector: '{pod!=""}'
+              stages:
+                - regex:
+                    source: msg
+                    expression: '^\\{'
+                - json:
+                    source: msg
+                    expressions:
+                      capsule_sha: capsule_sha
+                      sender: sender
+                      recipient: recipient
+                      lineage: lineage
+                      reflex: reflex
+                      decision: decision
+                # LOCKED: Promoted label `capsule_sha` — do not remove or rename without approval
+                - labels:
+                    capsule_sha: capsule_sha
+        relabel_configs:
+          - source_labels: ["__meta_kubernetes_namespace"]
+            target_label: "namespace"
+          - source_labels: ["__meta_kubernetes_pod_name"]
+            target_label: "pod"
+          - source_labels: ["__meta_kubernetes_pod_container_name"]
+            target_label: "container"
+          - source_labels: ["__meta_kubernetes_pod_label_app"]
+            target_label: "app"
+
+          # Drop Promtail's own logs to avoid feedback and json unmarshal spam
+          - source_labels: ["__meta_kubernetes_pod_name"]
+            regex: "promtail-.*"
+            action: drop
+
+          # Set __path__ to the pod log file on the host so the filetarget manager can find it.
+          - source_labels: ["__meta_kubernetes_namespace","__meta_kubernetes_pod_name","__meta_kubernetes_pod_uid","__meta_kubernetes_pod_container_name"]
+            separator: "_"
+            target_label: "__path__"
+            replacement: "/var/log/pods/${1}_${2}_${3}/${4}/*.log"
+
+          # Fallback to the /var/log/containers symlink pattern
+          - source_labels: ["__meta_kubernetes_pod_name","__meta_kubernetes_namespace","__meta_kubernetes_pod_container_name"]
+            separator: "_"
+            target_label: "__path__"
+            replacement: "/var/log/containers/${1}_${2}_${3}-*.log"
+
+          # Normalize accidental double underscores before hyphen (e.g., "...container__-*.log" -> "...container-*.log")
+          - source_labels: ["__path__"]
+            regex: "(.*)__-(.*)"
+            target_label: "__path__"
+            replacement: "${1}-${2}"
+
+

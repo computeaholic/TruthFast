@@ -1,0 +1,18 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: tier0-istiod-allow-ingress
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: pilot
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway-service-account
+      to:
+        - operation:
+            ports: ["15010","15012","15014","443"]

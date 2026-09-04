@@ -1,0 +1,22 @@
+apiVersion: v2
+name: grafana
+description: ThreadForge — Unified Observability Console (Zero-Trust, SPIFFE, mTLS)
+type: application
+version: 0.3.0
+appVersion: "11.2.0"
+
+keywords:
+  - grafana
+  - observability
+  - dashboards
+  - tracing
+  - metrics
+  - logs
+  - tempo
+  - loki
+  - prometheus
+  - threadforge
+
+maintainers:
+  - name: ThreadForge
+    email: ops@threadforge.local

@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "identity-controller.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "identity-controller.name" . }}
+    chart: {{ include "identity-controller.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "identity-controller.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "identity-controller.name" . }}
+        release: {{ .Release.Name }}
+      annotations:
+        sidecar.istio.io/inject: {{ .Values.identityController.istio.inject | quote }}
+    spec:
+      serviceAccountName: identity-controller
+      initContainers:
+        - name: wait-for-spire-socket
+          image: "{{ .Values.identityController.initImage.repository }}:{{ .Values.identityController.initImage.tag }}"
+          command:
+            - sh
+            - -c
+            - |
+              until [ -S /run/spire/sockets/socket ]; do
+                echo "waiting for SPIRE agent socket"
+                sleep 1
+              done
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /run/spire/sockets
+      containers:
+        - name: manager
+          image: "{{ .Values.identityController.image.repository }}:{{ .Values.identityController.image.tag }}"
+          imagePullPolicy: {{ .Values.identityController.image.pullPolicy }}
+          command:
+            - /manager
+          args:
+          {{- range .Values.identityController.args }}
+            - {{ . | quote }}
+          {{- end }}
+          env:
+          {{- range .Values.identityController.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+          {{- end }}
+          volumeMounts:
+          {{- range .Values.identityController.volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              readOnly: {{ .readOnly }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.identityController.containerSecurityContext | nindent 12 }}
+      volumes:
+      {{- range .Values.identityController.volumes }}
+        - name: {{ .name }}
+          hostPath:
+            path: {{ .hostPath.path }}
+            type: {{ .hostPath.type }}
+      {{- end }}
+      {{- if .Values.identityController.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.identityController.podSecurityContext | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,212 @@
+{
+  "uid": "tf-minio-cluster",
+  "title": "Infra — MinIO Cluster Storage & Health",
+  "description": "Panels render only where underlying metrics are present. Empty panels indicate intentionally uninstrumented components.",
+  "datasource": "Prometheus",
+  "tags": [
+    "threadforge",
+    "minio",
+    "cluster",
+    "storage",
+    "health"
+  ],
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Cluster Online Drives",
+      "id": 10,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "sum(minio_cluster_drive_online_total)",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Offline Drives",
+      "id": 11,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "colorMode": "critical",
+      "datasource": "Prometheus",
+      "description": "This metric is event-driven and indicates drive offline events. 'No data' indicates no offline events observed in the selected time range.",
+      "targets": [
+        {
+          "expr": "sum(minio_cluster_drive_offline_total)",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Healing Entries",
+      "id": 12,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "colorMode": "warning",
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "sum(minio_heal_objects_queued_total)",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Disk Read IOPS (Per Drive)",
+      "id": 20,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "rate(minio_disk_usage_read_bytes[1m])",
+          "legendFormat": "{{drive}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "bytes"
+        },
+        {
+          "format": "short"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Disk Write IOPS (Per Drive)",
+      "id": 21,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(minio_disk_usage_written_bytes[1m])",
+          "legendFormat": "{{drive}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "bytes"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Drive Latency (ms)",
+      "id": 22,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "minio_drive_latency_ms",
+          "legendFormat": "{{drive}}"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "ms"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Heal Throughput (Bytes/sec)",
+      "id": 23,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(minio_heal_bytes_total[5m])",
+          "legendFormat": "healing"
+        }
+      ],
+      "yaxes": [
+        {
+          "format": "bytes"
+        },
+        {
+          "format": "short"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Cluster Ops Saturation",
+      "id": 24,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(minio_s3_requests_total[1m])",
+          "legendFormat": "Requests"
+        },
+        {
+          "expr": "rate(minio_heal_objects_queued_total[1m])",
+          "legendFormat": "Healing"
+        },
+        {
+          "expr": "rate(minio_disk_usage_written_bytes[1m])",
+          "legendFormat": "Disk Write"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    }
+  ]
+}

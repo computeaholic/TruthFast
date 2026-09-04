@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: router-netpol
+  namespace: threadforge
+spec:
+  podSelector:
+    matchLabels:
+      app: router
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              topology.istio.io/network: threadforge-mesh
+
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - port: 15443
+          protocol: TCP
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              threadforge.io/role: llm-backend

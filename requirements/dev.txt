@@ -1,0 +1,48 @@
+# ------------------------------------------------------------
+# ThreadForge — Development & CI Tooling
+# ------------------------------------------------------------
+# This file is intentionally LIMITED to tools used by:
+# - CI linting
+# - CI testing
+# - Local developer hygiene
+#
+# NO runtime dependencies
+# NO database drivers
+# NO cluster dependencies
+# ------------------------------------------------------------
+
+# Linting
+ruff==0.6.9
+
+# Formatting
+black==24.8.0
+
+# SQL formatting/linting
+sqlfluff==4.0.0
+
+# Testing
+pytest==8.3.3
+pytest-cov==5.0.0
+pytest-mock==3.10.0
+requests==2.31.0
+fakeredis==2.33.0
+redis==7.1.0
+# Pytest configuration imports Pydantic's deprecation warning category.
+pydantic==2.8.2
+# The repository-wide test fixture generates isolated Ed25519 test keys.
+cryptography==41.0.7
+# YAML parsing for tools and scripts
+PyYAML==6.0.3
+
+# Documentation
+mkdocs-material==9.7.7
+
+# Type checking
+mypy==1.13.0
+types-PyYAML==6.0.12.20240917
+types-requests==2.31.0.10
+types-psycopg2==2.9.21.15
+types-Markdown==3.5.0.20240311
+
+# Optional local ergonomics (safe, non-invasive)
+ipython==8.26.0

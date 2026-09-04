@@ -1,0 +1,41 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: meshtrustpolicies.threadforge.io
+spec:
+  group: threadforge.io
+  scope: Cluster
+  names:
+    plural: meshtrustpolicies
+    singular: meshtrustpolicy
+    kind: MeshTrustPolicy
+    shortNames:
+      - mtp
+      - trustpol
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                source:
+                  type: string
+                targets:
+                  type: array
+                  items:
+                    type: string
+                rules:
+                  type: object
+                  properties:
+                    mtls:
+                      type: string
+                      enum:
+                        - STRICT
+                        - PERMISSIVE
+                    jwtRequired:
+                      type: boolean

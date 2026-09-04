@@ -1,0 +1,17 @@
+apiVersion: v2
+name: runtime-umbrella
+description: ThreadForge — Runtime Umbrella Chart (snapshots, rotation, archival)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+dependencies:
+  - name: snapshots
+    version: 0.1.0
+    repository: "file://../charts/snapshots"
+  - name: ledger-rotation
+    version: 0.1.0
+    repository: "file://../charts/ledger-rotation"
+  - name: ledger-archival
+    version: 0.1.0
+    repository: "file://../charts/ledger-archival"

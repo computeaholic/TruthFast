@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: buildkit
+  namespace: build-system
+  labels:
+    app.kubernetes.io/name: buildkit
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: buildkit
+  ports:
+    - name: control
+      port: 1234
+      targetPort: 1234
+# For secure access, use NetworkPolicy and restrict access to CI runner subnet or kube-system proxies.

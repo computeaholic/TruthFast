@@ -1,0 +1,67 @@
+# ==============================================================================
+# ThreadForge — Tri-Modal Qdrant Values
+# # deployment/infra/qdrant/values.yaml
+# ==============================================================================
+
+global:
+  namespace: qdrant
+  serviceName: qdrant
+
+image:
+  repository: registry.threadforge.local:30500/mirror/docker.io/qdrant/qdrant
+  digest: sha256:2e06bf3370a0df61a25ba45424bbe8b414fc2dc66f15f62da427ae524b5e73fa
+  pullPolicy: IfNotPresent
+
+backend:
+  target: cpu             # cpu | gpu | ane   (auto is NOT valid in CRD)
+  nodeSelector: {}
+  tolerations: []
+  resources:
+    limits:
+      cpu: 4
+      memory: 4Gi
+    requests:
+      cpu: 1
+      memory: 2Gi
+
+persistence:
+  size: 10Gi
+  storageClass: ""
+
+service:
+  type: ClusterIP
+  port: 6333
+  grpcPort: 6334
+
+mesh:
+  host: "qdrant.threadforge.local"
+
+operatorAI:
+  routing:
+    mode: adaptive       # valid: static | adaptive | continuous
+    preferredOrder: [gpu, ane, cpu]
+
+secret:
+  apiKey: "SET_ME"
+
+indexer:
+  image:
+    repository: registry.threadforge.local:30500/threadforge/vector-indexer
+    digest: sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f
+    pullPolicy: IfNotPresent
+  source: operator        # operator | value
+  collection: threadforge_vectors
+  model: sentence-transformers/all-MiniLM-L6-v2
+  batchSize: 100
+
+env:
+  - name: QDRANT__GPU__ENABLED
+    valueFrom:
+      configMapKeyRef:
+        name: node-capabilities
+        key: gpu
+  - name: QDRANT__ANE__ENABLED
+    valueFrom:
+      configMapKeyRef:
+        name: node-capabilities
+        key: ane

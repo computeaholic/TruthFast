@@ -1,0 +1,3 @@
+-- ingest_cursors is managed by Alembic (see db/alembic/versions/a1b2c3d4e5f6_create_operator_ledger_v2_and_ingest_cursors.py)
+-- Infra schema files must not CREATE TABLE application-owned objects.
+-- This SQL stub remains for reference only.

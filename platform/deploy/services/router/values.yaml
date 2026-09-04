@@ -1,0 +1,24 @@
+replicaCount: 2
+
+image:
+  repository: registry.threadforge.local:30500/threadforge/router-go
+  digest: sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080
+
+env:
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-gateway.otel:4318"
+  LOG_LEVEL: "info"
+
+# Opt-in flag to allow debug/trace logging for this chart
+allowDebugLogs: false
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vector-router
+spec:
+  serviceName: vector-router
+  replicas: {{ .Values.replicaCount }}
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: vector-router
+  template:
+    metadata:
+      labels:
+        app: vector-router
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/grpc: runtime/default
+        container.apparmor.security.beta.kubernetes.io/proxy: runtime/default
+        seccomp.security.alpha.kubernetes.io/pod: runtime/default
+    spec:
+      serviceAccountName: vector-router
+
+      containers:
+
+        # --------------------------------------------------------------
+        # gRPC Core Engine
+        # --------------------------------------------------------------
+        - name: grpc
+          image: "{{ .Values.image.grpcRepository }}:{{ .Values.image.grpcTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          env:
+            - name: QDRANT_HOST
+              value: {{ .Values.qdrant.host | quote }}
+            - name: QDRANT_PORT
+              value: "{{ .Values.qdrant.port }}"
+
+            - name: PG_HOST
+              value: {{ .Values.pgvector.host | quote }}
+            - name: PG_PORT
+              value: "{{ .Values.pgvector.port }}"
+            - name: PG_USER
+              value: {{ .Values.pgvector.user | quote }}
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.pgvector.secretName }}
+                  key: password
+            - name: PG_DB
+              value: {{ .Values.pgvector.db | quote }}
+
+            - name: GPU_VENDOR
+              value: {{ .Values.gpu.vendor | quote }}
+            - name: GPU_ALLOCATE
+              value: "{{ .Values.gpu.allocate }}"
+
+          livenessProbe:
+            exec:
+              command: ["/bin/grpc_health_probe", "-addr=:50051"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          resources:
+            {{- toYaml .Values.resources.grpc | nindent 12 }}
+
+        # --------------------------------------------------------------
+        # HTTP Sidecar Proxy
+        # --------------------------------------------------------------
+        - name: proxy
+          image: "{{ .Values.image.proxyRepository }}:{{ .Values.image.proxyTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources.proxy | nindent 12 }}

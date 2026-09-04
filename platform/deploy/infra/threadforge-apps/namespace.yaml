@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: threadforge-apps
+  labels:
+    threadforge.io/role: apps
+    threadforge.io/evaluated: "false"

@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: tempo
+    threadforge.io/tier: observability
+data:
+  tempo.yaml: |
+    server:
+      http_listen_address: {{ .Values.tempo.server.http_listen_address | default "0.0.0.0" | quote }}
+      http_listen_port: {{ .Values.service.port }}
+      log_level: info
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: {{ .Values.tempo.listeners.otlp.grpc | default "0.0.0.0:4317" | quote }}
+            http:
+              endpoint: {{ .Values.tempo.listeners.otlp.http | default "0.0.0.0:4318" | quote }}
+
+
+    ingester:
+      max_block_bytes: 104857600
+      max_block_duration: 5m
+      trace_idle_period: 30s
+      lifecycler:
+        address: tempo-0.tempo.{{ .Release.Namespace }}.svc.cluster.local
+        tokens_file_path: /var/tempo/lifecycler.tokens
+        ring:
+          kvstore:
+            store: memberlist
+          replication_factor: 1
+
+    querier:
+      shuffle_sharding_ingesters_enabled: true
+      shuffle_sharding_ingesters_lookback_period: 2h
+
+    compactor:
+      compaction:
+        block_retention: 48h
+
+    metrics_generator:
+      registry:
+        external_labels:
+          cluster: threadforge
+      storage:
+        path: /var/tempo/wal
+
+    storage:
+      trace:
+{{- if eq .Values.tempo.storage.trace.backend "s3" }}
+{{- $s3 := .Values.tempo.storage.trace.s3 }}
+{{- $_ := required "tempo.storage.trace.s3 is required when backend is s3" $s3 }}
+{{- $_ := required "tempo.storage.trace.s3.endpoint is required when backend is s3" $s3.endpoint }}
+{{- $_ := required "tempo.storage.trace.s3.bucket is required when backend is s3" $s3.bucket }}
+{{- $_ := required "tempo.storage.trace.s3.access_key is required when backend is s3" $s3.access_key }}
+{{- $_ := required "tempo.storage.trace.s3.secret_key is required when backend is s3" $s3.secret_key }}
+        backend: s3
+        s3:
+          endpoint: {{ $s3.endpoint | quote }}
+          bucket: {{ $s3.bucket | quote }}
+          access_key: {{ $s3.access_key | quote }}
+          secret_key: {{ $s3.secret_key | quote }}
+          insecure: {{ $s3.insecure }}
+{{- else }}
+{{- $_ := required "persistence.size is required when using local backend" .Values.persistence.size }}
+{{- $_ := required "persistence.storageClassName is required when using local backend" .Values.persistence.storageClassName }}
+{{- $_ := required "tempo.storage.trace.local.path is required when using local backend" .Values.tempo.storage.trace.local.path }}
+        backend: local
+        local:
+          path: {{ .Values.tempo.storage.trace.local.path | quote }}
+{{- end }}
+
+    overrides:
+      max_bytes_per_trace: 35000000
+
+{{- if .Values.reporting.enabled }}
+    reporting:
+      enabled: true
+{{- end }}

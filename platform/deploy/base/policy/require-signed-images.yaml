@@ -1,0 +1,58 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-signed-images
+  annotations:
+    policies.kyverno.io/title: ThreadForge Require Signed Images
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Pod
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: verify-cosign-signatures
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - istio-system
+                - kyverno
+                - spire-system
+                - local-path-storage
+      verifyImages:
+        - imageReferences:
+            - "registry.threadforge.local:30500/*"
+          imageRegistryCredentials:
+            secrets:
+              - registry-credentials
+          mutateDigest: false
+          verifyDigest: true
+          required: true
+          useCache: false
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8xDeE7rWcxz6O8xqoF2iqetycjhS
+                      damvMVjBRTALshh6LJRCnP42jXS/5eblP3d9H7rowDbY/UcRueVSLg5kQQ==
+                      -----END PUBLIC KEY-----
+                    # ThreadForge requires Rekor transparency log verification for all
+                    # signed images. Offline-only signatures (no Rekor entry) are
+                    # rejected. ctlog SCT and Rekor tlog are both mandatory.
+                    ctlog:
+                      ignoreSCT: false
+                    rekor:
+                      ignoreTlog: false
+                      url: https://rekor.sigstore.dev

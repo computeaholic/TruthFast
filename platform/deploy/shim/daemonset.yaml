@@ -1,0 +1,112 @@
+# ===================================================================
+# Kernel-Adjacent Shim — Security Contract (audit evidence)
+# This DaemonSet is *kernel-adjacent infrastructure only*. It MUST NEVER:
+#  - execute customer/application workloads
+#  - emit SMP envelopes
+#  - access Civ / PPIT / ThreadForge application APIs
+#  - perform network egress (egress is explicitly denied by policy)
+#  - mount application secrets or other application-scoped credentials
+# Any change of responsibility for this component requires an RFC + security review.
+# ===================================================================
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: csi-node-shim
+  namespace: spire-system
+  labels:
+    app: csi-node-shim
+    app.kubernetes.io/component: identity-infra
+    threadforge.io/layer: kernel-adjacent
+    threadforge.io/execution-surface: none
+    threadforge.io/mutation-policy: forbidden
+  annotations:
+    threadforge.io/immutable-note: "Any expansion of responsibility requires an RFC + security review"
+spec:
+  selector:
+    matchLabels:
+      app: csi-node-shim
+  template:
+    metadata:
+      labels:
+        app: csi-node-shim
+        app.kubernetes.io/component: identity-infra
+        sidecar.istio.io/inject: "false"
+      annotations:
+    spec:
+      # Service account is dedicated to CSI responsibilities (no shared default SA)
+      serviceAccountName: spire-spiffe-csi-driver
+      # Host PID present for CSI registration socket handling (justified: CSI host socket ownership)
+      hostPID: true
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: csi-node-shim
+          image: registry.threadforge.local:30500/csi-node-shim@sha256:d5899cfe92b8b4fbb097164c269ab6a6bb881e8f63b3531740a667b4312ca1f0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0 # root required to bind host sockets and manage registration dirs (justified inline)
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: CSI_BACKEND_SOCKET
+              value: "/spiffe-csi/driver.sock"
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /csi
+              readOnly: false
+            - name: registration-dir
+              mountPath: /var/lib/kubelet/plugins_registry
+              readOnly: false
+            - name: spiffe-csi
+              mountPath: /spiffe-csi
+              readOnly: true
+        - name: csi-node-reg-shim
+          image: registry.threadforge.local:30500/csi-node-reg-shim@sha256:b9e218b3bf6d8027c7218cc2c54d155e9d3920321b02bbfd36acbac18b1c65d3
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0 # root required for kubelet registration socket ownership
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: MY_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          args:
+            - --listen-socket=/var/lib/kubelet/plugins_registry/csi.spiffe.io-reg.sock
+          volumeMounts:
+            - name: registration-dir
+              mountPath: /var/lib/kubelet/plugins_registry
+              readOnly: false
+            - name: spiffe-csi
+              mountPath: /spiffe-csi
+              readOnly: true
+      volumes:
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi.spiffe.io
+            type: DirectoryOrCreate
+        - name: spiffe-csi
+          hostPath:
+            path: /spiffe-csi
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+      tolerations:
+        - operator: Exists
+      terminationGracePeriodSeconds: 30
+  updateStrategy:
+    type: RollingUpdate

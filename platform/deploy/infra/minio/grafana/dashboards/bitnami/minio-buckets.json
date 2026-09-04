@@ -1,0 +1,73 @@
+{
+  "uid": "minio-buckets",
+  "title": "MinIO Buckets (Bitnami)",
+  "tags": ["minio", "bitnami", "buckets"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "table",
+      "title": "Buckets — Size",
+      "id": 200,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "minio_bucket_usage_total_bytes",
+          "legendFormat": "{{bucket}}"
+        }
+      ],
+      "styles": [
+        { "pattern": "Value", "type": "bytes", "unit": "bytes" }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Buckets — Object Count",
+      "id": 201,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "minio_bucket_usage_total_objects",
+          "legendFormat": "{{bucket}}"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Bucket Growth Rate (Bytes/sec)",
+      "id": 202,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 16 },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "rate(minio_bucket_usage_total_bytes[5m])",
+          "legendFormat": "{{bucket}}"
+        }
+      ],
+      "yaxes": [
+        { "format": "bytes" },
+        { "format": "short" }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Bucket Object Velocity (Objects/sec)",
+      "id": 203,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 23 },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "rate(minio_bucket_usage_total_objects[5m])",
+          "legendFormat": "{{bucket}}"
+        }
+      ]
+    }
+  ]
+}

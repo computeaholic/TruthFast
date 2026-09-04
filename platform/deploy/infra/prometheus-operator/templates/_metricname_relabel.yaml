@@ -1,0 +1,48 @@
+{{- define "prometheus.metricNameAsciiOnly" }}
+# Ensure metric names are ASCII-safe without dropping metrics.
+# Strategy:
+# 1) If the name is already valid ASCII, keep it.
+# 2) Otherwise, iteratively replace the first non-ASCII character with an underscore.
+#    Repeat several times to handle multiple offending characters.
+# 3) If the final name starts with an invalid leading character, prefix with 'm_'.
+metricRelabelings:
+  # Keep already-valid names immediately
+  - sourceLabels: ["__name__"]
+    regex: '^[A-Za-z_:][A-Za-z0-9_:]*$'
+    action: keep
+
+  # Iteratively replace the first non-ASCII character with an underscore.
+  # RE2 doesn't provide a global replace, so multiple passes are used.
+  - sourceLabels: ["__name__"]
+    regex: '^(.*)[^\x00-\x7F](.*)$'
+    targetLabel: __name__
+    replacement: '${1}_${2}'
+    action: replace
+  - sourceLabels: ["__name__"]
+    regex: '^(.*)[^\x00-\x7F](.*)$'
+    targetLabel: __name__
+    replacement: '${1}_${2}'
+    action: replace
+  - sourceLabels: ["__name__"]
+    regex: '^(.*)[^\x00-\x7F](.*)$'
+    targetLabel: __name__
+    replacement: '${1}_${2}'
+    action: replace
+  - sourceLabels: ["__name__"]
+    regex: '^(.*)[^\x00-\x7F](.*)$'
+    targetLabel: __name__
+    replacement: '${1}_${2}'
+    action: replace
+  - sourceLabels: ["__name__"]
+    regex: '^(.*)[^\x00-\x7F](.*)$'
+    targetLabel: __name__
+    replacement: '${1}_${2}'
+    action: replace
+
+  # Ensure the name starts with a valid starting character
+  - sourceLabels: ["__name__"]
+    regex: '^[^A-Za-z_:](.*)$'
+    targetLabel: __name__
+    replacement: 'm_${1}'
+    action: replace
+{{- end }}

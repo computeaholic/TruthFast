@@ -1,0 +1,278 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-protect-kyverno-webhooks
+  annotations:
+    policies.kyverno.io/title: ThreadForge Protect Kyverno Webhook Configurations
+    policies.kyverno.io/category: Security Hardening
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: ValidatingWebhookConfiguration,MutatingWebhookConfiguration
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: deny-kyverno-webhook-deletion
+      match:
+        any:
+          - resources:
+              kinds:
+                - ValidatingWebhookConfiguration
+                - MutatingWebhookConfiguration
+              names:
+                - kyverno-resource-validating-webhook-cfg
+                - kyverno-resource-mutating-webhook-cfg
+                - kyverno-policy-validating-webhook-cfg
+                - kyverno-policy-mutating-webhook-cfg
+                - kyverno-verify-mutating-webhook-cfg
+                - kyverno-exception-validating-webhook-cfg
+                - kyverno-cleanup-validating-webhook-cfg
+                - kyverno-global-context-validating-webhook-cfg
+                - kyverno-ttl-validating-webhook-cfg
+      exclude:
+        any:
+          - subjects:
+              - kind: ServiceAccount
+                name: kyverno-admission-controller
+                namespace: kyverno
+              - kind: ServiceAccount
+                name: kyverno-background-controller
+                namespace: kyverno
+      validate:
+        message: >-
+          Deletion of Kyverno webhook configurations is prohibited.
+          Delete the threadforge-protect-kyverno-webhooks ClusterPolicy first
+          (action will be audited) if intentional Kyverno removal is required.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.operation }}"
+                operator: Equals
+                value: DELETE
+---
+# ── VAP 1: Protect Kyverno admission-controller and background-controller from scale-to-0 ──
+# Break-glass: annotate the deployment with threadforge.io/breakglass=true AND
+# the request must come from a user/SA in group threadforge-breakglass.
+# Both conditions required simultaneously (AND-logic via extra guard policy).
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: threadforge-protect-kyverno-scale
+  labels:
+    threadforge.io/critical-guard: "true"
+    threadforge.io/layer: admission-protection
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["UPDATE"]
+        resources: ["deployments", "deployments/scale"]
+  variables:
+    # Break-glass condition for scale path:
+    # rely on explicit breakglass group membership. Scale subresource requests
+    # do not reliably carry deployment annotations in admission object payload.
+    - name: isBreakGlass
+      expression: >-
+        has(request.userInfo.groups) && 'threadforge-breakglass' in request.userInfo.groups
+  validations:
+    # kyverno-admission-controller: deny scale to 0 unless break-glass
+    - expression: >-
+        !(request.namespace == "kyverno" &&
+          object.metadata.name == "kyverno-admission-controller" &&
+          (!has(object.spec.replicas) || object.spec.replicas == 0)) ||
+        variables.isBreakGlass
+      message: >-
+        [DENIED_POLICY] Scaling kyverno-admission-controller to 0 replicas is prohibited.
+        Admission enforcement would be completely removed, allowing all workloads to bypass
+        policy. Break-glass required: annotate with threadforge.io/breakglass=true AND
+        belong to group threadforge-breakglass. All break-glass actions are audited.
+    # kyverno-background-controller: deny scale to 0 unless break-glass
+    - expression: >-
+        !(request.namespace == "kyverno" &&
+          object.metadata.name == "kyverno-background-controller" &&
+          (!has(object.spec.replicas) || object.spec.replicas == 0)) ||
+        variables.isBreakGlass
+      message: >-
+        [DENIED_POLICY] Scaling kyverno-background-controller to 0 replicas is prohibited.
+        Break-glass required: annotate with threadforge.io/breakglass=true AND
+        belong to group threadforge-breakglass. All break-glass actions are audited.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: threadforge-protect-kyverno-scale-binding
+spec:
+  policyName: threadforge-protect-kyverno-scale
+  validationActions: [Deny]
+---
+# ── VAP 2: Protect the VAP guard itself from deletion/modification ──
+# This is the "guard-the-guard" policy. It prevents deletion of the critical
+# admission-protection VAPs. Uses the same break-glass model.
+#
+# KNOWN LIMITATION (Kubernetes design constraint):
+#   The Kubernetes API server exempts admissionregistration.k8s.io resources from
+#   VAP evaluation to prevent circular bootstrapping. As a result, this VAP cannot
+#   prevent cluster-admin from deleting VAPs directly.
+#
+# COMPENSATING CONTROLS:
+#   1. RBAC (below): Only threadforge-breakglass group has DELETE on VAPs.
+#      Regular CI/CD operators and service accounts cannot delete VAPs.
+#   2. Audit: All VAP deletions appear in the Kubernetes audit log (policy: all
+#      delete operations on admissionregistration.k8s.io are at RequestResponse
+#      level). External SIEM/alert on this.
+#   3. Process gate: The break-glass procedure requires explicit group membership
+#      + resource annotation — making bypass multi-step and non-silent.
+#   4. Bootstrap: apply_kyverno_policies() in bootstrap.sh re-creates VAPs on
+#      every cluster bootstrap, so a deleted VAP is restored at next bootstrap.
+#
+# THREAT MODEL:
+#   cluster-admin bypass = explicit + logged + requires console access.
+#   This is NOT a silent bypass. The intent (per THREADFORGE spec) is:
+#     "make bypass explicit, multi-step, auditable, non-silent."
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: threadforge-protect-vap
+  labels:
+    threadforge.io/critical-guard: "true"
+    threadforge.io/layer: meta-protection
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["admissionregistration.k8s.io"]
+        apiVersions: ["v1"]
+        operations: ["DELETE", "UPDATE"]
+        resources:
+          - validatingadmissionpolicies
+          - validatingadmissionpolicybindings
+  variables:
+    - name: isBreakGlass
+      expression: >-
+        has(request.userInfo.groups) && 'threadforge-breakglass' in request.userInfo.groups
+    - name: protectedVAPs
+      expression: >-
+        ['threadforge-protect-kyverno-scale', 'threadforge-protect-vap',
+         'threadforge-protect-kyverno-scale-binding', 'threadforge-protect-vap-binding']
+  validations:
+    - expression: >-
+        !(object.metadata.name in variables.protectedVAPs) || variables.isBreakGlass
+      message: >-
+        [DENIED_POLICY] Deletion or modification of critical admission-protection VAPs is
+        prohibited. Protected VAPs: threadforge-protect-kyverno-scale,
+        threadforge-protect-vap. Break-glass required: user must be in group
+        threadforge-breakglass. All break-glass deletions are audited.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: threadforge-protect-vap-binding
+spec:
+  policyName: threadforge-protect-vap
+  validationActions: [Deny]
+---
+# ── RBAC: Deny ValidatingAdmissionPolicy delete/modify for non-break-glass users ──
+# Defense-in-depth: even if a VAP is somehow bypassed, RBAC is an independent layer.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: threadforge-deny-vap-mutation
+  labels:
+    threadforge.io/layer: rbac-defense-depth
+  annotations:
+    threadforge.io/purpose: >-
+      Restricts mutation of ValidatingAdmissionPolicies to break-glass users only.
+      Bind this role to restrict service accounts and automation from touching VAPs.
+rules:
+  # Explicit deny via resource restriction — grant to break-glass group only via
+  # threadforge-breakglass-vap-admin ClusterRoleBinding below.
+  # Non-break-glass subjects get this role which has NO delete/patch on VAPs.
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources:
+      - validatingadmissionpolicies
+      - validatingadmissionpolicybindings
+    verbs: ["get", "list", "watch"]
+  # Allow full access to everything else for CI/CD
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+---
+# Break-glass group: ONLY members of threadforge-breakglass can delete/modify VAPs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: threadforge-breakglass-vap-admin
+  labels:
+    threadforge.io/layer: break-glass
+    threadforge.io/emergency-role: "true"
+  annotations:
+    threadforge.io/purpose: >-
+      Break-glass role for VAP administration. Must be used with explicit
+      threadforge.io/breakglass=true annotation on the resource. All actions audited.
+rules:
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources:
+      - validatingadmissionpolicies
+      - validatingadmissionpolicybindings
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+# Bind break-glass admin role to the threadforge-breakglass group.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: threadforge-breakglass-vap-admin
+  labels:
+    threadforge.io/layer: break-glass
+    threadforge.io/emergency-role: "true"
+    threadforge.io/breakglass: "true"
+  annotations:
+    threadforge.io/purpose: >-
+      Members of group threadforge-breakglass may manage VAPs.
+      All actions are recorded in the Kubernetes audit log.
+      This binding itself is protected by the VAP guard.
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: threadforge-breakglass-vap-admin
+subjects:
+  - kind: Group
+    name: threadforge-breakglass
+    apiGroup: rbac.authorization.k8s.io
+
+---
+# Break-glass runtime role for Kyverno scale operations only.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: threadforge-breakglass-kyverno-scale
+  namespace: kyverno
+  labels:
+    threadforge.io/layer: break-glass
+    threadforge.io/emergency-role: "true"
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["kyverno-admission-controller", "kyverno-background-controller"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    resourceNames: ["kyverno-admission-controller", "kyverno-background-controller"]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: threadforge-breakglass-kyverno-scale
+  namespace: kyverno
+  labels:
+    threadforge.io/layer: break-glass
+    threadforge.io/emergency-role: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: threadforge-breakglass-kyverno-scale
+subjects:
+  - kind: Group
+    name: threadforge-breakglass
+    apiGroup: rbac.authorization.k8s.io

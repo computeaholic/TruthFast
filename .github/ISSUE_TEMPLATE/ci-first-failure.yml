@@ -1,0 +1,46 @@
+name: CI First-Failure Capture
+description: Track and resolve the first real CI failure signal
+title: "[CI] First failure — <workflow/job>"
+labels: ["ci", "blocking"]
+body:
+  - type: input
+    id: run
+    attributes:
+      label: CI Run ID / URL
+    validations:
+      required: true
+
+  - type: input
+    id: workflow
+    attributes:
+      label: Workflow / Job Name
+    validations:
+      required: true
+
+  - type: textarea
+    id: failure
+    attributes:
+      label: Failure Summary
+      placeholder: |
+        Workflow aborted before jobs started due to invalid YAML.
+    validations:
+      required: true
+
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Artifacts & Logs
+      placeholder: |
+        - Log gist:
+        - Attached artifacts:
+    validations:
+      required: true
+
+  - type: textarea
+    id: resolution
+    attributes:
+      label: Resolution Criteria
+      placeholder: |
+        CI job starts and reaches test execution phase.
+    validations:
+      required: true

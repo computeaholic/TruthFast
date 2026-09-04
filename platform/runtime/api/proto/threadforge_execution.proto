@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package threadforge.execution.v1;
+
+option go_package = "threadforge/execution/v1;execution";
+option java_multiple_files = true;
+
+service ExecutionService {
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+}
+
+message ExecuteRequest {
+  string request_id = 1;
+  string actor_identity = 2;
+  string identity_class = 3; // native | translated | bridged | ephemeral
+  string action = 4;
+  string resource = 5;
+  bytes payload_json = 6;
+}
+
+message ExecuteResponse {
+  string request_id = 1;
+  string outcome = 2; // ALLOW | DENY | ESCALATE
+  bytes result_json = 3;
+}

@@ -1,0 +1,821 @@
+[
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/library/alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc",
+    "expected_digest": "sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc",
+    "source_type": "upstream",
+    "source_reference": "docker.io/library/alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc",
+    "producer": "",
+    "local_artifact": "out/images/runtime-ledger-archival_rebuild-20260215.tar",
+    "local_image_reference": "docker.io/library/alpine@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/kindest/kindnetd@sha256:9c2b5fcda3cb5a9725ecb893f3c8998a92d51a87465a886eb563e18d649383a8",
+    "expected_digest": "sha256:9c2b5fcda3cb5a9725ecb893f3c8998a92d51a87465a886eb563e18d649383a8",
+    "source_type": "upstream",
+    "source_reference": "docker.io/kindest/kindnetd@sha256:9c2b5fcda3cb5a9725ecb893f3c8998a92d51a87465a886eb563e18d649383a8",
+    "producer": "",
+    "local_artifact": "out/images/runtime-ledger-rotation_rebuild-20260215.tar",
+    "local_image_reference": "docker.io/kindest/kindnetd@sha256:9c2b5fcda3cb5a9725ecb893f3c8998a92d51a87465a886eb563e18d649383a8"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/kindest/local-path-provisioner@sha256:19a34c5f94b0cd2835d647ea6d4c64f65b4e644e9e4a7b511f7e76336e58469a",
+    "expected_digest": "sha256:19a34c5f94b0cd2835d647ea6d4c64f65b4e644e9e4a7b511f7e76336e58469a",
+    "source_type": "upstream",
+    "source_reference": "docker.io/kindest/local-path-provisioner@sha256:19a34c5f94b0cd2835d647ea6d4c64f65b4e644e9e4a7b511f7e76336e58469a",
+    "producer": "",
+    "local_artifact": "out/images/runtime-snapshot_rebuild-20260215.tar",
+    "local_image_reference": "docker.io/kindest/local-path-provisioner@sha256:19a34c5f94b0cd2835d647ea6d4c64f65b4e644e9e4a7b511f7e76336e58469a"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/kindest/local-path-helper@sha256:d8a6cc3b66ff253e3adb1ed3017bd1556301a76bcb3a0d2a4db3c8eeb7f0fc0a",
+    "expected_digest": "sha256:d8a6cc3b66ff253e3adb1ed3017bd1556301a76bcb3a0d2a4db3c8eeb7f0fc0a",
+    "source_type": "upstream",
+    "source_reference": "docker.io/kindest/local-path-helper@sha256:d8a6cc3b66ff253e3adb1ed3017bd1556301a76bcb3a0d2a4db3c8eeb7f0fc0a",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "docker.io/kindest/local-path-helper@sha256:d8a6cc3b66ff253e3adb1ed3017bd1556301a76bcb3a0d2a4db3c8eeb7f0fc0a"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/ghcr.io/dexidp/dex@sha256:f579d00721b0d842328c43a562f50343c54b0048ef2d58d6b54e750c21fc7938",
+    "expected_digest": "sha256:f579d00721b0d842328c43a562f50343c54b0048ef2d58d6b54e750c21fc7938",
+    "source_type": "upstream",
+    "source_reference": "ghcr.io/dexidp/dex@sha256:f579d00721b0d842328c43a562f50343c54b0048ef2d58d6b54e750c21fc7938",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "ghcr.io/dexidp/dex@sha256:f579d00721b0d842328c43a562f50343c54b0048ef2d58d6b54e750c21fc7938"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/quay.io/argoproj/argocd@sha256:5f1de1b4d959868c1e006e08d46361c8f019d9730e74bc1feeab8c7b413f1187",
+    "expected_digest": "sha256:5f1de1b4d959868c1e006e08d46361c8f019d9730e74bc1feeab8c7b413f1187",
+    "source_type": "upstream",
+    "source_reference": "quay.io/argoproj/argocd@sha256:5f1de1b4d959868c1e006e08d46361c8f019d9730e74bc1feeab8c7b413f1187",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/argoproj/argocd@sha256:5f1de1b4d959868c1e006e08d46361c8f019d9730e74bc1feeab8c7b413f1187"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/frrouting/frr@sha256:6959404cfe5878c641d5619b7348f5b0efb7968ac6e00f1aa42cbf269aa2ddc6",
+    "expected_digest": "sha256:6959404cfe5878c641d5619b7348f5b0efb7968ac6e00f1aa42cbf269aa2ddc6",
+    "source_type": "upstream",
+    "source_reference": "quay.io/frrouting/frr@sha256:6959404cfe5878c641d5619b7348f5b0efb7968ac6e00f1aa42cbf269aa2ddc6",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/frrouting/frr@sha256:6959404cfe5878c641d5619b7348f5b0efb7968ac6e00f1aa42cbf269aa2ddc6"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/metallb/controller@sha256:faa8f0d53b3811705910f823f895f797a68729a0fe1f38e36e4a25efeab303bd",
+    "expected_digest": "sha256:faa8f0d53b3811705910f823f895f797a68729a0fe1f38e36e4a25efeab303bd",
+    "source_type": "upstream",
+    "source_reference": "quay.io/metallb/controller@sha256:faa8f0d53b3811705910f823f895f797a68729a0fe1f38e36e4a25efeab303bd",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/metallb/controller@sha256:faa8f0d53b3811705910f823f895f797a68729a0fe1f38e36e4a25efeab303bd"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/metallb/speaker@sha256:b73cc85aaf693bb283cec2b9b14acf788fcf78acd23ae999013b512d37d8a946",
+    "expected_digest": "sha256:b73cc85aaf693bb283cec2b9b14acf788fcf78acd23ae999013b512d37d8a946",
+    "source_type": "upstream",
+    "source_reference": "quay.io/metallb/speaker@sha256:b73cc85aaf693bb283cec2b9b14acf788fcf78acd23ae999013b512d37d8a946",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/metallb/speaker@sha256:b73cc85aaf693bb283cec2b9b14acf788fcf78acd23ae999013b512d37d8a946"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/ghcr.io/spiffe/spiffe-helper@sha256:53904baad9cf402fbe81ae6bfa658bac857b289514e6bd521ad74aa54a0d6e8f",
+    "expected_digest": "sha256:53904baad9cf402fbe81ae6bfa658bac857b289514e6bd521ad74aa54a0d6e8f",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/ghcr.io/spiffe/spiffe-helper@sha256:53904baad9cf402fbe81ae6bfa658bac857b289514e6bd521ad74aa54a0d6e8f",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/ghcr.io/spiffe/spiffe-helper:0.8.0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/kindest-node@sha256:48321fb2717f92527d9aba9a9b32055dff622f9c356ea3de2f1ffb75344f87bf",
+    "expected_digest": "sha256:48321fb2717f92527d9aba9a9b32055dff622f9c356ea3de2f1ffb75344f87bf",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/kindest-node@sha256:48321fb2717f92527d9aba9a9b32055dff622f9c356ea3de2f1ffb75344f87bf",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/kindest-node:v1.30.2-registry-trust --load -f platform/images/kind-node/Dockerfile .",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/kindest-node:v1.30.2-registry-trust"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/kube-apiserver@sha256:340ab4a1d66a60630a7a298aa0b2576fcd82e51ecdddb751cf61e5d3846fde2d",
+    "expected_digest": "sha256:340ab4a1d66a60630a7a298aa0b2576fcd82e51ecdddb751cf61e5d3846fde2d",
+    "source_type": "upstream",
+    "source_reference": "registry.k8s.io/kube-apiserver@sha256:340ab4a1d66a60630a7a298aa0b2576fcd82e51ecdddb751cf61e5d3846fde2d",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.k8s.io/kube-apiserver@sha256:340ab4a1d66a60630a7a298aa0b2576fcd82e51ecdddb751cf61e5d3846fde2d"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/kube-controller-manager@sha256:4c412bc1fc585ddeba10d34a02e7507ea787ec2c57256d4c18fd230377ab048e",
+    "expected_digest": "sha256:4c412bc1fc585ddeba10d34a02e7507ea787ec2c57256d4c18fd230377ab048e",
+    "source_type": "upstream",
+    "source_reference": "registry.k8s.io/kube-controller-manager@sha256:4c412bc1fc585ddeba10d34a02e7507ea787ec2c57256d4c18fd230377ab048e",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.k8s.io/kube-controller-manager@sha256:4c412bc1fc585ddeba10d34a02e7507ea787ec2c57256d4c18fd230377ab048e"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/kube-scheduler@sha256:0ed75a333704f5d315395c6ec04d7af7405715537069b65d40b43ec1c8e030bc",
+    "expected_digest": "sha256:0ed75a333704f5d315395c6ec04d7af7405715537069b65d40b43ec1c8e030bc",
+    "source_type": "upstream",
+    "source_reference": "registry.k8s.io/kube-scheduler@sha256:0ed75a333704f5d315395c6ec04d7af7405715537069b65d40b43ec1c8e030bc",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.k8s.io/kube-scheduler@sha256:0ed75a333704f5d315395c6ec04d7af7405715537069b65d40b43ec1c8e030bc"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/kube-proxy@sha256:8a44c6e094af3dea3de57fa967e201608a358a3bd8b4e3f31ab905bbe4108aec",
+    "expected_digest": "sha256:8a44c6e094af3dea3de57fa967e201608a358a3bd8b4e3f31ab905bbe4108aec",
+    "source_type": "upstream",
+    "source_reference": "registry.k8s.io/kube-proxy@sha256:8a44c6e094af3dea3de57fa967e201608a358a3bd8b4e3f31ab905bbe4108aec",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.k8s.io/kube-proxy@sha256:8a44c6e094af3dea3de57fa967e201608a358a3bd8b4e3f31ab905bbe4108aec"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/etcd@sha256:22f892d7672adc0b9c86df67792afdb8b2dc08880f49f669eaaa59c47d7908c2",
+    "expected_digest": "sha256:22f892d7672adc0b9c86df67792afdb8b2dc08880f49f669eaaa59c47d7908c2",
+    "source_type": "upstream",
+    "source_reference": "registry.k8s.io/etcd@sha256:22f892d7672adc0b9c86df67792afdb8b2dc08880f49f669eaaa59c47d7908c2",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.k8s.io/etcd@sha256:22f892d7672adc0b9c86df67792afdb8b2dc08880f49f669eaaa59c47d7908c2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "expected_digest": "sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206 -f platform/cmd/csi-reg-shim/Dockerfile platform/cmd/csi-reg-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "expected_digest": "sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206 -f platform/cmd/csi-reg-shim/Dockerfile platform/cmd/csi-reg-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "expected_digest": "sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206 -f platform/cmd/csi-reg-shim/Dockerfile platform/cmd/csi-reg-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "expected_digest": "sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206 -f platform/cmd/csi-reg-shim/Dockerfile platform/cmd/csi-reg-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "expected_digest": "sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206 -f platform/cmd/csi-reg-shim/Dockerfile platform/cmd/csi-reg-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "expected_digest": "sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206 -f platform/cmd/csi-reg-shim/Dockerfile platform/cmd/csi-reg-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "expected_digest": "sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206 -f platform/cmd/csi-reg-shim/Dockerfile platform/cmd/csi-reg-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-reg-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "expected_digest": "sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-shim:rebuild-20260206 -f platform/cmd/csi-node-shim/Dockerfile platform/cmd/csi-node-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "expected_digest": "sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-shim:rebuild-20260206 -f platform/cmd/csi-node-shim/Dockerfile platform/cmd/csi-node-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "expected_digest": "sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-shim:rebuild-20260206 -f platform/cmd/csi-node-shim/Dockerfile platform/cmd/csi-node-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "expected_digest": "sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-shim:rebuild-20260206 -f platform/cmd/csi-node-shim/Dockerfile platform/cmd/csi-node-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "expected_digest": "sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-shim:rebuild-20260206 -f platform/cmd/csi-node-shim/Dockerfile platform/cmd/csi-node-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "expected_digest": "sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-shim:rebuild-20260206 -f platform/cmd/csi-node-shim/Dockerfile platform/cmd/csi-node-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "expected_digest": "sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 -t registry.threadforge.local:30500/csi-node-shim:rebuild-20260206 -f platform/cmd/csi-node-shim/Dockerfile platform/cmd/csi-node-shim --load",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/csi-node-shim:rebuild-20260206"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "expected_digest": "sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=oci,dest=out/images/forgesec_rebuild-20260215.tar -t registry.threadforge.local:30500/forgesec:v2 -f platform/images/forgesec/Dockerfile.forgesec platform/images/forgesec",
+    "local_artifact": "out/images/forgesec_rebuild-20260215.tar",
+    "local_image_reference": "registry.threadforge.local:30500/forgesec:v2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "expected_digest": "sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=oci,dest=out/images/forgesec_rebuild-20260215.tar -t registry.threadforge.local:30500/forgesec:v2 -f platform/images/forgesec/Dockerfile.forgesec platform/images/forgesec",
+    "local_artifact": "out/images/forgesec_rebuild-20260215.tar",
+    "local_image_reference": "registry.threadforge.local:30500/forgesec:v2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "expected_digest": "sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=oci,dest=out/images/forgesec_rebuild-20260215.tar -t registry.threadforge.local:30500/forgesec:v2 -f platform/images/forgesec/Dockerfile.forgesec platform/images/forgesec",
+    "local_artifact": "out/images/forgesec_rebuild-20260215.tar",
+    "local_image_reference": "registry.threadforge.local:30500/forgesec:v2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "expected_digest": "sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=oci,dest=out/images/forgesec_rebuild-20260215.tar -t registry.threadforge.local:30500/forgesec:v2 -f platform/images/forgesec/Dockerfile.forgesec platform/images/forgesec",
+    "local_artifact": "out/images/forgesec_rebuild-20260215.tar",
+    "local_image_reference": "registry.threadforge.local:30500/forgesec:v2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "expected_digest": "sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=oci,dest=out/images/forgesec_rebuild-20260215.tar -t registry.threadforge.local:30500/forgesec:v2 -f platform/images/forgesec/Dockerfile.forgesec platform/images/forgesec",
+    "local_artifact": "out/images/forgesec_rebuild-20260215.tar",
+    "local_image_reference": "registry.threadforge.local:30500/forgesec:v2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "expected_digest": "sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=oci,dest=out/images/forgesec_rebuild-20260215.tar -t registry.threadforge.local:30500/forgesec:v2 -f platform/images/forgesec/Dockerfile.forgesec platform/images/forgesec",
+    "local_artifact": "out/images/forgesec_rebuild-20260215.tar",
+    "local_image_reference": "registry.threadforge.local:30500/forgesec:v2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "expected_digest": "sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-api_v20260223-0.tar -t registry.threadforge.local:30500/threadforge-api:v20260223-0 -f platform/images/api/Dockerfile .",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-api:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "expected_digest": "sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-api_v20260223-0.tar -t registry.threadforge.local:30500/threadforge-api:v20260223-0 -f platform/images/api/Dockerfile .",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-api:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "expected_digest": "sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-api_v20260223-0.tar -t registry.threadforge.local:30500/threadforge-api:v20260223-0 -f platform/images/api/Dockerfile .",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-api:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "expected_digest": "sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-api_v20260223-0.tar -t registry.threadforge.local:30500/threadforge-api:v20260223-0 -f platform/images/api/Dockerfile .",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-api:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "expected_digest": "sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-api_v20260223-0.tar -t registry.threadforge.local:30500/threadforge-api:v20260223-0 -f platform/images/api/Dockerfile .",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-api:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "expected_digest": "sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-api_v20260223-0.tar -t registry.threadforge.local:30500/threadforge-api:v20260223-0 -f platform/images/api/Dockerfile .",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-api:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "expected_digest": "sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-notifier_20260328-closedloop1.tar -t registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1 -f platform/cmd/threadforge-notifier/Dockerfile platform/cmd/threadforge-notifier",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "expected_digest": "sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-notifier_20260328-closedloop1.tar -t registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1 -f platform/cmd/threadforge-notifier/Dockerfile platform/cmd/threadforge-notifier",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "expected_digest": "sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-notifier_20260328-closedloop1.tar -t registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1 -f platform/cmd/threadforge-notifier/Dockerfile platform/cmd/threadforge-notifier",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "expected_digest": "sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-notifier_20260328-closedloop1.tar -t registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1 -f platform/cmd/threadforge-notifier/Dockerfile platform/cmd/threadforge-notifier",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "expected_digest": "sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-notifier_20260328-closedloop1.tar -t registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1 -f platform/cmd/threadforge-notifier/Dockerfile platform/cmd/threadforge-notifier",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "expected_digest": "sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --output type=docker,dest=out/images/threadforge-notifier_20260328-closedloop1.tar -t registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1 -f platform/cmd/threadforge-notifier/Dockerfile platform/cmd/threadforge-notifier",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/notifier:20260328-closedloop1"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469",
+    "expected_digest": "sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:ac9c255664075e199f0527b3ba61b0d09a907bde8e699777469dd0c9c43ba004",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:ac9c255664075e199f0527b3ba61b0d09a907bde8e699777469dd0c9c43ba004"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/cert-manager/controller@sha256:6bf0fd34e1d5b58e31bfdc640d5d284e528685b19f20df6c0fb6f13867603bba",
+    "expected_digest": "sha256:6bf0fd34e1d5b58e31bfdc640d5d284e528685b19f20df6c0fb6f13867603bba",
+    "source_type": "upstream",
+    "source_reference": "quay.io/jetstack/cert-manager-controller@sha256:6bf0fd34e1d5b58e31bfdc640d5d284e528685b19f20df6c0fb6f13867603bba",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/jetstack/cert-manager-controller@sha256:6bf0fd34e1d5b58e31bfdc640d5d284e528685b19f20df6c0fb6f13867603bba"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/cert-manager/cainjector@sha256:6381b508a274d56f0ed3ac6af76faf12e3e5a2e0028d33a13039e364c45c93ff",
+    "expected_digest": "sha256:6381b508a274d56f0ed3ac6af76faf12e3e5a2e0028d33a13039e364c45c93ff",
+    "source_type": "upstream",
+    "source_reference": "quay.io/jetstack/cert-manager-cainjector@sha256:6381b508a274d56f0ed3ac6af76faf12e3e5a2e0028d33a13039e364c45c93ff",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/jetstack/cert-manager-cainjector@sha256:6381b508a274d56f0ed3ac6af76faf12e3e5a2e0028d33a13039e364c45c93ff"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/cert-manager/webhook@sha256:7f16d397b8b48c5133d9f2859fb2dea30f0f297eb04c517bbfc06f5d207b3cf0",
+    "expected_digest": "sha256:7f16d397b8b48c5133d9f2859fb2dea30f0f297eb04c517bbfc06f5d207b3cf0",
+    "source_type": "upstream",
+    "source_reference": "quay.io/jetstack/cert-manager-webhook@sha256:7f16d397b8b48c5133d9f2859fb2dea30f0f297eb04c517bbfc06f5d207b3cf0",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/jetstack/cert-manager-webhook@sha256:7f16d397b8b48c5133d9f2859fb2dea30f0f297eb04c517bbfc06f5d207b3cf0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/cert-manager/startupapicheck@sha256:d313d9b8a846c163e52eebe68fd5e7da2457fddda2f144848de17b6fcd6e14f4",
+    "expected_digest": "sha256:d313d9b8a846c163e52eebe68fd5e7da2457fddda2f144848de17b6fcd6e14f4",
+    "source_type": "upstream",
+    "source_reference": "quay.io/jetstack/cert-manager-startupapicheck@sha256:d313d9b8a846c163e52eebe68fd5e7da2457fddda2f144848de17b6fcd6e14f4",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/jetstack/cert-manager-startupapicheck@sha256:d313d9b8a846c163e52eebe68fd5e7da2457fddda2f144848de17b6fcd6e14f4"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/curlimages-curl@sha256:56efe57deecfd4145a36b24f1cfd676f8cbda808b5ce56d0f644ca0db6b1c0de",
+    "expected_digest": "sha256:56efe57deecfd4145a36b24f1cfd676f8cbda808b5ce56d0f644ca0db6b1c0de",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/curlimages-curl@sha256:6f9ba7b59c88aed3d7668f053a653e6604f4bdbf764dd3af635aa10bb5c404fb",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/curlimages-curl@sha256:6f9ba7b59c88aed3d7668f053a653e6604f4bdbf764dd3af635aa10bb5c404fb"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/grafana/grafana@sha256:8ae0684bf0a3ee176d511443facfcf2af5188f5d28ffc248f3ac2a9f503739c2",
+    "expected_digest": "sha256:8ae0684bf0a3ee176d511443facfcf2af5188f5d28ffc248f3ac2a9f503739c2",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/grafana/grafana:10.0.0",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/grafana/grafana:10.0.0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/grafana@sha256:3d0a9cf19db093e616b8731b4ae7ed476c8f69ab5e47cac71b12dfae8536a7c2",
+    "expected_digest": "sha256:3d0a9cf19db093e616b8731b4ae7ed476c8f69ab5e47cac71b12dfae8536a7c2",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/grafana@sha256:3d0a9cf19db093e616b8731b4ae7ed476c8f69ab5e47cac71b12dfae8536a7c2",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/grafana@sha256:3d0a9cf19db093e616b8731b4ae7ed476c8f69ab5e47cac71b12dfae8536a7c2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/hashicorp/http-echo@sha256:3f5c9a5a28daf63a712bbf45f2fa0741be9cd34339ba598a5c13af02959f108d",
+    "expected_digest": "sha256:3f5c9a5a28daf63a712bbf45f2fa0741be9cd34339ba598a5c13af02959f108d",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/hashicorp/http-echo@sha256:3f5c9a5a28daf63a712bbf45f2fa0741be9cd34339ba598a5c13af02959f108d",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/hashicorp/http-echo@sha256:3f5c9a5a28daf63a712bbf45f2fa0741be9cd34339ba598a5c13af02959f108d"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/istio/pilot@sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f",
+    "expected_digest": "sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/istio/pilot@sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/istio/pilot:1.29.0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b",
+    "expected_digest": "sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/istio/proxyv2:1.29.0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/envoyproxy/envoy@sha256:deb1d3a3cfc53d9306465426b4cc2b9443bea4b6100f2a0caf224ce3be23c0ad",
+    "expected_digest": "sha256:deb1d3a3cfc53d9306465426b4cc2b9443bea4b6100f2a0caf224ce3be23c0ad",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/envoyproxy/envoy:v1.31.0",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/envoyproxy/envoy:v1.31.0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/loki@sha256:40ec9159365409fd3f49370ca184ee20ef932711125673dd4979fbae422c0b9b",
+    "expected_digest": "sha256:40ec9159365409fd3f49370ca184ee20ef932711125673dd4979fbae422c0b9b",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/loki@sha256:40ec9159365409fd3f49370ca184ee20ef932711125673dd4979fbae422c0b9b",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/loki@sha256:40ec9159365409fd3f49370ca184ee20ef932711125673dd4979fbae422c0b9b"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/minio/minio@sha256:9966a92a734f9411e32f4f41d7d9d826fcdc0f68c4e20b70295bd4e7c11f8a2f",
+    "expected_digest": "sha256:9966a92a734f9411e32f4f41d7d9d826fcdc0f68c4e20b70295bd4e7c11f8a2f",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/minio/minio:RELEASE.2025-09-07T16-13-09Z"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/quay.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727",
+    "expected_digest": "sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727",
+    "source_type": "upstream",
+    "source_reference": "quay.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "quay.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/bitnami/kubectl@sha256:a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068",
+    "expected_digest": "sha256:a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/bitnami/kubectl@sha256:a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/bitnami/kubectl:1.31.4"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/curlimages/curl@sha256:846c5f0324b40f833b9a1fa3d5a667ac0f2b4712c9a39cae8cafe890286c52f2",
+    "expected_digest": "sha256:846c5f0324b40f833b9a1fa3d5a667ac0f2b4712c9a39cae8cafe890286c52f2",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/curlimages/curl@sha256:8fa7d6de9f78ee5ff30e39d17bbe6bfa77caa256c9c74cbb5441afc8855922b0",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/curlimages/curl@sha256:8fa7d6de9f78ee5ff30e39d17bbe6bfa77caa256c9c74cbb5441afc8855922b0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/grafana/promtail@sha256:4a039ade78d3ecac1dac83be74c0f3c9209d6c5f850db59b4004661e45309a5e",
+    "expected_digest": "sha256:4a039ade78d3ecac1dac83be74c0f3c9209d6c5f850db59b4004661e45309a5e",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/grafana/promtail@sha256:4a039ade78d3ecac1dac83be74c0f3c9209d6c5f850db59b4004661e45309a5e",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/grafana/promtail@sha256:4a039ade78d3ecac1dac83be74c0f3c9209d6c5f850db59b4004661e45309a5e"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469",
+    "expected_digest": "sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:ac9c255664075e199f0527b3ba61b0d09a907bde8e699777469dd0c9c43ba004",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:ac9c255664075e199f0527b3ba61b0d09a907bde8e699777469dd0c9c43ba004"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/library/python@sha256:36ae442f0f0d4bc85c5122666b64222a9a8584e2f61a3b286e0d72cc30c29632",
+    "expected_digest": "sha256:36ae442f0f0d4bc85c5122666b64222a9a8584e2f61a3b286e0d72cc30c29632",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/library/python@sha256:36ae442f0f0d4bc85c5122666b64222a9a8584e2f61a3b286e0d72cc30c29632",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/library/python@sha256:c80b8a915802074a84d8e08c1a5af1d94e29e5b87a6177f35c9cd1bcba978c92"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/prom/prometheus@sha256:d1591daeb276e8c840b7264187c8d37f38e1e78388e21c4be69a7774a982d3c3",
+    "expected_digest": "sha256:d1591daeb276e8c840b7264187c8d37f38e1e78388e21c4be69a7774a982d3c3",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/docker.io/prom/prometheus@sha256:d1591daeb276e8c840b7264187c8d37f38e1e78388e21c4be69a7774a982d3c3",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/docker.io/prom/prometheus@sha256:d1591daeb276e8c840b7264187c8d37f38e1e78388e21c4be69a7774a982d3c3"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/prom/blackbox-exporter@sha256:8d502b55bead7dcac8805fc90cbc93b36e6967360af88cd3213e14ff350ec29d",
+    "expected_digest": "sha256:8d502b55bead7dcac8805fc90cbc93b36e6967360af88cd3213e14ff350ec29d",
+    "source_type": "upstream",
+    "source_reference": "docker.io/prom/blackbox-exporter@sha256:8d502b55bead7dcac8805fc90cbc93b36e6967360af88cd3213e14ff350ec29d",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "docker.io/prom/blackbox-exporter@sha256:8d502b55bead7dcac8805fc90cbc93b36e6967360af88cd3213e14ff350ec29d"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/prom/pushgateway@sha256:21a7911913498a2732d984a84876d6d729ac2cf6c26802665ea5904c2fc6df62",
+    "expected_digest": "sha256:21a7911913498a2732d984a84876d6d729ac2cf6c26802665ea5904c2fc6df62",
+    "source_type": "upstream",
+    "source_reference": "docker.io/prom/pushgateway@sha256:21a7911913498a2732d984a84876d6d729ac2cf6c26802665ea5904c2fc6df62",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "docker.io/prom/pushgateway@sha256:21a7911913498a2732d984a84876d6d729ac2cf6c26802665ea5904c2fc6df62"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/opentelemetry-collector-contrib@sha256:020daa1130d84af199dc2060d6dc3867f350e438f36629a640a7f4a0d0ffbfb8",
+    "expected_digest": "sha256:020daa1130d84af199dc2060d6dc3867f350e438f36629a640a7f4a0d0ffbfb8",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/opentelemetry-collector-contrib@sha256:020daa1130d84af199dc2060d6dc3867f350e438f36629a640a7f4a0d0ffbfb8",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/opentelemetry-collector-contrib@sha256:020daa1130d84af199dc2060d6dc3867f350e438f36629a640a7f4a0d0ffbfb8"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/postgres@sha256:4aea012537edfad80f98d870a36e6b90b4c09b27be7f4b4759d72db863baeebb",
+    "expected_digest": "sha256:4aea012537edfad80f98d870a36e6b90b4c09b27be7f4b4759d72db863baeebb",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/postgres@sha256:4aea012537edfad80f98d870a36e6b90b4c09b27be7f4b4759d72db863baeebb",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/postgres:16.2"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/runtime-ledger-archival@sha256:b79ccd3b6a241904a422b4d33bfd55762c8e9f4d6b10604c5c1221fd48a85100",
+    "expected_digest": "sha256:b79ccd3b6a241904a422b4d33bfd55762c8e9f4d6b10604c5c1221fd48a85100",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/runtime-ledger-archival@sha256:b79ccd3b6a241904a422b4d33bfd55762c8e9f4d6b10604c5c1221fd48a85100",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --build-arg REGISTRY_HOSTPORT=registry.threadforge.local:30500 --pull --output type=docker,dest=out/images/runtime-ledger-archival_rebuild-20260215.tar -t registry.threadforge.local:30500/runtime-ledger-archival:rebuild-20260215 -f platform/images/runtime-ledger-archival/Containerfile platform/images/runtime-ledger-archival",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/runtime-ledger-archival:rebuild-20260215"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/runtime-ledger-rotation@sha256:e0de2c09a306446d1a702a2f8deafd5dca9d573ea01f32d9c938394641af9dda",
+    "expected_digest": "sha256:e0de2c09a306446d1a702a2f8deafd5dca9d573ea01f32d9c938394641af9dda",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/runtime-ledger-rotation@sha256:e0de2c09a306446d1a702a2f8deafd5dca9d573ea01f32d9c938394641af9dda",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --build-arg REGISTRY_HOSTPORT=registry.threadforge.local:30500 --pull --output type=docker,dest=out/images/runtime-ledger-rotation_rebuild-20260215.tar -t registry.threadforge.local:30500/runtime-ledger-rotation:rebuild-20260215 -f platform/images/runtime-ledger-rotation/Containerfile platform/images/runtime-ledger-rotation",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/runtime-ledger-rotation:rebuild-20260215"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/runtime-snapshot@sha256:4e86925b447ac974b8cd6a2190cc4e2127c0b6306d150e2b1278e530d8371fe4",
+    "expected_digest": "sha256:4e86925b447ac974b8cd6a2190cc4e2127c0b6306d150e2b1278e530d8371fe4",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/runtime-snapshot@sha256:4e86925b447ac974b8cd6a2190cc4e2127c0b6306d150e2b1278e530d8371fe4",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --build-arg REGISTRY_HOSTPORT=registry.threadforge.local:30500 --pull --output type=docker,dest=out/images/runtime-snapshot_rebuild-20260215.tar -t registry.threadforge.local:30500/runtime-snapshot:rebuild-20260215 -f platform/images/runtime-snapshot/Containerfile platform/images/runtime-snapshot",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/runtime-snapshot:rebuild-20260215"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:33ebe428e5995e2e58188344919800fb78f0ce82ef6e78642eafa7107d80b915",
+    "expected_digest": "sha256:33ebe428e5995e2e58188344919800fb78f0ce82ef6e78642eafa7107d80b915",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/mirror/registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:33ebe428e5995e2e58188344919800fb78f0ce82ef6e78642eafa7107d80b915",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/mirror/registry.k8s.io/sig-storage/csi-node-driver-registrar:v2.8.0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/spiffe/spire-agent@sha256:0d3cebdf4e033edaa67ef1b4197696f853bb76f8970e25010237c7e3a7c98531",
+    "expected_digest": "sha256:0d3cebdf4e033edaa67ef1b4197696f853bb76f8970e25010237c7e3a7c98531",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/spiffe/spire-agent@sha256:8808bf2310024e0734b4ff2ea28d7d74963335b9bba0694a259fe405c473a4ce",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/spiffe/spire-agent@sha256:8808bf2310024e0734b4ff2ea28d7d74963335b9bba0694a259fe405c473a4ce"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/spiffe/spire-server@sha256:817a87c37a6b77ff74c95908160ee0555daac8d8269e2fd7ad2b6e41b86164d8",
+    "expected_digest": "sha256:817a87c37a6b77ff74c95908160ee0555daac8d8269e2fd7ad2b6e41b86164d8",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/spiffe/spire-server@sha256:eba03fb7a19b948a448434a1810c53b14adf85b10d3407eb52744513759606fa",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/spiffe/spire-server@sha256:eba03fb7a19b948a448434a1810c53b14adf85b10d3407eb52744513759606fa"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/spire-csi-driver@sha256:b60682a1496b7ffb9fd1a58b5f1ca3e497068d22b042f80b3f7c19ec8824ac84",
+    "expected_digest": "sha256:b60682a1496b7ffb9fd1a58b5f1ca3e497068d22b042f80b3f7c19ec8824ac84",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/spire-csi-driver@sha256:1009bdf05b43b7c20ff0ca84fbc589c1c936314c80cb0314de01b1fa63720b35",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/spire-csi-driver@sha256:1009bdf05b43b7c20ff0ca84fbc589c1c936314c80cb0314de01b1fa63720b35"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f",
+    "expected_digest": "sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f",
+    "producer": "docker buildx build --builder threadforge-builder --platform linux/arm64 --pull --load -t registry.threadforge.local:30500/spire-csr:20260331-raceguard1 -f internal/control/identity/identity-controller/Dockerfile.spire-csr internal/control/identity/identity-controller",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/spire-csr:20260331-raceguard1"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/tempo@sha256:0f168afdf979b3796c01f26786bce250f4b9d3293b3e640a8199fe90d48e5c3a",
+    "expected_digest": "sha256:0f168afdf979b3796c01f26786bce250f4b9d3293b3e640a8199fe90d48e5c3a",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/tempo@sha256:0f168afdf979b3796c01f26786bce250f4b9d3293b3e640a8199fe90d48e5c3a",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/tempo@sha256:0f168afdf979b3796c01f26786bce250f4b9d3293b3e640a8199fe90d48e5c3a"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/dashboard@sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "expected_digest": "sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/threadforge-api@sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-api:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/gateway@sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "expected_digest": "sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/threadforge/gateway@sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/gateway:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/router-go@sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "expected_digest": "sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/threadforge/router-go@sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/router-go:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge/worker@sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "expected_digest": "sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/threadforge/worker@sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge/worker:v20260223-0"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/agents-lab/research-agent@sha256:1b090e9c7e334de8380029d1713ef2a31168ef4ae11fa94a5a61040f7c2d7d17",
+    "expected_digest": "sha256:1b090e9c7e334de8380029d1713ef2a31168ef4ae11fa94a5a61040f7c2d7d17",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/agents-lab/research-agent@sha256:1b090e9c7e334de8380029d1713ef2a31168ef4ae11fa94a5a61040f7c2d7d17",
+    "producer": "bash scripts/install/prepare_agents_lab_images.sh",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/agents-lab/research-agent:audit"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/agents-lab/writer-agent@sha256:e8d3ce0d2213c9fd7eeb2c07955b51ca080eba7a7c20cf17cbec3049c3af4780",
+    "expected_digest": "sha256:e8d3ce0d2213c9fd7eeb2c07955b51ca080eba7a7c20cf17cbec3049c3af4780",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/agents-lab/writer-agent@sha256:e8d3ce0d2213c9fd7eeb2c07955b51ca080eba7a7c20cf17cbec3049c3af4780",
+    "producer": "bash scripts/install/prepare_agents_lab_images.sh",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/agents-lab/writer-agent:audit"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/agents-lab/attacker-agent@sha256:9a29d2afa6c17260ed1ce178d17b8fa1c634c4bf8e7bcb0fa110091c957e003a",
+    "expected_digest": "sha256:9a29d2afa6c17260ed1ce178d17b8fa1c634c4bf8e7bcb0fa110091c957e003a",
+    "source_type": "local_build",
+    "source_reference": "registry.threadforge.local:30500/agents-lab/attacker-agent@sha256:9a29d2afa6c17260ed1ce178d17b8fa1c634c4bf8e7bcb0fa110091c957e003a",
+    "producer": "bash scripts/install/prepare_agents_lab_images.sh",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/agents-lab/attacker-agent:audit"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/threadforge-operator@sha256:315ddcc7449efdcc4f78c2de5423f285c37e71327394b77ee98ce84a8c4c5806",
+    "expected_digest": "sha256:315ddcc7449efdcc4f78c2de5423f285c37e71327394b77ee98ce84a8c4c5806",
+    "source_type": "existing_local_image",
+    "source_reference": "registry.threadforge.local:30500/threadforge-operator:rebuild-20260215",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "registry.threadforge.local:30500/threadforge-operator:rebuild-20260215"
+  },
+  {
+    "internal_reference": "registry.threadforge.local:30500/mirror/docker.io/clickhouse/clickhouse-server@sha256:944d430f525177485baeb9d93ed8c07b7219e2d682423a38525154192cbaf6ec",
+    "expected_digest": "sha256:944d430f525177485baeb9d93ed8c07b7219e2d682423a38525154192cbaf6ec",
+    "source_type": "upstream",
+    "source_reference": "docker.io/clickhouse/clickhouse-server@sha256:944d430f525177485baeb9d93ed8c07b7219e2d682423a38525154192cbaf6ec",
+    "producer": "",
+    "local_artifact": "",
+    "local_image_reference": "docker.io/clickhouse/clickhouse-server@sha256:944d430f525177485baeb9d93ed8c07b7219e2d682423a38525154192cbaf6ec"
+  }
+]

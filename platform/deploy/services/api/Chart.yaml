@@ -1,0 +1,6 @@
+# platform/deploy/services/api/Chart.yaml
+apiVersion: v2
+name: threadforge-api
+description: ThreadForge HTTP API
+type: application
+version: 0.1.0

@@ -1,0 +1,177 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spire-agent
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: spire-agent
+
+  template:
+    metadata:
+      labels:
+        app: spire-agent
+        sidecar.istio.io/inject: "false"
+      annotations:
+        proxy.istio.io/config: |
+          {"holdApplicationUntilProxyStarts": false}
+    spec:
+      {{- if not .Values.spireAgent.enabled }}
+      nodeSelector:
+        threadforge.io/spire-agent-disabled: "true"
+      {{- end }}
+      hostPID: true
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      priorityClassName: {{ .Values.resources.agent.priorityClassName | quote }}
+      serviceAccountName: spire-agent
+      # automountServiceAccountToken: false to allow default behavior or explicitly set to true
+
+      initContainers:
+      - name: spire-sockets-perms
+        image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        command:
+          - /bin/sh
+          - -c
+          - |
+            mkdir -p /run/spire/data/keys
+            chown -R 0:0 /run/spire/sockets
+            chmod -R 0777 /run/spire/sockets
+            chmod -R 0700 /run/spire/data
+        volumeMounts:
+          - name: spire-sockets
+            mountPath: /run/spire/sockets
+          - name: spire
+            mountPath: /run/spire
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+      containers:
+        - name: spire-agent
+          image: "{{ .Values.spireAgent.image.repository }}:{{ .Values.spireAgent.image.tag }}{{- if .Values.spireAgent.image.digest }}@{{ .Values.spireAgent.image.digest }}{{- end }}"
+          imagePullPolicy: {{ .Values.spireAgent.image.pullPolicy | default "IfNotPresent" }}
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          args:
+            - run
+            - "-config"
+            - "/opt/spire/conf/agent/agent.conf"
+          readinessProbe:
+            exec:
+              command:
+                - /opt/spire/bin/spire-agent
+                - healthcheck
+                - -socketPath
+                - /run/spire/sockets/socket
+            initialDelaySeconds: 5
+            periodSeconds: 2
+          resources:
+            requests:
+              cpu: {{ .Values.resources.agent.requests.cpu }}
+              memory: {{ .Values.resources.agent.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.agent.limits.cpu }}
+              memory: {{ .Values.resources.agent.limits.memory }}
+          volumeMounts:
+            - name: agent-config
+              mountPath: /opt/spire/conf/agent
+            - name: spire
+              mountPath: /run/spire
+            - name: spire-sockets
+              mountPath: /run/spire/sockets
+            - name: containerd-socket
+              mountPath: /run/containerd
+              readOnly: true
+            {{- if .Values.spireAgent.k3sEnabled }}
+            - name: k3s-containerd-socket
+              mountPath: /run/k3s/containerd
+              readOnly: true
+            {{- end }}
+            - name: kubelet-pod-resources
+              mountPath: /var/lib/kubelet/pod-resources
+              readOnly: true
+            - name: spire-bundle
+              mountPath: /run/spire/ca
+              readOnly: true
+            - name: spire-tmp
+              mountPath: /tmp/spire-agent
+            - name: spire-token
+              mountPath: /var/run/secrets/tokens
+
+      volumes:
+        - name: agent-config
+          configMap:
+            name: spire-agent-config
+            items:
+              - key: agent.conf
+                path: agent.conf
+
+        - name: spire
+          hostPath:
+            path: /var/lib/spire-agent
+            type: DirectoryOrCreate
+
+        - name: spire-sockets
+          hostPath:
+            path: /run/spire/sockets
+            type: DirectoryOrCreate
+
+        - name: containerd-socket
+          hostPath:
+            path: /run/containerd
+            type: Directory
+
+        {{- if .Values.spireAgent.k3sEnabled }}
+        - name: k3s-containerd-socket
+          hostPath:
+            path: /run/k3s/containerd
+            type: Directory
+        {{- end }}
+
+        - name: kubelet-pod-resources
+          hostPath:
+            path: /var/lib/kubelet/pod-resources
+            type: Directory
+
+        - name: spire-bundle
+          configMap:
+            name: spire-bundle
+
+        - name: spire-tmp
+          emptyDir: {}
+
+        - name: spire-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: spire-agent
+                  expirationSeconds: 7200
+                  audience: spire-server
+
+{{- if .Values.spireServer.upstreamCa.enabled }}
+        - name: upstream-ca
+          secret:
+            secretName: {{ .Values.spireServer.upstreamCa.secretName }}
+{{- end }}
+
+# TLS CONFIGURATION GUARD
+# SPIRE 1.14.0 does not support TLS certificate mounts.
+# No TLS volumes or mounts should be added to this DaemonSet.
+# Agent-server communication is secured via network controls and workload mTLS.

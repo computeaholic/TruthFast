@@ -1,0 +1,19 @@
+replicaCount: 3
+
+# Do NOT use Kubernetes Ingress — Istio handles routing.
+ingress:
+  enabled: false
+
+# Override environment for prod
+env:
+  LOG_LEVEL: "WARN"
+  THREADFORGE_DEBUG_MODE: "false"
+  THREADFORGE_IGNORE_SCHEMA_WARNINGS: "false"
+
+# Container tag override for prod
+image:
+  repository: registry.threadforge.local:30500/threadforge-api
+  digest: sha256:eb55cee8e7baedb754731d405b302713225510bad398508c206c187c1c6fa0e9
+  pullPolicy: IfNotPresent
+
+host: "api.threadforge.prod"

@@ -1,0 +1,353 @@
+# Phase G2 Enforcement: NetworkPolicies for Egress/Ingress Boundaries
+# These policies enforce network-level isolation so components cannot reach forbidden resources.
+# Fail-closed: Default DENY all, explicit ALLOW only.
+#
+# PHASE G2 CRITICAL IMPROVEMENT:
+# - Namespace-level deny-all instead of pod-label reliance
+# - ServiceAccount-based allow rules (immutable, not pod-label bypassable)
+# - Explicit default-deny for ALL namespaces
+# - Pod label changes cannot bypass these policies
+
+---
+# Namespace for ThreadForge governance
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: threadforge
+  labels:
+    threadforge.io/governance: "true"
+
+---
+# NetworkPolicy: Cluster-wide default DENY ingress on threadforge namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: threadforge
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  # No ingress rules = HARD DENY (fail-closed)
+
+---
+# NetworkPolicy: Cluster-wide default DENY egress on threadforge namespace
+# PHASE G2: Explicit deny-all, not implicit
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-egress
+  namespace: threadforge
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  # No egress rules = HARD DENY (fail-closed)
+  # Exception rules below are explicit ALLOW only
+
+---
+# Allow internal pod-to-pod communication within threadforge namespace
+# (Required for inter-service communication)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-internal-threadforge
+  namespace: threadforge
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector: {}  # Any pod within threadforge namespace
+      namespaceSelector:
+        matchLabels:
+          name: threadforge
+
+---
+# NetworkPolicy: Crossplane system - allow API and DNS only
+# PHASE G2: ServiceAccount-based selection (not pod labels)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: crossplane-api-only
+  namespace: crossplane-system
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector:
+    matchExpressions:
+    - key: serviceAccount
+      operator: In
+      values:
+      - crossplane
+  policyTypes:
+  - Egress
+  egress:
+  # Allow: Kubernetes API (internal)
+  - to:
+    - podSelector:
+        matchLabels:
+          component: kube-apiserver
+    ports:
+    - protocol: TCP
+      port: 6443
+
+  # Allow: DNS only (for service discovery)
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+  # DENY: Cloud provider APIs (AWS, GCP, Azure)
+  # Implicit by omission from egress rules
+  # No external HTTPS, no metadata services
+
+---
+# NetworkPolicy: Argo CD system - allow Git repos and API only
+# PHASE G2: ServiceAccount-based selection (not pod labels)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: argocd-git-only
+  namespace: argocd
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector:
+    matchExpressions:
+    - key: serviceAccount
+      operator: In
+      values:
+      - argocd-application-controller
+  policyTypes:
+  - Egress
+  egress:
+  # Allow: Kubernetes API
+  - to:
+    - podSelector:
+        matchLabels:
+          component: kube-apiserver
+    ports:
+    - protocol: TCP
+      port: 6443
+
+  # Allow: Git repositories (HTTPS, port 443 only)
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32    # AWS metadata service (DENY)
+        - 10.0.0.0/8            # Private networks (DENY)
+        - 172.16.0.0/12         # Private networks (DENY)
+        - 192.168.0.0/16        # Private networks (DENY)
+    ports:
+    - protocol: TCP
+      port: 443               # HTTPS only
+
+  # Allow: DNS for Git hostname resolution
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# NetworkPolicy: Kyverno policy controller - API only
+# PHASE G2: ServiceAccount-based selection (not pod labels)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kyverno-isolated
+  namespace: kyverno
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector:
+    matchExpressions:
+    - key: serviceAccount
+      operator: In
+      values:
+      - kyverno-admission-controller
+  policyTypes:
+  - Egress
+  egress:
+  # Allow: Kubernetes API only
+  - to:
+    - podSelector:
+        matchLabels:
+          component: kube-apiserver
+    ports:
+    - protocol: TCP
+      port: 6443
+
+  # Allow: DNS
+  - to:
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+      namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# NetworkPolicy: Crossplane health check ingress
+# PHASE G2: ServiceAccount-based selection (not pod labels)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: crossplane-health-ingress
+  namespace: crossplane-system
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector:
+    matchExpressions:
+    - key: serviceAccount
+      operator: In
+      values:
+      - crossplane
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow: kubelet probes (liveness, readiness) from local node
+  - from:
+    - namespaceSelector: {}  # Allow kubelet from same node
+    ports:
+    - protocol: TCP
+      port: 8081              # health check port
+
+  # Allow: Prometheus scraping (if monitoring enabled)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+      namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8081
+
+---
+# NetworkPolicy: Argo CD API server ingress
+# PHASE G2: ServiceAccount-based selection (not pod labels)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: argocd-api-ingress
+  namespace: argocd
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector:
+    matchExpressions:
+    - key: serviceAccount
+      operator: In
+      values:
+      - argocd-api-server
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow: Argo UI access (from argocd-ui SA)
+  - from:
+    - podSelector:
+        matchExpressions:
+        - key: serviceAccount
+          operator: In
+          values:
+          - argocd-ui
+      namespaceSelector:
+        matchLabels:
+          name: argocd
+    ports:
+    - protocol: TCP
+      port: 8080
+
+  # Allow: Controller access (from application-controller SA)
+  - from:
+    - podSelector:
+        matchExpressions:
+        - key: serviceAccount
+          operator: In
+          values:
+          - argocd-application-controller
+      namespaceSelector:
+        matchLabels:
+          name: argocd
+    ports:
+    - protocol: TCP
+      port: 8080
+
+---
+# NetworkPolicy: ThreadForge namespace isolation
+# PHASE G2: Explicit allow list, no implicit trust
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: threadforge-namespace-isolation
+  namespace: threadforge
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/phase: "G2"
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow: API server access only
+  - from:
+    - podSelector:
+        matchLabels:
+          component: kube-apiserver
+  egress:
+  # Allow: API server access
+  - to:
+    - podSelector:
+        matchLabels:
+          component: kube-apiserver
+    ports:
+    - protocol: TCP
+      port: 6443
+
+  # Allow: DNS
+  - to:
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+      namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+

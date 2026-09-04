@@ -1,0 +1,96 @@
+# platform/deploy/infra/minio/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    threadforge.io/workload-class: dependency-gated
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+      annotations:
+        sidecar.opentelemetry.io/inject: "true"
+        otel.threadforge.io/enabled: "true"
+        sidecar.istio.io/userVolume: '{"istio-ca-root-cert":{"configMap":{"name":"istio-ca-root-cert"}}}'
+        sidecar.istio.io/userVolumeMount: '{"istio-ca-root-cert":{"mountPath":"/etc/certs","readOnly":true}}'
+    spec:
+      serviceAccountName: minio-sa
+      priorityClassName: {{ .Values.priorityClassName | quote }}
+      containers:
+        - name: minio
+{{- if .Values.image.digest }}
+          image: "{{ .Values.image.repository }}@{{ .Values.image.digest }}"
+{{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+{{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          # All args must be plain strings; we interpolate the console port
+          args:
+            - "server"
+            - "/data"
+            - "--console-address=:{{ .Values.consoleService.port }}"
+
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecretName | default "minio-secrets" }}
+                  key: accesskey
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecretName | default "minio-secrets" }}
+                  key: secretkey
+
+          ports:
+            - name: s3
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+
+            - name: console
+              containerPort: {{ .Values.consoleService.port }}
+              protocol: TCP
+
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+
+          volumeMounts:
+            - name: data
+              mountPath: /data
+
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: s3
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /minio/health/live
+              port: s3
+            failureThreshold: 30
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: {{ .Values.resources.requests.cpu }}
+              memory: {{ .Values.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.limits.cpu }}
+              memory: {{ .Values.resources.limits.memory }}
+
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: minio-data

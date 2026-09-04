@@ -1,0 +1,51 @@
+# ==============================================================================
+# PHASE X: Crossplane Provider Installation (Binding-Only, No Provisioning)
+# ==============================================================================
+#
+# Purpose:
+#   Install Crossplane providers for infrastructure claim binding.
+#   Providers are READ-ONLY and NAMESPACED.
+#   No automatic infrastructure creation.
+#
+# Critical Design: Disabled by Default
+#   Providers are installed but do NOT reconcile automatically.
+#   Claims must explicitly opt-in to provider features.
+#   This prevents autonomous reconciliation of infrastructure.
+#
+# Authority:
+#   Crossplane binds to EXISTING infrastructure (OpenTofu).
+#   Crossplane does NOT create infrastructure.
+#   Crossplane does NOT modify ThreadForge authority.
+#
+# ==============================================================================
+#
+# ==============================================================================
+
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-kubernetes
+  namespace: crossplane-system
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.10.0
+  # Pinned version for determinism
+  skipDependencyResolution: false
+  controllerConfigRef:
+    name: crossplane-system
+
+  # CRITICAL: Disabled by default
+  # Claims must explicitly opt-in to Kubernetes bindings
+  # This prevents autonomous reconciliation of workloads
+
+---
+
+# NOTE: Provider-Helm is NOT installed in Phase X
+# Helm is reserved for future operational phases
+# Workload management is outside Crossplane's scope
+
+# ==============================================================================
+# Next: Additional providers (AWS, GCP, Azure) will be added
+# when actual cloud infrastructure deployment is required.
+# For now, Kubernetes provider is sufficient for binding to
+# the existing k3s cluster provisioned by OpenTofu.
+# ==============================================================================

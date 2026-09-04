@@ -1,0 +1,103 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: forgesec-surface-
+  namespace: forgesec
+  labels:
+    app: forgesec
+    forgesec.threadforge.local/suite: surface
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundPorts: "30500"
+        sidecar.istio.io/userVolume: '{"istio-custom-root-cert":{"configMap":{"name":"istio-ca-root-cert"}}}'
+        sidecar.istio.io/userVolumeMount: '{"istio-custom-root-cert":{"mountPath":"/etc/certs","readOnly":true}}'
+      labels:
+        app: forgesec
+        forgesec.threadforge.local/suite: surface
+        sidecar.istio.io/inject: "true"
+    spec:
+      priorityClassName: threadforge-low
+      serviceAccountName: forgesec-sa
+      imagePullSecrets:
+        - name: registry-credentials
+      restartPolicy: Never
+      automountServiceAccountToken: true
+      containers:
+        - name: forgesec
+          image: registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50
+          imagePullPolicy: IfNotPresent
+          args:
+            - suite
+            - surface
+          env:
+
+            - name: FORGESEC_API_HOST
+              value: "threadforge-notifier.threadforge-system.svc.cluster.local"
+            - name: FORGESEC_API_PORT
+              value: "8080"
+
+            - name: FORGESEC_PG_HOST
+              value: "postgres.threadforge-system.svc.cluster.local"
+            - name: FORGESEC_PG_PORT
+              value: "5432"
+
+            - name: FORGESEC_CLICKHOUSE_HOST
+              value: "clickhouse.threadforge-system.svc.cluster.local"
+            - name: FORGESEC_CLICKHOUSE_PORT
+              value: "9000"
+
+            - name: FORGESEC_MINIO_HOST
+              value: "minio.minio.svc.cluster.local"
+            - name: FORGESEC_MINIO_PORT
+              value: "9000"
+
+            - name: FORGESEC_GRAFANA_HOST
+              value: "grafana.observability.svc.cluster.local"
+            - name: FORGESEC_GRAFANA_PORT
+              value: "3000"
+
+            - name: FORGESEC_TEMPO_HOST
+              value: "tempo.observability.svc.cluster.local"
+            - name: FORGESEC_TEMPO_PORT
+              value: "3100"
+
+            - name: FORGESEC_STRICT_SURFACE
+              value: "1"
+
+            - name: FORGESEC_REQUIRE_TLS
+              value: "1"
+
+            - name: FORGESEC_CHECK_CERT
+              value: "1"
+
+            - name: FORGESEC_EXPECT_NO_HTTP
+              value: "1"
+
+            - name: FORGESEC_REGISTRY_CA_FILE
+              value: /etc/registry-ca/threadforge-ingress-ca.crt
+
+            - name: SSL_CERT_FILE
+              value: /etc/registry-ca/threadforge-ingress-ca.crt
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: registry-ca
+              mountPath: /etc/registry-ca
+              readOnly: true
+      volumes:
+        - name: istio-custom-root-cert
+          configMap:
+            name: istio-ca-root-cert
+        - name: registry-ca
+          configMap:
+            name: registry-ca

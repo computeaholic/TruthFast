@@ -1,0 +1,14 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-spire-agents
+  namespace: spire-system
+spec:
+  selector:
+    matchLabels:
+      app: spire-server
+  rules:
+  - from:
+    - source:
+        principals:
+        - spiffe://identity.threadforge.local/spire/agent/*

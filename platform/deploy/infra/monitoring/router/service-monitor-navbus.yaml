@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: navbus
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: navbus
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  endpoints:
+    - port: metrics
+      interval: 10s

@@ -1,0 +1,35 @@
+replicaCount: 1  # HA-ready; scale replicas without refactor
+
+image:
+  repository: registry.threadforge.local:30500/mirror/docker.io/clickhouse/clickhouse-server
+  digest: sha256:944d430f525177485baeb9d93ed8c07b7219e2d682423a38525154192cbaf6ec
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 9000
+
+persistence:
+  enabled: true
+  storageClass: standard
+  size: 50Gi
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 2
+    memory: 2Gi
+
+securityContext:
+  runAsUser: 101
+  runAsGroup: 101
+  fsGroup: 101
+
+istio:
+  enabled: true
+
+replication:
+  enabled: true   # topology encoded even with 1 replica
+  clusterName: threadforge-value-plane

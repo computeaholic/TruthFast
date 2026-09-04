@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: threadforge-capsule-monitor
+  namespace: observability
+  labels:
+    threadforge-monitor: enabled
+    threadforge.monitor/enabled: "true"
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-api
+  namespaceSelector:
+    matchNames:
+      - default
+      - threadforge
+  endpoints:
+    - port: http
+      interval: 15s
+      path: /metrics
+      honorLabels: true
+      relabelings:
+        - action: replace
+          replacement: threadforge-api.threadforge.svc.cluster.local:8080
+          targetLabel: __address__
+      {{ include "prometheus.metricNameAsciiOnly" . | indent 6 }}

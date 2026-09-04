@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blackbox-minio
+  namespace: observability
+  labels:
+    app: blackbox-minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blackbox-minio
+  template:
+    metadata:
+      labels:
+        app: blackbox-minio
+    spec:
+      serviceAccountName: blackbox-sa
+
+
+      containers:
+        - name: blackbox-exporter
+          image: registry.threadforge.local:30500/mirror/docker.io/prom/blackbox-exporter@sha256:8d502b55bead7dcac8805fc90cbc93b36e6967360af88cd3213e14ff350ec29d
+          args:
+            - --config.file=/etc/blackbox/blackbox.yml
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          ports:
+            - name: metrics
+              containerPort: 9115
+          volumeMounts:
+            - name: blackbox-config
+              mountPath: /etc/blackbox
+        - name: envoy-sidecar
+          image: registry.threadforge.local:30500/mirror/docker.io/envoyproxy/envoy@sha256:deb1d3a3cfc53d9306465426b4cc2b9443bea4b6100f2a0caf224ce3be23c0ad
+          args: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+            - name: spire-socket
+              mountPath: /run/spire/sockets
+              readOnly: true
+      volumes:
+        - name: blackbox-config
+          configMap:
+            name: blackbox-config
+            items:
+              - key: blackbox.yml
+                path: blackbox.yml
+        - name: envoy-config
+          configMap:
+            name: blackbox-envoy-bootstrap
+            items:
+              - key: envoy.yaml
+                path: envoy.yaml
+        - name: spire-socket
+          hostPath:
+            path: /run/spire/sockets
+            type: DirectoryOrCreate

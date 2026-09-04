@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: runtime-ledger-archival
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: runtime
+    agent: Ella
+spec:
+  schedule: "{{ default "0 * * * *" .Values.schedule.archival }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: archival
+              image: "{{ include "runtime.image" (dict "Values" .Values "repository" (default "localhost:5000/runtime-ledger-archival" .Values.image.archival.repository) "tag" (default "rebuild-20260215" .Values.image.archival.tag)) }}"
+              env:
+                - name: MINIO_URL
+                  value: "{{ default "http://minio.minio.svc.cluster.local:9000" .Values.minio.url }}"
+                - name: MINIO_BUCKET
+                  value: "{{ default "operator-ledger" .Values.minio.bucket }}"
+              envFrom:
+                - secretRef:
+                    name: {{ default "minio-operator-sa" .Values.minio.secretName }}
+              volumeMounts:
+                - name: ledger
+                  mountPath: /var/threadforge/logs
+          volumes:
+            - name: ledger
+              persistentVolumeClaim:
+                claimName: {{ default "operator-ledger-pvc" .Values.pvc.ledger }}

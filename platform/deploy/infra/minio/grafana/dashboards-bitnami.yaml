@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-bitnami-dashboards
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  minio-overview.json: |
+    <<BITNAMI_OVERVIEW_JSON>>
+  minio-performance.json: |
+    <<BITNAMI_PERFORMANCE_JSON>>
+  minio-requests.json: |
+    <<BITNAMI_REQUESTS_JSON>>
+  minio-buckets.json: |
+    <<BITNAMI_BUCKETS_JSON>>

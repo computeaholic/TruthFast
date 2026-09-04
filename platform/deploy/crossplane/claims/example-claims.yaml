@@ -1,0 +1,221 @@
+# ==============================================================================
+# PHASE X: Example Claims (Optional, Not Applied by Default)
+# ==============================================================================
+#
+# Purpose:
+#   These are EXAMPLE claims showing how to bind to existing infrastructure.
+#   They are NOT automatically applied.
+#   They serve as documentation of the claim pattern.
+#
+# Authority:
+#   Claims succeed only if infrastructure (from OpenTofu) exists.
+#   Claims fail cleanly if infrastructure is missing.
+#   Claims do NOT create infrastructure.
+#
+# Usage:
+#   These examples show how future Civ Engine or applications
+#   may declare infrastructure dependencies.
+#
+# ==============================================================================
+
+# Example Network Claim (Development)
+# Binds to: threadforge-dev VPC from OpenTofu
+---
+apiVersion: threadforge.local/v1
+kind: XNetworkClaim
+metadata:
+  name: dev-network-claim
+  namespace: threadforge
+  labels:
+    environment: dev
+    phase: X
+spec:
+  environment: dev
+  vpcId: "10.0.0.0/16"  # From OpenTofu output: module.network.vpc_cidr
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Network Claim (Staging)
+# Binds to: threadforge-staging VPC from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XNetworkClaim
+metadata:
+  name: staging-network-claim
+  namespace: threadforge
+  labels:
+    environment: staging
+    phase: X
+spec:
+  environment: staging
+  vpcId: "10.1.0.0/16"  # From OpenTofu output: module.network.vpc_cidr
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Network Claim (Production)
+# Binds to: threadforge-prod VPC from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XNetworkClaim
+metadata:
+  name: prod-network-claim
+  namespace: threadforge
+  labels:
+    environment: prod
+    phase: X
+spec:
+  environment: prod
+  vpcId: "10.2.0.0/16"  # From OpenTofu output: module.network.vpc_cidr
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Cluster Claim (Development)
+# Binds to: threadforge-dev cluster from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XClusterClaim
+metadata:
+  name: dev-cluster-claim
+  namespace: threadforge
+  labels:
+    environment: dev
+    phase: X
+spec:
+  environment: dev
+  clusterId: "threadforge-dev"  # From OpenTofu output: module.cluster.cluster_name
+  kubeconfig: "threadforge-dev-kubeconfig"  # Secret ref (future)
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Cluster Claim (Staging)
+# Binds to: threadforge-staging cluster from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XClusterClaim
+metadata:
+  name: staging-cluster-claim
+  namespace: threadforge
+  labels:
+    environment: staging
+    phase: X
+spec:
+  environment: staging
+  clusterId: "threadforge-staging"  # From OpenTofu output: module.cluster.cluster_name
+  kubeconfig: "threadforge-staging-kubeconfig"  # Secret ref (future)
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Cluster Claim (Production)
+# Binds to: threadforge-prod cluster from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XClusterClaim
+metadata:
+  name: prod-cluster-claim
+  namespace: threadforge
+  labels:
+    environment: prod
+    phase: X
+spec:
+  environment: prod
+  clusterId: "threadforge-prod"  # From OpenTofu output: module.cluster.cluster_name
+  kubeconfig: "threadforge-prod-kubeconfig"  # Secret ref (future)
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Storage Claim (Development)
+# Binds to: dev storage classes from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XStorageClaim
+metadata:
+  name: dev-storage-claim
+  namespace: threadforge
+  labels:
+    environment: dev
+    phase: X
+spec:
+  environment: dev
+  storageClass: "standard"  # From OpenTofu output: module.storage storage_classes
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Storage Claim (Staging)
+# Binds to: staging storage classes from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XStorageClaim
+metadata:
+  name: staging-storage-claim
+  namespace: threadforge
+  labels:
+    environment: staging
+    phase: X
+spec:
+  environment: staging
+  storageClass: "standard"  # From OpenTofu output: module.storage storage_classes
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# Example Storage Claim (Production)
+# Binds to: production storage classes from OpenTofu
+apiVersion: threadforge.local/v1
+kind: XStorageClaim
+metadata:
+  name: prod-storage-claim
+  namespace: threadforge
+  labels:
+    environment: prod
+    phase: X
+spec:
+  environment: prod
+  storageClass: "fast"  # From OpenTofu output: module.storage storage_classes
+  customLabels:
+    app.kubernetes.io/managed-by: threadforge-crossplane
+    threadforge.io/phase: X
+
+---
+
+# ==============================================================================
+# HOW TO USE THESE CLAIMS
+# ==============================================================================
+#
+# These claims are EXAMPLES ONLY.
+# They are NOT applied by default (not in platform/deploy/base/crossplane/).
+#
+# To test claim binding:
+#   1. Verify OpenTofu infrastructure exists
+#   2. Apply XRDs: kubectl apply -f xrd/claims.yaml
+#   3. Apply compositions: kubectl apply -f compositions/binding-compositions.yaml
+#   4. Apply ONE example claim: kubectl apply -f claims/example-dev-network.yaml
+#   5. Verify claim binding: kubectl get xnetworkclaims
+#
+# Expected result:
+#   - Claim is READY
+#   - No infrastructure created
+#   - Binding ConfigMaps created (metadata only)
+#   - No reconciliation loops
+#
+# If claim fails:
+#   - Check: Does referenced infrastructure exist in OpenTofu outputs?
+#   - Check: Is kubeconfig secret properly configured?
+#   - Check: Are XRDs and compositions installed?
+#
+# ==============================================================================

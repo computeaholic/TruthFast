@@ -1,0 +1,10 @@
+apiVersion: policy/v1
+kind: PodSecurityPolicy
+metadata:
+  name: router-psp
+spec:
+  privileged: false
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny

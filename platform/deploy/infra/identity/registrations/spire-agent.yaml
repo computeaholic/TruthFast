@@ -1,0 +1,13 @@
+apiVersion: identity.threadforge.local/v1
+kind: IdentityRegistration
+metadata:
+  name: 9bcf8435dc86413f6bd4b3278754a44f42e32da889c18786b249cf314093a98c77628be27519fa63fe3d8ed6e75898d9136bcd6e948bf70c133e1628a55e827c
+  namespace: spire-system
+spec:
+  parentId: spiffe://identity.threadforge.local/spire/server
+  spiffeId: spiffe://identity.threadforge.local/tier/tier0/cluster-alpha/ns/spire-system/sa/spire-agent/role/agent
+  selectors:
+    - type: k8s
+      value: ns:spire-system
+    - type: k8s
+      value: sa:spire-agent

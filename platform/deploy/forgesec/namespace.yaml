@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: forgesec
+  labels:
+    istio-injection: enabled
+    security.threadforge.local/role: boundary-validator

@@ -1,0 +1,15 @@
+apiVersion: policy/v1
+kind: PodSecurityPolicy
+metadata:
+  name: dashboard-restricted
+spec:
+  privileged: false
+  runAsUser:
+    rule: MustRunAsNonRoot
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  fsGroup:
+    rule: MustRunAs
+    ranges:
+      - min: 1000
+        max: 65535

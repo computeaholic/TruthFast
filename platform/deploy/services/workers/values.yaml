@@ -1,0 +1,33 @@
+image:
+  repository: registry.threadforge.local:30500/threadforge/worker
+  digest: sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  port: 5555  # Not externally exposed, but useful for liveness checks
+
+env:
+  REDIS_HOST: "redis.cache.svc.cluster.local"
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: "postgres.db.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  OLLAMA_API_BASE: "http://ollama.llm.svc.cluster.local:11434"
+
+# Opt-in flag to allow debug/trace logging for this chart
+allowDebugLogs: false
+
+queues:
+  - "system"
+  - "rag"
+  - "lora"
+  - "audit"
+
+secrets:
+  secretKey: "REPLACE_ME"
+  dbWriterHost: "postgres.threadforge-system.svc.cluster.local"
+  dbWriterPort: "5432"
+  dbWriterName: "threadforge"
+  dbWriterUser: "threadforge_writer"
+  dbWriterPassword: "writer_password_2025"

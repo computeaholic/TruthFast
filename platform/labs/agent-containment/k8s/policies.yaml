@@ -1,0 +1,66 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all-to-writer
+  namespace: agents-lab
+spec:
+  selector:
+    matchLabels:
+      app: writer-agent
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "8000"
+            methods:
+              - "IMPOSSIBLE_METHOD"
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all-to-research
+  namespace: agents-lab
+spec:
+  selector:
+    matchLabels:
+      app: research-agent
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "8000"
+            methods:
+              - "IMPOSSIBLE_METHOD"
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all-to-attacker
+  namespace: agents-lab
+spec:
+  selector:
+    matchLabels:
+      app: attacker-agent
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "8000"
+            methods:
+              - "IMPOSSIBLE_METHOD"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: attacker-egress-registry-only
+  namespace: agents-lab
+spec:
+  workloadSelector:
+    labels:
+      app: attacker-agent
+  outboundTrafficPolicy:
+    mode: REGISTRY_ONLY
+  egress:
+    - hosts:
+        - "./*"
+        - "istio-system/*"

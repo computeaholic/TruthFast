@@ -1,0 +1,112 @@
+# =====================================================================
+# ThreadForge — Kyverno Helm Values
+# platform/deploy/infra/kyverno/values.yaml
+# =====================================================================
+# Render every Kyverno image as an internal digest-pinned reference.
+# The chart only supports repository + tag, so repository values end with
+# @sha256 and the tag carries the raw digest hex.
+global:
+  image:
+    registry: ~
+  # Mount the node's system CA bundle (which includes the ThreadForge ingress CA,
+  # added during cluster bootstrap) so Kyverno can reach both:
+  #   1. registry.threadforge.local:30500 (local TLS registry)
+  #   2. tuf-repo-cdn.sigstore.dev (internet sigstore TUF)
+  # Using hostPath so helm does not embed the 200KB bundle in the release secret.
+  caCertificates:
+    volume:
+      hostPath:
+        path: /etc/ssl/certs/ca-certificates.crt
+        type: File
+
+crds:
+  migration:
+    enabled: false
+
+webhooksCleanup:
+  image:
+    registry: registry.threadforge.local:30500
+    repository: mirror/docker.io/bitnami/kubectl@sha256
+    tag: a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+    pullPolicy: Always
+
+policyReportsCleanup:
+  image:
+    registry: registry.threadforge.local:30500
+    repository: mirror/docker.io/bitnami/kubectl@sha256
+    tag: a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+    pullPolicy: Always
+
+admissionController:
+  initContainer:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: kyverno/kyvernopre@sha256
+      tag: 94e787023a71c1a2850388a9fe190b45156684fe7f20f59132edfe6b57e17d31
+      pullPolicy: Always
+  container:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: kyverno/kyverno@sha256
+      tag: 2e1af149ebf318b67233c519225b403ca0500c657b347553c74627ccb6f369f7
+      pullPolicy: Always
+
+backgroundController:
+  image:
+    registry: registry.threadforge.local:30500
+    repository: kyverno/background-controller@sha256
+    tag: 148e3f0f5f0c84f3cf1428f5460b680c15d1e190f3e6182e2e02ff177071a5be
+    pullPolicy: Always
+
+cleanupController:
+  image:
+    registry: registry.threadforge.local:30500
+    repository: kyverno/cleanup-controller@sha256
+    tag: 72be48bd94266ae87f9ad6567d8f8a6c1ef6ca173adb8c8bcceab7c1c9b9a242
+    pullPolicy: Always
+
+reportsController:
+  image:
+    registry: registry.threadforge.local:30500
+    repository: kyverno/reports-controller@sha256
+    tag: aa878cc71678d45d63775a0014244b5d238dfcfcd4e79ad8be3158d08e7b71b2
+    pullPolicy: Always
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Override cleanup job images to use local registry mirror
+cleanupJobs:
+  admissionReports:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: mirror/docker.io/bitnami/kubectl@sha256
+      tag: a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+      pullPolicy: Always
+  clusterAdmissionReports:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: mirror/docker.io/bitnami/kubectl@sha256
+      tag: a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+      pullPolicy: Always
+  clusterEphemeralReports:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: mirror/docker.io/bitnami/kubectl@sha256
+      tag: a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+      pullPolicy: Always
+  ephemeralReports:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: mirror/docker.io/bitnami/kubectl@sha256
+      tag: a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+      pullPolicy: Always
+  updateRequests:
+    image:
+      registry: registry.threadforge.local:30500
+      repository: mirror/docker.io/bitnami/kubectl@sha256
+      tag: a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+      pullPolicy: Always

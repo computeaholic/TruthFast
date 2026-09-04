@@ -1,0 +1,6 @@
+[sqlfluff]
+dialect = postgres
+max_line_length = 120
+
+# Enforce core linting rules; team can fine-tune later
+# Note: `rules:max_line_length` was deprecated; using root-level `max_line_length` instead.

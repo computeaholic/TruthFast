@@ -1,0 +1,28 @@
+{{- if .Values.jobs.enableReplication }}
+# platform/deploy/infra/minio/templates/replication.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-replication-setup
+  namespace: minio
+spec:
+  template:
+    metadata:
+      labels:
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: replication-setup
+          image: registry.threadforge.local:30500/mirror/quay.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              mc alias set local http://minio.minio.svc.cluster.local:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              mc alias set s3 https://s3.amazonaws.com "$AWS_ACCESS_KEY_ID" "$AWS_SECRET_ACCESS_KEY"
+
+              mc replicate add local/operator-ledger s3/operator-ledger --remote-bucket operator-ledger
+              mc replicate add local/operator-replay s3/operator-replay --remote-bucket operator-replay
+              mc replicate add local/vector-shards s3/vector-shards --remote-bucket vector-shards
+{{- end }}

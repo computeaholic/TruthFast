@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: observability-alerts
+spec:
+  groups:
+  - name: observability.rules
+    rules:
+    - alert: CollectorExporterFailures
+      expr: rate(otelcol_exporter_send_failed_spans[5m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Collector exporter failures detected"
+        description: "The OpenTelemetry collector is reporting failed exporter sends for spans (rate > 0 over 5m). Investigate collector -> tempo connectivity and exporter errors."
+
+    - alert: NodeClockSkew
+      expr: abs(node_time_seconds - time()) > 300
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node clock skew detected"
+        description: "Node time differs from Prometheus server time by more than 5 minutes. This may cause certificate managers to fail (clockHealth). Run NTP/chrony remediation on affected nodes."

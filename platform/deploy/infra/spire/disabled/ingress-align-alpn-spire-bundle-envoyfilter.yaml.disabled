@@ -1,0 +1,40 @@
+{{- if and .Values.bundleService.enabled .Values.bundleService.envoyFilter.enabled }}
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: {{ default "ingress-align-alpn-spire-bundle" .Values.bundleService.envoyFilter.name }}
+  namespace: istio-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    description: "Helm-managed ALPN normalization for SPIRE bundle distribution (ingress-only)"
+spec:
+  # Scope strictly to the ingress gateway workload to avoid workload-scoped or mesh-wide effects.
+  workloadSelector:
+    labels:
+      app: istio-ingressgateway
+  configPatches:
+  - applyTo: CLUSTER
+    match:
+      cluster:
+        # Match the EDS service cluster for the bundle gateway upstream.
+        service: "outbound|{{ .Values.bundleService.port }}||{{ .Values.bundleService.gatewayHost }}.svc.cluster.local"
+    patch:
+      operation: MERGE
+      value:
+        transport_socket:
+          name: envoy.transport_sockets.tls
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+            common_tls_context:
+              alpn_protocols:
+              - "istio-peer-exchange"
+              - "istio"
+              - "istio-http/1.1"
+              - "istio-http/1.0"
+              - "istio-h2"
+            # Preserve SNI behavior; do not modify validation contexts here.
+            # This filter is purposely minimal: it only merges ALPN entries
+            # onto the ingress upstream cluster to match the bundle's
+            # virtualInbound expectations.
+{{- end }}

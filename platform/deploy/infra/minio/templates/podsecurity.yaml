@@ -1,0 +1,11 @@
+# platform/deploy/infra/minio/templates/podsecurity.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: minio-pdb
+  namespace: minio
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: minio

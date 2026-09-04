@@ -1,0 +1,15 @@
+# ==============================================================================
+# ThreadForge — Issuer Boundary Guardrails
+# Prevents cert-manager from issuing certificates outside approved namespaces.
+# ==============================================================================
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: cert-manager-safe
+  namespace: cert-manager
+spec:
+  maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: cert-manager

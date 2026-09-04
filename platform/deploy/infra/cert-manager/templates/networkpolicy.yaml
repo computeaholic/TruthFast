@@ -1,0 +1,61 @@
+# ==============================================================================
+# ThreadForge — cert-manager Zero-Trust NetworkPolicy (DOD Grade)
+# ==============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cert-manager-restrict
+  namespace: cert-manager
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # ---------------------------------------------------------------------------
+  # INGRESS — Only allow API server + internal webhook traffic
+  # ---------------------------------------------------------------------------
+  ingress:
+    - from:
+        # API server
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+
+        # cert-manager webhook talking to cert-manager controller
+        - podSelector:
+            matchLabels:
+              app: cert-manager-webhook
+
+  # ---------------------------------------------------------------------------
+  # EGRESS — Only allow:
+  #   - API server for leader election + cert issuance
+  #   - Webhook
+  #   - DNS
+  # ---------------------------------------------------------------------------
+  egress:
+    # kube-apiserver (leader election + signing requests)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+
+    # DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # Webhook
+    - to:
+        - podSelector:
+            matchLabels:
+              app: cert-manager-webhook
+
+    # Final explicit deny
+    - {}

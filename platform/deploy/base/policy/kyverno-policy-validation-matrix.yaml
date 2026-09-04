@@ -1,0 +1,167 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-policy-validation-matrix
+  annotations:
+    policies.kyverno.io/title: "ThreadForge Policy Validation Matrix"
+    policies.kyverno.io/category: "ThreadForge Admission"
+    policies.kyverno.io/severity: "critical"
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: matrix-require-internal-digest-images
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaceSelector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+              selector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+      validate:
+        message: >-
+          Matrix image policy: all container images must be internal and digest pinned.
+        foreach:
+          - list: "request.object.spec.containers[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ starts_with(element.image, 'registry.threadforge.local:30500') }}"
+                    operator: Equals
+                    value: false
+                  - key: "{{ regex_match('^.+@sha256:[a-f0-9]{64}$', element.image) }}"
+                    operator: Equals
+                    value: false
+
+    - name: matrix-require-expected-digest-match
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaceSelector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+              selector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.annotations.\"threadforge.io/expected-image-digest\" || '' }}"
+            operator: NotEquals
+            value: ""
+      validate:
+        message: >-
+          Matrix digest policy: image digest does not match threadforge.io/expected-image-digest.
+        foreach:
+          - list: "request.object.spec.containers[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ regex_match(join('', ['^.+@sha256:', request.object.metadata.annotations.\"threadforge.io/expected-image-digest\", '$']), element.image) }}"
+                    operator: Equals
+                    value: false
+
+    - name: matrix-require-sidecar
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaceSelector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+              selector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+      validate:
+        message: "Matrix sidecar policy: pod must include container named istio-proxy."
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.containers[?name=='istio-proxy'] | length(@) }}"
+                operator: Equals
+                value: 0
+
+    - name: matrix-deny-mutated-pod
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaceSelector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+              selector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+      validate:
+        message: "Matrix mutation policy: threadforge.io/mutated=true is forbidden."
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.metadata.annotations.\"threadforge.io/mutated\" || 'false' }}"
+                operator: Equals
+                value: "true"
+
+    - name: matrix-deny-privileged
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaceSelector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+              selector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+      validate:
+        message: "Matrix pod security policy: privileged containers are forbidden."
+        foreach:
+          - list: "request.object.spec.containers[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.securityContext.privileged || false }}"
+                    operator: Equals
+                    value: true
+
+    - name: matrix-deny-hostnetwork
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaceSelector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+              selector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+      validate:
+        message: "Matrix pod security policy: hostNetwork is forbidden."
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.hostNetwork || false }}"
+                operator: Equals
+                value: true
+
+    - name: matrix-deny-hostpath
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaceSelector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+              selector:
+                matchLabels:
+                  threadforge.io/policy-matrix: "true"
+      validate:
+        message: "Matrix pod security policy: hostPath volumes are forbidden."
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.volumes[?hostPath] | length(@) }}"
+                operator: GreaterThan
+                value: 0

@@ -1,0 +1,29 @@
+{{- if .Values.spireServer.upstreamCa.enabled }}
+# When enabled, cert-manager will provision an upstream CA certificate and store
+# it in the Secret named by `.Values.spireServer.upstreamCa.secretName`.
+# Requires cert-manager to be installed and configured (platform/deploy/infra/cert-manager).
+
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: spire-upstream-ca-issuer
+  namespace: {{ .Release.Namespace }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: spire-upstream-ca
+  namespace: {{ .Release.Namespace }}
+spec:
+  isCA: true
+  commonName: spire-upstream-ca
+  secretName: {{ .Values.spireServer.upstreamCa.secretName }}
+  issuerRef:
+    name: spire-upstream-ca-issuer
+    kind: Issuer
+  privateKey:
+    algorithm: RSA
+    size: 2048
+{{- end }}

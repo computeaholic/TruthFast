@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: api-vs
+  namespace: threadforge
+spec:
+  hosts:
+    - "api.threadforge.svc.cluster.local"
+  http:
+    - route:
+        - destination:
+            host: api.threadforge.svc.cluster.local
+            subset: v1
+          weight: 100
+        - destination:
+            host: api.threadforge.svc.cluster.local
+            subset: v2
+          weight: 0

@@ -1,0 +1,21 @@
+# Explicit system-image allowlist for global signature enforcement.
+# Rules:
+# - Exact image@sha256 entries only
+# - No wildcards
+# - Allowed registry prefix only (${REGISTRY_HOSTPORT}/)
+
+registry.threadforge.local:30500/curlimages-curl@sha256:56efe57deecfd4145a36b24f1cfd676f8cbda808b5ce56d0f644ca0db6b1c0de
+registry.threadforge.local:30500/hashicorp/http-echo@sha256:3f5c9a5a28daf63a712bbf45f2fa0741be9cd34339ba598a5c13af02959f108d
+registry.threadforge.local:30500/istio/pilot@sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f
+registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+registry.threadforge.local:30500/kindest-node@sha256:48321fb2717f92527d9aba9a9b32055dff622f9c356ea3de2f1ffb75344f87bf
+registry.threadforge.local:30500/cert-manager/controller@sha256:6bf0fd34e1d5b58e31bfdc640d5d284e528685b19f20df6c0fb6f13867603bba
+registry.threadforge.local:30500/cert-manager/cainjector@sha256:6381b508a274d56f0ed3ac6af76faf12e3e5a2e0028d33a13039e364c45c93ff
+registry.threadforge.local:30500/cert-manager/webhook@sha256:7f16d397b8b48c5133d9f2859fb2dea30f0f297eb04c517bbfc06f5d207b3cf0
+registry.threadforge.local:30500/mirror/docker.io/clickhouse/clickhouse-server@sha256:944d430f525177485baeb9d93ed8c07b7219e2d682423a38525154192cbaf6ec
+registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+registry.threadforge.local:30500/minio/minio@sha256:9966a92a734f9411e32f4f41d7d9d826fcdc0f68c4e20b70295bd4e7c11f8a2f
+registry.threadforge.local:30500/spiffe/spire-agent@sha256:0d3cebdf4e033edaa67ef1b4197696f853bb76f8970e25010237c7e3a7c98531
+registry.threadforge.local:30500/spiffe/spire-server@sha256:817a87c37a6b77ff74c95908160ee0555daac8d8269e2fd7ad2b6e41b86164d8
+registry.threadforge.local:30500/mirror/docker.io/prom/prometheus@sha256:d1591daeb276e8c840b7264187c8d37f38e1e78388e21c4be69a7774a982d3c3
+registry.threadforge.local:30500/forgesec@sha256:b20b0a077cb612d94c0dd07819d58637b0d7573f01664df9ed477b556e455a50

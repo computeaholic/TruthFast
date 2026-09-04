@@ -1,0 +1,97 @@
+groups:
+- name: policy
+  rules:
+  - record: policy_decision:storage_latency
+    expr: '((histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) < 0.25) or (absent(probe_duration_seconds_bucket{target=~".*minio.*"}) * 0))'
+
+  # Convenience recording rule that exposes the metric name requested by policy consumers
+  - record: policy_decision
+    expr: 'label_replace(policy_decision:storage_latency, "policy", "storage_latency", "__name__", ".*") or label_replace(policy_decision:spire_operational, "policy", "spire_operational", "__name__", ".*")'
+    labels:
+      policy: "storage_latency"
+
+  # Reason code explains WHY a decision was made (0=DENY_missing_input,1=DENY_threshold_exceeded,2=ALLOW)
+  - record: policy_reason_code:storage_latency
+    expr: '((absent(probe_duration_seconds_bucket{target=~".*minio.*"}) * 0) or ((histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) >= 0.25) * 1) or ((histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) < 0.25) * 2))'
+
+  - record: policy_reason_code
+    expr: 'label_replace(policy_reason_code:storage_latency, "policy", "storage_latency", "__name__", ".*") or label_replace(policy_reason_code:spire_operational, "policy", "spire_operational", "__name__", ".*")'
+    labels:
+      policy: "storage_latency"
+
+  # Aggregated posture: 1 if all policy_decision metrics are 1; 0 if any missing or any is 0
+  - record: policy_posture
+    expr: '(min(policy_decision{policy=~".+"}) or (absent(policy_decision{policy=~".+"}) * 0))'
+
+  # Pressure signals
+  - record: policy_pressure_margin:storage_latency
+    expr: '(0.25 - histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)))'
+  - record: policy_pressure_margin
+    expr: policy_pressure_margin:storage_latency
+    labels:
+      policy: "storage_latency"
+
+  - record: policy_pressure_volatility:storage_latency
+    expr: 'abs((histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) - histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[1h])) by (le))))'
+  - record: policy_pressure_volatility
+    expr: policy_pressure_volatility:storage_latency
+    labels:
+      policy: "storage_latency"
+
+  # SPIRE operational policy: pressure/unease rules
+  - record: policy_decision:spire_operational
+    expr: '((max(up{job=~".*spire.*"}) > 0) or (absent(up{job=~".*spire.*"}) * 0))'
+
+  - record: policy_reason_code:spire_operational
+    expr: '((absent(up{job=~".*spire.*"}) * 0) or ((max(up{job=~".*spire.*"}) == 0) * 1) or ((max(up{job=~".*spire.*"}) == 1) * 2))'
+
+  - record: policy_pressure_spire_uptime:spire_operational
+    expr: 'avg_over_time(up{job=~".*spire.*"}[5m])'
+  - record: policy_pressure_spire_uptime
+    expr: policy_pressure_spire_uptime:spire_operational
+    labels:
+      policy: "spire_operational"
+
+  - record: policy_unease_spire_deny_missing_input:spire_operational
+    expr: '(absent(up{job=~".*spire.*"}) * 1)'
+  - record: policy_unease_spire_deny_missing_input
+    expr: policy_unease_spire_deny_missing_input:spire_operational
+    labels:
+      policy: "spire_operational"
+
+  # Counterfactuals (threshold variants)
+  - record: policy_cf_threshold_0_2:storage_latency
+    expr: '((histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) < 0.2) or (absent(probe_duration_seconds_bucket{target=~".*minio.*"}) * 0))'
+  - record: policy_cf_threshold_0_2
+    expr: policy_cf_threshold_0_2:storage_latency
+    labels:
+      policy: "storage_latency"
+
+  - record: policy_cf_threshold_0_3:storage_latency
+    expr: '((histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) < 0.3) or (absent(probe_duration_seconds_bucket{target=~".*minio.*"}) * 0))'
+  - record: policy_cf_threshold_0_3
+    expr: policy_cf_threshold_0_3:storage_latency
+    labels:
+      policy: "storage_latency"
+
+  # Unease signals
+  - record: policy_unease_allow_under_pressure:storage_latency
+    expr: '((policy_decision:storage_latency == 1) and (histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) >= 0.25))'
+  - record: policy_unease_allow_under_pressure
+    expr: policy_unease_allow_under_pressure:storage_latency
+    labels:
+      policy: "storage_latency"
+
+  - record: policy_unease_deny_missing_input:storage_latency
+    expr: '(absent(probe_duration_seconds_bucket{target=~".*minio.*"}) * 1)'
+  - record: policy_unease_deny_missing_input
+    expr: policy_unease_deny_missing_input:storage_latency
+    labels:
+      policy: "storage_latency"
+
+  - record: policy_unease_volatility_breach:storage_latency
+    expr: '((abs((histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[5m])) by (le)) - histogram_quantile(0.95, sum(rate(probe_duration_seconds_bucket{target=~".*minio.*"}[1h])) by (le)))) > 0.1) and (sum(rate(probe_duration_seconds_count{target=~".*minio.*"}[5m])) > 0) and (sum(rate(probe_duration_seconds_count{target=~".*minio.*"}[1h])) > 0)) * 1'
+  - record: policy_unease_volatility_breach
+    expr: policy_unease_volatility_breach:storage_latency
+    labels:
+      policy: "storage_latency"

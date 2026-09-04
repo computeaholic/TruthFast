@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blackbox-config
+  namespace: observability
+data:
+  blackbox.yml: |
+    modules:
+      minio_mtls:
+        prober: http
+        http:
+          method: GET
+          # Probe MinIO via local envoy sidecar which handles SPIFFE mTLS
+          # Target should be set to the local sidecar listener (see ServiceMonitor)
+          headers:
+            Accept: "*/*"
+          valid_http_versions: ["HTTP/1.1"]
+          preferred_ip_protocol: "ip4"
+
+        # probe timeout
+        timeout: 10s

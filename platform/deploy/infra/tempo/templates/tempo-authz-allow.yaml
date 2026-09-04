@@ -1,0 +1,107 @@
+# platform/deploy/infra/tempo/templates/tempo-authz-allow.yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: tempo-http-allow
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: tempo
+  action: ALLOW
+  rules:
+    # Read/query plane for observability workloads (including Tempo self /ready, seed proof, and Grafana).
+    - from:
+        - source:
+            namespaces:
+              - observability
+      to:
+        - operation:
+            ports: ["3100"]
+
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/observability/sa/grafana-sa"
+      to:
+        - operation:
+            ports: ["3100"]
+    # Seed-proof job: allowed to ingest traces AND query them for retrieval verification.
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/observability/sa/observability-seed-sa"
+      to:
+        - operation:
+            ports: ["3100"]
+        - operation:
+            ports: ["4317", "4318"]
+            methods: ["GET", "POST"]
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: tempo-ingest-allow
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: tempo
+  action: ALLOW
+  rules:
+    # Tempo self-communication under strict SPIFFE/mTLS (ring formation)
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/observability/sa/tempo-sa"
+      to:
+        - operation:
+            ports: ["7946", "9095", "3100"]
+
+    - from:
+        - source:
+            namespaces:
+              - observability
+      to:
+        - operation:
+            ports: ["4317", "4318", "9411"]
+
+    # ------------------------------------------------
+    # Read-only access — Observability namespace (Grafana, tooling)
+    # ------------------------------------------------
+    - from:
+        - source:
+            namespaces:
+              - observability
+            principals:
+              - "spiffe://identity.threadforge.local/tier/tier5/cluster-alpha/ns/grafana/sa/grafana/role/dashboards"
+      to:
+        - operation:
+            ports:
+              - "3100"   # Tempo HTTP query API
+
+    # ------------------------------------------------
+    # Allow mesh-labeled namespaces (identity-first via SPIFFE is preferred)
+    # This allows legitimate in-mesh test clients and cross-namespace observability consumers
+    # No broad namespace allow here — rely on NetworkPolicy to permit mesh-labeled namespaces.
+    # Identity-bound access (SPIFFE principals) is preferred; add explicit principals for known collectors below:
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/tier/tier5/cluster-alpha/ns/observability/sa/threadforge-collector/role/telemetry"
+      to:
+        - operation:
+            ports:
+              - "4317"
+              - "4318"
+
+    # ------------------------------------------------
+    # S3 storage access — MinIO
+    # ------------------------------------------------
+    - to:
+        - operation:
+            hosts:
+              - "minio.minio.svc.cluster.local"
+            ports:
+              - "9000"   # MinIO S3 API

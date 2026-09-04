@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: router-config
+  namespace: router
+data:
+  config.yaml: |
+    router:
+      default_model: mixtral
+      timeout_ms: 80000

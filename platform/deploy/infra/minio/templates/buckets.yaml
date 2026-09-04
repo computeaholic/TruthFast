@@ -1,0 +1,88 @@
+{{- if .Values.jobs.enableBucketBootstrap }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: threadforge-bucket-bootstrap
+  namespace: minio
+  labels:
+    app: minio
+    threadforge.component: storage-bootstrap
+spec:
+  backoffLimit: 5
+  template:
+    metadata:
+      labels:
+        app: minio
+        threadforge.component: storage-bootstrap
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: minio-sa
+      imagePullSecrets:
+      - name: registry-credentials
+
+      containers:
+      - name: mc
+        image: registry.threadforge.local:30500/mirror/quay.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+
+        env:
+        - name: MINIO_HOST
+          value: "http://minio.minio.svc.cluster.local:9000"
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecretName | default "minio-secrets" }}
+              key: accesskey
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.existingSecretName | default "minio-secrets" }}
+              key: secretkey
+
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+
+          echo "[+] Waiting for MinIO..."
+          for i in $(seq 1 30); do
+            if mc alias set tf "${MINIO_HOST}" "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}" >/dev/null 2>&1; then
+              break
+            fi
+            echo "  - Retry $i/30…"
+            sleep 2
+          done
+
+          echo "[+] MinIO reachable."
+
+          buckets="
+            tf-models
+            tf-lora
+            tf-sim
+            tf-events
+            tf-audit
+            tf-uploads
+            tf-checkpoints
+            tf-registry
+            tf-traces
+            tf-traces-blocks
+            tf-traces-index
+          "
+
+          echo "[+] Creating buckets..."
+          for bucket in $buckets; do
+            mc mb --ignore-existing tf/$bucket || true
+            mc anonymous set private tf/$bucket || true
+            mc version enable tf/$bucket || true
+          done
+
+          echo "[✓] Bucket bootstrap complete."
+{{- end }}

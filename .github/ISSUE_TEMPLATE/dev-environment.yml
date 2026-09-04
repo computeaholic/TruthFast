@@ -1,0 +1,40 @@
+name: Developer Environment Improvement
+description: Improve local developer experience with CI parity
+title: "[DevEx] <tooling or editor improvement>"
+labels: ["devex"]
+body:
+  - type: textarea
+    id: gap
+    attributes:
+      label: Current Gap
+      placeholder: |
+        SQL linting runs in CI but not in VS Code.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Intended Solution
+      placeholder: |
+        Configure sqlfluff VS Code extension with repo .sqlfluff config.
+    validations:
+      required: true
+
+  - type: textarea
+    id: parity
+    attributes:
+      label: CI ↔ Local Parity Check
+      placeholder: |
+        Local editor must surface same violations as CI.
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of Done
+      placeholder: |
+        SQL errors surface live in editor; no CI-only surprises.
+    validations:
+      required: true

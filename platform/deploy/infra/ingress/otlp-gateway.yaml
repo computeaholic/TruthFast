@@ -1,0 +1,130 @@
+# Istio Gateway for OTLP (Option 1)
+# Trust boundary: mTLS from senders terminates at this Gateway
+# Termination point: Gateway (MUTUAL TLS) authenticates clients and asserts identity
+# Rollback surface: delete this Gateway and its VirtualService to remove the termination boundary
+
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: observability-otlp-gateway
+  namespace: istio-system
+  labels:
+    app: observability-otlp-gateway
+  # Owner: networking
+spec:
+  selector:
+    istio: istiod-gateway # verified against this cluster's ingress gateway label; update if ingress gateway labels change
+  servers:
+    - port:
+        number: 4317
+        name: otlp-grpc
+        protocol: HTTPS
+      hosts:
+        - "otlp.observability.example.com" # external FQDN; can also SNI to cluster-internal host
+      tls:
+        # TLS termination and client certificate verification occurs here (trust boundary)
+        mode: MUTUAL
+        credentialName: otlp-gateway-tls-placeholder # Placeholder secret supplied by Networking
+        # The 'credentialName' must reference a Kubernetes Secret with server cert/key and CA for client validation
+
+    - port:
+        number: 4318
+        name: otlp-http
+        protocol: HTTPS
+      hosts:
+        - "otlp.observability.example.com"
+      tls:
+        mode: MUTUAL
+        credentialName: otlp-gateway-tls-placeholder
+
+---
+# VirtualService routes external OTLP host to the Collector service in the observability namespace
+# Trust boundary reminder: Gateway is where client mTLS is validated; traffic forwarded here is assumed authenticated
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: otlp-collector-vs
+  namespace: observability
+  labels:
+    app: otlp-collector-routing
+spec:
+  hosts:
+    - "otlp.observability.example.com"
+  gateways:
+    - istio-system/observability-otlp-gateway
+  http:
+    - match:
+        - port: 4317
+      route:
+        - destination:
+            host: threadforge-collector-collector.observability.svc.cluster.local
+            port:
+              number: 4317
+  http:
+    - match:
+        - port: 4318
+      route:
+        - destination:
+            host: threadforge-collector-collector.observability.svc.cluster.local
+            port:
+              number: 4318
+
+---
+# NetworkPolicy to restrict ingress to the Collector: only allow traffic from the Istio ingress gateway
+# This ensures only the Gateway can reach the Collector service on OTLP ports
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-otlp-from-gateway
+  namespace: observability
+  labels:
+    app: otlp-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: threadforge-collector-collector
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # Allow specific ingress gateway pods in the istio-system namespace (verifiable and deterministic)
+        - namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - istio-system
+          podSelector:
+            matchLabels:
+              app: istiod-gateway
+    - from:
+        # Alternate ingress gateway label used by some installations; included for compatibility and auditability
+        - namespaceSelector:
+            matchExpressions:
+              - key: kubernetes.io/metadata.name
+                operator: In
+                values:
+                  - istio-system
+          podSelector:
+            matchLabels:
+              app: istio-ingressgateway
+    # Alternative: if your cluster identifies the Istio namespace by label, replace the matchExpressions above with a deterministic label match, for example:
+    # - from:
+    #     namespaceSelector:
+    #       matchLabels:
+    #         istio-injection: enabled
+      ports:
+        - protocol: TCP
+          port: 4317
+        - protocol: TCP
+          port: 4318
+      # Note: these ports correspond to the Collector service (ClusterIP) and are restricted to the Gateway above.
+
+# Note: Gateway -> Collector traffic is plaintext by design.
+# Protected by:
+# - NetworkPolicy 'allow-otlp-from-gateway' restricting ingress to the Istio ingress gateway
+# - Cluster-local routing (service ClusterIP)
+# - No external exposure of the collector pod IPs
+# Rollback note:
+# To rollback: delete this NetworkPolicy, the VirtualService, and the Gateway resources. Deleting these three resources is sufficient
+# to restore the previous state (no collector-side config changed). Ensure to document and coordinate with Networking before deletion.

@@ -1,0 +1,80 @@
+# PHASE K: Base Kustomization
+#
+# This is the immutable base configuration for ThreadForge infrastructure.
+# Contains:
+#   - Argo CD installation (argocd/)
+#   - Observability stack (observability/)
+#   - Networking infrastructure (networking/)
+#   - Policy enforcement (policy/)
+#
+# Overlays will apply environment-specific patches without modifying this base.
+#
+# Authority: Intent is declarative YAML only.
+# No logic, no conditionals, no generated content.
+# Argo CD applies this with manual sync only (no auto-sync).
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: threadforge-base
+  namespace: threadforge
+
+# Base components: each stack is self-contained
+# Namespace hierarchies are explicit
+bases: []
+
+# Include manifests from subdirectories
+# Order is intentional (dependencies first)
+resources:
+  # Argo CD infrastructure (bootstrap)
+  - argocd/install.yaml
+  - argocd/rbac.yaml
+
+  # Internal notification controller
+  - notifier/deployment.yaml
+  - notifier/service.yaml
+
+  # Observability infrastructure (namespace + stack)
+  # Canonical location: platform/deploy/infra/observability/base/
+  - ../infra/observability/base/namespace.yaml
+  - ../infra/observability/base/prometheus.yaml
+  - ../infra/observability/base/grafana.yaml
+  - ../infra/observability/prometheus
+
+  # Networking infrastructure (namespace + stack)
+  - networking/namespace.yaml
+
+  # Policy enforcement (cluster-wide)
+  - policy/kyverno-governance-block.yaml
+
+# Common labels applied to all resources
+labels:
+  - pairs:
+      app.kubernetes.io/managed-by: threadforge-gitops
+      threadforge.io/phase: base
+
+# Common annotations for audit trail
+commonAnnotations:
+  threadforge.io/description: "Base infrastructure configuration (immutable intent)"
+  threadforge.io/sync-policy: "manual"
+  argocd.argoproj.io/sync-wave: "0"
+
+# Images: intentionally left alone in base
+# Overlays will specify pinned versions per environment
+images: []
+
+# Replicas: intentionally left alone in base
+# Overlays will scale per environment
+replicas: []
+
+# Variables: none in base
+# All env-specific config goes in overlays via patches
+vars: []
+
+# Transformers: minimal
+# Only add essential namespace labeling
+transformers: []
+
+# No replacements, no patches at base level
+# Base is pure immutable intent

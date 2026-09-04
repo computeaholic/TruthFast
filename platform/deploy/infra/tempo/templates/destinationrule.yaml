@@ -1,0 +1,3 @@
+# DestinationRule intentionally omitted for sidecarless Tempo workloads.
+# If Tempo is later run as an Istio workload (sidecar-enabled), add a DestinationRule
+# with ISTIO_MUTUAL to enable mTLS between Envoy proxies.

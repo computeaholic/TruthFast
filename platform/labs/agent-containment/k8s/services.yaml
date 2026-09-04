@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: research-agent
+  namespace: agents-lab
+spec:
+  selector:
+    app: research-agent
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: writer-agent
+  namespace: agents-lab
+spec:
+  selector:
+    app: writer-agent
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: attacker-agent
+  namespace: agents-lab
+spec:
+  selector:
+    app: attacker-agent
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000

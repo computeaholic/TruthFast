@@ -1,0 +1,13 @@
+{{- if .Values.bundleService.enabled }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: spire-bundle-mtls
+  namespace: spire-system
+spec:
+  selector:
+    matchLabels:
+      app: spire-bundle
+  mtls:
+    mode: STRICT
+{{- end }}

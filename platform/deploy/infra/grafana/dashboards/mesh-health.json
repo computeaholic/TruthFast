@@ -1,0 +1,27 @@
+{
+  "uid": "mesh-health",
+  "title": "Infra — Mesh Security & Identity",
+  "schemaVersion": 39,
+  "description": "OPERATIONAL_CONTRACT: Is mTLS identity exchange working across the mesh, and are certificates expiring? | METRICS_DEPENDENCY: [istio_mtls_handshake_errors_total, istio_cert_chain_expiry_timestamp] | METRICS_SOURCE: Istio control plane (istiod) | BREAKS_IF: Istio undeployed OR istiod stops exporting metrics | OWNER: Infrastructure SRE | Last validated: 2026-02-09. Panels render only where underlying metrics are present; empty panels indicate intentionally uninstrumented components.",
+  "tags": ["infra", "istio", "identity"],
+  "datasource": "Prometheus",
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "graph",
+      "title": "mTLS Handshake Failures",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 8 },
+      "description": "This metric is not emitted unless failures occur. 'No data' indicates a healthy system.\nPANEL_CONTRACT: mTLS handshake failures observed | METRIC: istio_mtls_handshake_errors_total | NOTE: No data = no failures or exporter missing",
+      "targets": [{ "expr": "istio_mtls_handshake_errors_total" }]
+    },
+    {
+      "id": 2,
+      "type": "graph",
+      "title": "Certificate Expiry (days remaining)",
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 8 },
+      "description": "This metric is not emitted unless cert-exporter is present. 'No data' indicates the exporter is not present or no expiry events were found.\nPANEL_CONTRACT: Certificate expiry (days remaining) | METRIC: avg(istio_cert_chain_expiry_timestamp) | NOTE: No data = exporter missing",
+      "targets": [{ "expr": "avg(istio_cert_chain_expiry_timestamp)" }]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+# Example HA values for SPIRE (for operator use only)
+spireServer:
+  replicaCount: 3
+  sql:
+    enabled: true
+    secretName: spire-sql-conn
+    connectionKey: connection_string
+  metrics:
+    enabled: true
+    prometheus:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9091"
+# Note: This file is an example. Operators must deploy a Postgres instance (platform/deploy/infra/postgres)
+# and create the Secret 'spire-sql-conn' with the PostgreSQL connection string before enabling.

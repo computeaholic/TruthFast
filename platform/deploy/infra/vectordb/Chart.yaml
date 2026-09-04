@@ -1,0 +1,6 @@
+# platform/deploy/infra/vectordb/Chart.yaml
+apiVersion: v2
+name: vectordb
+description: ThreadForge — pgvector Initialization Job
+type: application
+appVersion: "16.3"

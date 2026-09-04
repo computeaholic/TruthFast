@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: buildkit-secrets-reader-binding
+  namespace: build-system
+  labels:
+    app.kubernetes.io/name: buildkit
+subjects:
+  - kind: ServiceAccount
+    name: buildkit
+    namespace: build-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: buildkit-secrets-reader

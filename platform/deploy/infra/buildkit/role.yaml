@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: buildkit-secrets-reader
+  namespace: build-system
+  labels:
+    app.kubernetes.io/name: buildkit
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["registry-credentials", "registry-ca"]
+    verbs: ["get"]
+# Minimal role allowing buildkit to fetch registry credentials and CA bundle only.

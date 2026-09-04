@@ -1,0 +1,12 @@
+{
+  "plans": [
+    {
+      "plan_digest": "plan-abc",
+      "events": [
+        {"event_id": "evt1", "expected_hash": "84649246250b02f7cec7435099d1b363e5139b20c9c041b7ba76e5c50091a979"},
+        {"event_id": "evt2", "expected_hash": "ffe05328b668531d2c38258ee498e1894c813ba360a213959ca19dde797a2b0f"},
+        {"event_id": "evt3", "expected_hash": "509621700d47262e6288974bb1de4f6a738f1f248e04ee398dd29619d4422999"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: threadforge-alerts
+  namespace: monitoring
+  labels:
+    threadforge-rules: enabled
+spec:
+  groups:
+    - name: ella-core
+      rules:
+        - alert: OperatorLedgerDBFailures
+          expr: rate(operator_ledger_db_errors_total[5m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Operator Ledger DB write failures detected"
+            description: "Ledger write failures are occurring within the last 5 minutes."
+
+        - alert: OperatorReflexBlocks
+          expr: rate(operator_reflex_block_total[2m]) > 2
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Reflex BLOCK threshold triggered"
+            description: "Operator-AI is blocking actions above normal rate."
+
+        - alert: VectorRouterMisroute
+          expr: rate(operator_router_misroute_total[5m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "VectorRouterV2 misroutes detected"
+
+        - alert: SMPBackpressureHigh
+          expr: queue_length_smp_operator > 100
+          labels:
+            severity: critical
+          annotations:
+            summary: "SMP envelope backlog high."
+            description: "Operator-AI is experiencing backpressure."

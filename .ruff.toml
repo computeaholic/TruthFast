@@ -1,0 +1,14 @@
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "B"]
+# 🚫 Suppress noisy/false-positive rules
+ignore = [
+    "F841",  # unused local variable (allowed in tests/debug)
+    "B007",  # unused loop control variable (e.g. finder, _ispkg)
+    "B008",  # FastAPI pattern (Depends, Body, File) – safe to ignore
+]
+
+[format]
+docstring-code-format = true

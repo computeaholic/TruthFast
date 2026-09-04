@@ -1,0 +1,28 @@
+# =====================================================================
+# CERT-MANAGER — ThreadForge values (Jetstack v1.19.1 compatible)
+# =====================================================================
+
+global:
+  privateKeyAlgorithm: RSA
+  privateKeyRotationPolicy: Always
+
+crds:
+  enabled: false     # CRDs handled by ThreadForge substrate
+
+replicaCount: 1
+
+podAnnotations:
+  helm.sh/recreate: "true"   # avoids immutability conflicts
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: false   # Leave false unless Prometheus Operator is active

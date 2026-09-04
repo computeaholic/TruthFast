@@ -1,0 +1,26 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: grafana-allow
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              # Ingress
+              - "spiffe://identity.threadforge.local/tier/tier3/cluster-alpha/ns/istio-system/sa/istio-ingressgateway/role/gateway"
+
+              # Grafana internal + observability
+              - "spiffe://identity.threadforge.local/tier/tier5/cluster-alpha/ns/observability/sa/grafana-sa"
+              - "spiffe://identity.threadforge.local/tier/tier5/cluster-alpha/ns/observability/sa/otel-gateway"
+
+              # Metrics access
+              - "spiffe://identity.threadforge.local/ns/observability/sa/prometheus-sa"
+      to:
+        - operation:
+            ports: ["3000"]

@@ -1,0 +1,239 @@
+# =====================================================================
+# ThreadForge — Prometheus Operator Identity Bundle
+# Namespace: observability
+# =====================================================================
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-operator
+  namespace: observability
+  labels:
+    app: prometheus-operator
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-k8s
+  namespace: observability
+  labels:
+    app: prometheus
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: alertmanager
+  namespace: observability
+  labels:
+    app: alertmanager
+
+---
+# =====================================================================
+# SPIFFE Identity Bindings
+# =====================================================================
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: prometheus-identity
+  namespace: observability
+spec:
+  serviceAccount: prometheus-k8s
+  address: "127.0.0.1"
+
+---
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: alertmanager-identity
+  namespace: observability
+spec:
+  serviceAccount: alertmanager
+  address: "127.0.0.1"
+
+---
+# =====================================================================
+# STRICT mTLS
+# =====================================================================
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: prometheus-operator-mtls
+  namespace: observability
+spec:
+  mtls:
+    mode: STRICT
+
+---
+# =====================================================================
+# INBOUND AUTH — Prometheus
+# Allow:
+#   • OTel Gateway (metrics)
+#   • Runtime workloads exposing /metrics
+#   • Blackbox exporter
+# =====================================================================
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-inbound-allow
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/observability/sa/otel-gateway"
+              - "spiffe://identity.threadforge.local/ns/observability/sa/blackbox-sa"
+              - "spiffe://identity.threadforge.local/ns/threadforge/sa/threadforge-api"
+              - "spiffe://identity.threadforge.local/ns/weave/sa/weave-router"
+              - "spiffe://identity.threadforge.local/ns/vllm-bravo/sa/vllm"
+              - "spiffe://identity.threadforge.local/ns/vllm-charlie/sa/vllm"
+      to:
+        - operation:
+            ports: ["9090"]
+
+---
+# =====================================================================
+# OUTBOUND AUTH — Prometheus
+# Allow ONLY scraping target metrics endpoints through mesh.
+# This list will grow automatically via ServiceMonitors and PodMonitors.
+# =====================================================================
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-outbound-allow
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            ports: ["8000", "9000", "6060", "8080", "3100", "4317"]
+
+    - to:
+        - operation:
+            hosts:
+              - "*.svc.cluster.local"
+
+---
+# =====================================================================
+# INBOUND AUTH — Alertmanager
+# Allow:
+#   • Prometheus
+#   • OTel Gateway
+# =====================================================================
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: alertmanager-inbound-allow
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: alertmanager
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/observability/sa/prometheus-k8s"
+              - "spiffe://identity.threadforge.local/ns/observability/sa/otel-gateway"
+
+    - to:
+        - operation:
+            ports: ["9093"]
+
+---
+# =====================================================================
+# Certificate for Prometheus Gateway
+# =====================================================================
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-gateway-tls
+  namespace: istio-system
+spec:
+  secretName: prometheus-gateway-tls-secret
+  issuerRef:
+    kind: ClusterIssuer
+    name: threadforge-ca
+  dnsNames:
+    - "prometheus.threadforge.local"
+    - "alertmanager.threadforge.local"
+
+---
+# =====================================================================
+# Mesh Gateway for Prometheus/Alertmanager
+# =====================================================================
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: prometheus-internal-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 9090
+        name: prom-http
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: prometheus-gateway-tls-secret
+      hosts:
+        - "prometheus.threadforge.local"
+
+    - port:
+        number: 9093
+        name: alertmanager-http
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: prometheus-gateway-tls-secret
+      hosts:
+        - "alertmanager.threadforge.local"
+
+---
+# =====================================================================
+# CoreDNS Rewrite for Prometheus + Alertmanager
+# =====================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-prometheus
+  namespace: kube-system
+data:
+  prometheus.server: |
+    prometheus.threadforge.local:53 {
+      rewrite name exact prometheus.threadforge.local kube-prometheus-stack-prometheus.observability.svc.cluster.local
+        forward . /etc/resolv.conf
+    }
+
+  alertmanager.server: |
+    # Alertmanager discovery is intentionally namespace-scoped but flexible
+    # to allow additional Alertmanager instances without Prometheus rewiring.
+    # Default behavior: point to Alertmanager in the 'observability' namespace.
+    {{- $amNamespaces := .Values.alertmanager.allowedNamespaces }}
+    {{- if not $amNamespaces }}
+    alertmanager.threadforge.local:53 {
+      rewrite name exact alertmanager.threadforge.local kube-prometheus-stack-alertmanager.observability.svc.cluster.local
+        forward . /etc/resolv.conf
+    }
+    {{- else }}
+    {{- range $ns := $amNamespaces }}
+    alertmanager.threadforge.local:53 {
+        rewrite name exact alertmanager.threadforge.local alertmanager.{{ $ns }}.svc.cluster.local
+        forward . /etc/resolv.conf
+    }
+    {{- end }}
+    {{- end }}

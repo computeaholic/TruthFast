@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: threadforge-system
+  labels:
+    istio-injection: enabled
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: threadforge-notifier
+  namespace: threadforge-system
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: threadforge-notifier-event-reader
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: threadforge-notifier-event-reader
+subjects:
+  - kind: ServiceAccount
+    name: threadforge-notifier
+    namespace: threadforge-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: threadforge-notifier-event-reader
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: threadforge-notifier
+  namespace: threadforge-system
+  labels:
+    app: threadforge-notifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: threadforge-notifier
+  template:
+    metadata:
+      labels:
+        app: threadforge-notifier
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundPorts: "30500"
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+    spec:
+      priorityClassName: threadforge-high
+      serviceAccountName: threadforge-notifier
+      initContainers:
+        - name: init-notifier-state
+          image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+          command:
+            - sh
+            - -c
+            - mkdir -p /var/lib/threadforge-notifier/events && chmod -R 0777 /var/lib/threadforge-notifier
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: notifier-state
+              mountPath: /var/lib/threadforge-notifier
+      containers:
+        - name: registry-trust-probe
+          image: registry.threadforge.local:30500/curlimages-curl@sha256:56efe57deecfd4145a36b24f1cfd676f8cbda808b5ce56d0f644ca0db6b1c0de
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - trap 'exit 0' TERM INT; while true; do sleep 3600; done
+          env:
+            - name: SSL_CERT_FILE
+              value: /etc/registry-ca/threadforge-ingress-ca.crt
+          volumeMounts:
+            - name: registry-ca
+              mountPath: /etc/registry-ca
+              readOnly: true
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 50m
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+        - name: threadforge-notifier
+          image: registry.threadforge.local:30500/threadforge/notifier@sha256:f8d7fa9af6c25993922c2be50958bffbdff103d06560442275bbde227d67733d
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NOTIFIER_WATCH_NAMESPACE
+              value: argocd
+            - name: NOTIFIER_POLL_INTERVAL
+              value: 15s
+            - name: NOTIFIER_SPIFFE_ID
+              value: spiffe://identity.threadforge.local/ns/threadforge-system/sa/threadforge-notifier
+            - name: NOTIFIER_EVENT_LOG_PATH
+              value: /var/lib/threadforge-notifier/events/notifier_events.jsonl
+            - name: NOTIFIER_REMEDIATION_LOG_PATH
+              value: /var/lib/threadforge-notifier/events/remediation.log
+            - name: NOTIFIER_REMEDIATION_TIMEOUT
+              value: 30s
+            - name: NOTIFIER_REMEDIATION_COOLDOWN
+              value: 60s
+            - name: NOTIFIER_MAX_REMEDIATION_ATTEMPTS
+              value: "1"
+            - name: NOTIFIER_REMEDIATION_CMD
+              value: printf 'run_id=%s\n' "$THREADFORGE_EVENT_RUN_ID" >> /var/lib/threadforge-notifier/events/remediation.log
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: notifier-state
+              mountPath: /var/lib/threadforge-notifier
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+      volumes:
+        - name: notifier-state
+          hostPath:
+            path: /var/lib/threadforge-notifier
+            type: DirectoryOrCreate
+        - name: registry-ca
+          configMap:
+            name: registry-ca

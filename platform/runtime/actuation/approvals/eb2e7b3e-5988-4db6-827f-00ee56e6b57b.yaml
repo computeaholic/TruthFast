@@ -1,0 +1,37 @@
+apiVersion: threadforge.io/v1
+kind: ActuationApproval
+metadata:
+  created_at: '2025-12-16T16:30:19.891965Z'
+  created_by: reflex-hooks
+  environment: alpha
+  plan_id: eb2e7b3e-5988-4db6-827f-00ee56e6b57b
+spec:
+  approval:
+    approval_method: null
+    approval_notes: null
+    approved_at: null
+    approved_by: null
+    status: PENDING
+  commands: []
+  governance:
+    allowed: false
+    policy_version: v1
+    reason: Awaiting human approval
+  integrity:
+    digest:
+      algorithm: sha256
+      value: fda386dec4b4ebc3fdfbaf00beb91a9c63c392f1ab7ffe8dd0144ac266c16233
+    signature_ref: null
+    signed: false
+  intent:
+    description: ''
+    originating_signal: null
+    reflex_action: null
+  safety:
+    reversible: true
+    rollback: []
+    safe_action: false
+  smp:
+    guard_verdict: PENDING
+    queue_depth: 0
+    starvation_detected: false

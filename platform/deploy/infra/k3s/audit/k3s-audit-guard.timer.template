@@ -1,0 +1,10 @@
+[Unit]
+Description=Run K3s Audit Log Guard Every 5 Minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=k3s-audit-guard.service
+
+[Install]
+WantedBy=timers.target

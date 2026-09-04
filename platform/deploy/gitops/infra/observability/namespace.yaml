@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    threadforge.io/plane: observability
+  annotations:
+    description: "Observability infrastructure (Prometheus, Grafana, Loki, Jaeger)"

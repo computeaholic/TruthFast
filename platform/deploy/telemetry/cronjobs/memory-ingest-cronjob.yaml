@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: memory-ingest
+  namespace: threadforge-system
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: threadforge-telemetry
+          containers:
+            - name: memory-ingest
+              image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c", "/scripts/memory_ingest.sh"]
+              env:
+                - name: PROM_URL
+                  value: "http://prometheus-operated.monitoring.svc:9090"
+                - name: CLICKHOUSE_URL
+                  value: "http://clickhouse:8123"
+              volumeMounts:
+                - name: memory-ingest-scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: memory-ingest-scripts
+              configMap:
+                name: memory-ingest-scripts

@@ -1,0 +1,15 @@
+{{- if .Values.istio.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.istio.tls.certificateName }}
+  namespace: istio-system
+spec:
+  secretName: {{ .Values.istio.tls.secretName }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: threadforge-ca
+  dnsNames:
+    - "{{ .Values.istio.domains.public }}"
+    - "{{ .Values.istio.domains.internal }}"
+{{- end }}

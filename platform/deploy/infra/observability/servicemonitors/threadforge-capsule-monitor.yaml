@@ -1,0 +1,38 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: threadforge-capsule-monitor
+  namespace: observability
+  labels:
+    threadforge-monitor: enabled
+    threadforge.monitor/enabled: "true"
+spec:
+  # Capsule services are not currently deployed in this cluster.
+  # The prior selector incorrectly targeted threadforge-api, producing a failing
+  # pod-IP scrape (Envoy 503). Keep the monitor but retarget it to the intended
+  # capsule app label so it becomes active only when capsule services exist.
+  selector:
+    matchLabels:
+      app: threadforge-capsule
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+      honorLabels: true
+      metricRelabelings:
+        - action: keep
+          regex: ^[A-Za-z_:][A-Za-z0-9_:]*$
+          sourceLabels: [__name__]
+        - action: replace
+          regex: ^(.*)[^\x00-\x7F](.*)$
+          replacement: ${1}_${2}
+          sourceLabels: [__name__]
+          targetLabel: __name__
+        - action: replace
+          regex: ^[^A-Za-z_:](.*)$
+          replacement: m_${1}
+          sourceLabels: [__name__]
+          targetLabel: __name__

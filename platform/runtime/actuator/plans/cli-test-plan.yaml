@@ -1,0 +1,15 @@
+approval:
+  approved: true
+  approved_at: 1765903218.469793
+  approved_by: computeaholic
+  identity_provider: local
+  plan_id: cli-test-plan
+approved: true
+commands:
+- - echo
+  - CLI approval test successful
+intent:
+  description: Test plan for CLI approval
+metadata:
+  created_at: '2024-01-01T00:00:00Z'
+  id: cli-test-plan

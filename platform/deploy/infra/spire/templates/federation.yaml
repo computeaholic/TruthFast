@@ -1,0 +1,18 @@
+{{- if false }}
+# Federation scaffold (Phase 12) - disabled by default
+# This file is intentionally inert and not referenced by runtime.
+
+enabled: false
+# If enabled, populate trust_domains with peer trust domains and certificate bundle references
+trust_domains:
+  - name: example-foreign
+    trust_bundle: "path/to/foreign/bundle.pem"
+    notes: "Example only - federation must be explicitly enabled and audited"
+
+# Revocation model (sketch):
+# - offline CRL/OCSP references per peer trust domain
+# - short-lived SVIDs preferred
+# - agreement-managed revocation lists
+
+# Non-goals: automatic trust expansion, dynamic trust loading, runtime activation
+{{- end }}

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-router
+  namespace: vector-router
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector-router
+  template:
+    metadata:
+      labels:
+        app: vector-router
+      annotations:
+        sidecar.opentelemetry.io/inject: "true"
+        otel.threadforge.io/enabled: "true"
+    spec:
+      containers:
+        - name: vector-router
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8085
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+          env:
+            - name: OPERATOR_AI_HOST
+              value: "{{ .Values.operatorAI.host }}"
+            - name: OPERATOR_AI_PORT
+              value: "{{ .Values.operatorAI.port | quote }}"
+            - name: QDRANT_HOST
+              value: "{{ .Values.qdrant.host }}"
+            - name: QDRANT_PORT
+              value: "{{ .Values.qdrant.port | quote }}"
+            - name: PG_HOST
+              value: "{{ .Values.pgvector.host }}"
+            - name: PG_PORT
+              value: "{{ .Values.pgvector.port | quote }}"
+            - name: PG_DB
+              value: "{{ .Values.pgvector.db }}"
+            - name: PG_USER
+              value: "{{ .Values.pgvector.user }}"
+            - name: PG_PASSWORD
+              value: "{{ .Values.pgvector.password }}"

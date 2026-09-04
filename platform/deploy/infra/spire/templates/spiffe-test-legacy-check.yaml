@@ -1,0 +1,12 @@
+{{- /*
+Render-time lookup check: detect legacy, non-Helm-managed spiffe-test Pod and fail at
+helm rendering step. Using 'lookup' causes Helm to query the API server at render-time
+and prevents a Helm upgrade from proceeding while a legacy Pod exists. This converts
+an ongoing CrashLoopBackOff into a deterministic, explicit install-time failure.
+*/ -}}
+{{- $ns := .Release.Namespace | default "spire-system" -}}
+{{- $legacy := lookup "v1" "Pod" $ns "spiffe-test" -}}
+{{- if $legacy }}
+{{- fail (printf "Legacy Pod 'spiffe-test' exists in namespace %s and must be removed before upgrading the Helm release. Run: kubectl -n %s delete pod spiffe-test" $ns $ns) -}}
+{{- end }}
+

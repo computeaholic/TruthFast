@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-archive-pvc
+  namespace: build-system
+  labels:
+    app.kubernetes.io/name: registry-archive
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: fast-ssd
+# Notes:
+# - This PVC is for the on-node archive store mounted by archive verification jobs and optionally buildkit for direct writes.
+# - For DARPA-grade durability, archive copies must be synchronized to off-cluster object storage (S3-compatible) as well.

@@ -1,0 +1,88 @@
+{
+  "uid": "minio-performance",
+  "title": "MinIO Performance (Bitnami)",
+  "tags": ["minio", "bitnami", "performance"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "S3 Requests / Second",
+      "id": 10,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 0 },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "rate(minio_s3_requests_total{job=\"minio\"}[1m])",
+          "legendFormat": "{{method}}"
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Request Latency (ms)",
+      "id": 11,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 7 },
+      "lines": true,
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "minio_s3_requests_duration_seconds_bucket{job=\"minio\"}",
+          "legendFormat": "{{method}} - p50",
+          "intervalFactor": 2
+        }
+      ],
+      "yaxes": [
+        { "format": "ms" },
+        { "format": "short" }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Drive Throughput (Bytes/sec)",
+      "id": 12,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 14 },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "rate(minio_cluster_disk_written_bytes_total{job=\"minio\"}[1m])",
+          "legendFormat": "{{disk}} write"
+        },
+        {
+          "expr": "rate(minio_cluster_disk_read_bytes_total{job=\"minio\"}[1m])",
+          "legendFormat": "{{disk}} read"
+        }
+      ],
+      "yaxes": [
+        { "format": "bytes" },
+        { "format": "short" }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Drive IOPS",
+      "id": 13,
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 21 },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "rate(minio_cluster_disk_writes_total{job=\"minio\"}[2m])",
+          "legendFormat": "{{disk}} writes"
+        },
+        {
+          "expr": "rate(minio_cluster_disk_reads_total{job=\"minio\"}[2m])",
+          "legendFormat": "{{disk}} reads"
+        }
+      ],
+      "yaxes": [
+        { "format": "ops" },
+        { "format": "short" }
+      ]
+    }
+  ]
+}

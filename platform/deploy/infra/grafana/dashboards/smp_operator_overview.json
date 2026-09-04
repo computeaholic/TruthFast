@@ -1,0 +1,104 @@
+{
+  "uid": "threadforge-smp-operator",
+  "title": "Runtime — SMP & Operator Overview",
+  "description": "OPERATIONAL_CONTRACT: What is the SMP queue depth by priority, message age, and enqueue throughput? | METRICS_DEPENDENCY: [smp_queue_depth{priority}, smp_oldest_pending_seconds{priority}, smp_enqueue_total{outcome}] | METRICS_SOURCE: ThreadForge SMP runtime instrumentation | BREAKS_IF: SMP service down OR metrics no longer emitted OR Prometheus scrape fails | OWNER: SMP / Runtime SRE | Last validated: 2026-02-09",
+  "datasource": "Prometheus",
+  "tags": ["threadforge", "smp", "operator", "governance"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "SMP Queue Depth (Total)",
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "description": "PANEL_CONTRACT: SMP queue depth total | METRIC: sum(smp_queue_depth) | NOTE: No data = exporter missing",
+      "targets": [
+        {
+          "expr": "sum(smp_queue_depth)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Queue Depth by Priority",
+      "id": 2,
+      "gridPos": { "x": 6, "y": 0, "w": 12, "h": 6 },
+      "description": "PANEL_CONTRACT: Queue depth by priority | METRIC: smp_queue_depth | NOTE: No data = exporter missing",
+      "targets": [
+        {
+          "expr": "smp_queue_depth",
+          "legendFormat": "Priority {{priority}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Oldest Message Age by Priority (seconds)",
+      "id": 3,
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 6 },
+      "description": "PANEL_CONTRACT: Oldest pending message age by priority | METRIC: smp_oldest_pending_seconds | NOTE: No data = exporter missing",
+      "targets": [
+        {
+          "expr": "smp_oldest_pending_seconds",
+          "legendFormat": "Priority {{priority}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "SMP Enqueue Rate (by outcome)",
+      "id": 4,
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 6 },
+      "description": "PANEL_CONTRACT: SMP enqueue rate by outcome | METRIC: rate(smp_enqueue_total[1m]) | NOTE: No data = exporter missing",
+      "targets": [
+        {
+          "expr": "rate(smp_enqueue_total[1m])",
+          "legendFormat": "{{outcome}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Operator Pressure Signal Active",
+      "id": 5,
+      "gridPos": { "x": 0, "y": 18, "w": 6, "h": 4 },
+      "description": "PANEL_CONTRACT: Queue pressure indicator | METRIC: smp_queue_depth >= 25 | NOTE: True = pressure, False = normal",
+      "targets": [
+        {
+          "expr": "sum(smp_queue_depth) >= 25",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["last"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "System Health Summary",
+      "id": 6,
+      "gridPos": { "x": 6, "y": 18, "w": 6, "h": 4 },
+      "description": "PANEL_CONTRACT: Operator health quick check | METRIC: sum(smp_queue_depth) < 25 | NOTE: False indicates sustained pressure",
+      "targets": [
+        {
+          "expr": "sum(smp_queue_depth) < 25",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["last"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    }
+  ]
+}

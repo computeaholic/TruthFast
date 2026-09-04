@@ -1,0 +1,328 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: threadforge-observability-rules
+  namespace: observability
+  labels:
+    release: tf-observability
+    threadforge.io/component: observability-alerts
+spec:
+  groups:
+
+    # ── Core infrastructure health ──────────────────────────────────────────
+    - name: observability.core
+      interval: 30s
+      rules:
+
+        # Prometheus cannot scrape itself
+        - alert: PrometheusSelfDown
+          expr: absent(prometheus_build_info{job=~".*prometheus.*"})
+          for: 2m
+          labels:
+            severity: critical
+            component: prometheus
+          annotations:
+            summary: "Prometheus is not reporting its own build info"
+            description: >
+              prometheus_build_info is absent for 2 minutes, which means
+              Prometheus has stopped scraping itself. The metrics pipeline
+              is broken.
+
+        # Zero healthy scrape targets — all scrapes are failing
+        - alert: NoScrapeTargetsUp
+          expr: count(up == 1) == 0
+          for: 5m
+          labels:
+            severity: critical
+            component: prometheus
+          annotations:
+            summary: "All Prometheus scrape targets are down"
+            description: >
+              count(up == 1) == 0 for 5 minutes. No targets are reachable.
+              Prometheus may have lost network access or the cluster is unhealthy.
+
+        # More than half of scrape targets are down
+        - alert: MajorityOfTargetsDown
+          expr: (count(up == 0) / count(up)) > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            component: prometheus
+          annotations:
+            summary: "More than 50% of scrape targets are down"
+            description: >
+              {{ $value | humanizePercentage }} of scrape targets are returning
+              up=0. Check the Prometheus targets UI for details.
+
+        - alert: PrometheusConfigReloadFailed
+          expr: prometheus_config_last_reload_successful != 1
+          for: 5m
+          labels:
+            severity: critical
+            component: prometheus
+          annotations:
+            summary: "Prometheus config reload is failing"
+            description: >
+              prometheus_config_last_reload_successful is not 1 for 5 minutes.
+              Configuration changes are no longer auto-applied and manual
+              intervention is required.
+
+    # ── Loki health ─────────────────────────────────────────────────────────
+    - name: observability.loki
+      interval: 30s
+      rules:
+
+        # Loki pod is not reachable
+        - alert: LokiDown
+          expr: up{job=~"loki.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            component: loki
+          annotations:
+            summary: "Loki is down"
+            description: >
+              Prometheus cannot scrape Loki metrics (up{job="loki/loki-podmonitor"}
+              == 0). Log ingestion and querying may be unavailable.
+
+        # Loki metric is completely absent (target disappeared from config)
+        - alert: LokiMetricAbsent
+          expr: absent(up{job=~"loki.*"})
+          for: 5m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "Loki scrape target is absent from Prometheus"
+            description: >
+              The Loki PodMonitor target is no longer present in Prometheus.
+              The PodMonitor or Loki pod may have been removed.
+
+        # Loki ingestion has stopped (ingester received no bytes recently)
+        - alert: LokiIngestionStopped
+          expr: |
+            (
+              rate(loki_distributor_bytes_received_total[10m]) == 0
+            )
+            unless absent(loki_distributor_bytes_received_total)
+          for: 10m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "Loki is receiving no log bytes"
+            description: >
+              loki_distributor_bytes_received_total has had zero rate for 10
+              minutes. Log ingestion has stopped or no workloads are shipping
+              logs to Loki.
+
+    # ── Tempo health ─────────────────────────────────────────────────────────
+    - name: observability.tempo
+      interval: 30s
+      rules:
+
+        # Tempo pod is not reachable
+        - alert: TempoDown
+          expr: up{job=~"tempo.*"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            component: tempo
+          annotations:
+            summary: "Tempo is down"
+            description: >
+              Prometheus cannot scrape Tempo metrics. Trace ingestion and
+              querying may be unavailable.
+
+        # Tempo metric is completely absent
+        - alert: TempoMetricAbsent
+          expr: absent(up{job=~"tempo.*"})
+          for: 5m
+          labels:
+            severity: warning
+            component: tempo
+          annotations:
+            summary: "Tempo scrape target is absent from Prometheus"
+            description: >
+              The Tempo PodMonitor/ServiceMonitor target is no longer present.
+              The monitor or Tempo pod may have been removed.
+
+        # Tempo ingestion has stopped (no spans received)
+        - alert: TempoIngestionStopped
+          expr: |
+            (
+              rate(tempo_distributor_spans_received_total[10m]) == 0
+            )
+            unless absent(tempo_distributor_spans_received_total)
+          for: 10m
+          labels:
+            severity: warning
+            component: tempo
+          annotations:
+            summary: "Tempo is receiving no spans"
+            description: >
+              tempo_distributor_spans_received_total has had zero rate for 10
+              minutes. No traces are being ingested. Validate that trace
+              exporters are configured and reachable.
+
+    # ── Istio mesh health ────────────────────────────────────────────────────
+    - name: observability.istio
+      interval: 30s
+      rules:
+
+        # No Istio requests seen at all (metric absent) for extended period
+        - alert: IstioRequestsAbsent
+          expr: absent_over_time(istio_requests_total[30m])
+          for: 0m
+          labels:
+            severity: warning
+            component: istio
+          annotations:
+            summary: "istio_requests_total has been absent for 30 minutes"
+            description: >
+              Prometheus has not seen any istio_requests_total data points in
+              the last 30 minutes. Either the Istio proxy PodMonitor is not
+              scraping, or no traffic has flowed through the mesh.
+              Check: kubectl get podmonitor istio-proxy -n observability
+
+        # Istiod is not reachable
+        - alert: IstiodDown
+          expr: up{job="istiod"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            component: istio
+          annotations:
+            summary: "Istiod is not reachable by Prometheus"
+            description: >
+              Prometheus cannot scrape istiod metrics. Certificate issuance
+              and mesh configuration distribution may be affected.
+
+        # Istio cert issuance failing
+        - alert: IstioCertificateIssuanceFailures
+          expr: |
+            (
+              rate(citadel_server_csr_count[5m]) > 0
+            )
+            and
+            (
+              rate(citadel_server_success_cert_issuance_count[5m]) /
+              rate(citadel_server_csr_count[5m]) < 0.9
+            )
+          for: 5m
+          labels:
+            severity: warning
+            component: istio
+          annotations:
+            summary: "Istio certificate issuance success rate < 90%"
+            description: >
+              Less than 90% of certificate signing requests are succeeding.
+              This may indicate SPIRE or CA integration issues.
+
+    # ── Observability gate execution ────────────────────────────────────────
+    - name: observability.gate
+      interval: 30s
+      rules:
+
+        - alert: ObservabilityCheckJobFailed
+          expr: increase(kube_job_status_failed{namespace="observability", job_name=~"observability-check-.*"}[10m]) > 0
+          for: 0m
+          labels:
+            severity: critical
+            component: observability-gate
+          annotations:
+            summary: "observability_check.sh CronJob failed"
+            description: >
+              The observability-check CronJob has failed within the last 10
+              minutes. Deploy gates must be treated as failed until the check
+              job returns to green.
+
+        - alert: ObservabilityCheckScheduleMissing
+          expr: (time() - kube_cronjob_status_last_schedule_time{namespace="observability", cronjob="observability-check"}) > 900
+          for: 5m
+          labels:
+            severity: warning
+            component: observability-gate
+          annotations:
+            summary: "observability-check CronJob has not scheduled recently"
+            description: >
+              The observability-check CronJob has not been scheduled for over
+              15 minutes. Continuous observability enforcement is no longer
+              operating.
+
+    # ── ForgeSec security gate health ───────────────────────────────────────
+    - name: observability.forgesec
+      interval: 30s
+      rules:
+
+        - record: forgesec_last_run_age_seconds
+          expr: |
+            time() - max(forgesec_last_run_timestamp)
+
+        - alert: ForgeSecMetricsMissing
+          expr: absent(forgesec_last_run_timestamp) == 1
+          for: 5m
+          labels:
+            severity: critical
+            component: forgesec
+          annotations:
+            summary: "ForgeSec emitted metrics are missing"
+            description: >
+              Required real ForgeSec metrics are not present in Prometheus.
+              Verify Pushgateway, ServiceMonitor, and continuity execution.
+
+        - alert: ForgeSecFailure
+          expr: (forgesec_identity_pass < 1) or (forgesec_surface_pass < 1)
+          for: 2m
+          labels:
+            severity: critical
+            component: forgesec
+          annotations:
+            summary: "ForgeSec suite failed"
+            description: >
+              ForgeSec emitted an explicit failure status for identity or surface.
+              Security gate must be treated as failed until corrected.
+
+        - alert: ForgeSecNoRecentRun
+          expr: (time() - forgesec_last_run_timestamp) > 1800
+          for: 5m
+          labels:
+            severity: warning
+            component: forgesec
+          annotations:
+            summary: "ForgeSec continuity check is not running"
+            description: >
+              forgesec-continuity-check has not scheduled for over 30 minutes.
+              Continuous security validation is inactive.
+
+        - alert: ForgeSecViolationDetected
+          expr: forgesec_violation_count > 0
+          for: 0m
+          labels:
+            severity: critical
+            component: forgesec
+          annotations:
+            summary: "ForgeSec violation count is non-zero"
+            description: >
+              ForgeSec recorded one or more violations in the last hour.
+              Investigate identity/surface checks and denial boundaries.
+
+    # ── Prometheus Operator ──────────────────────────────────────────────────
+    - name: observability.operator
+      interval: 30s
+      rules:
+
+        # Operator reconcile errors spike
+        - alert: PrometheusOperatorReconcileErrors
+          expr: rate(prometheus_operator_reconcile_errors_total[5m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            component: prometheus-operator
+          annotations:
+            summary: "Prometheus operator reconcile errors"
+            description: >
+              The Prometheus operator is experiencing reconcile errors at rate
+              {{ $value | humanize }} errors/sec for controller
+              {{ $labels.controller }}. New monitors or rules may not be
+              picked up correctly.

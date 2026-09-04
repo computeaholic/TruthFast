@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vector-router
+  namespace: monitoring
+  labels:
+    threadforge-monitor: enabled
+spec:
+  namespaceSelector:
+    matchNames:
+      - vector-router
+  selector:
+    matchLabels:
+      app: vector-router
+  endpoints:
+    - port: http
+      interval: 10s
+      path: /metrics

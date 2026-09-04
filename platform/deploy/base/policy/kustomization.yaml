@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: policy-base
+
+# Policy enforcement: Kyverno governance isolation
+resources:
+  - kyverno-governance-block.yaml
+  - kyverno-policy-validation-matrix.yaml
+  - require-signed-images.yaml
+  - vap-enforce-internal-registry-digest.yaml
+  - vap-policy-validation-matrix.yaml
+
+labels:
+  - pairs:
+      component: policy
+      enforcement: governance
+
+commonAnnotations:
+  description: "Governance isolation (Kyverno) + digest enforcement (ValidatingAdmissionPolicy)"

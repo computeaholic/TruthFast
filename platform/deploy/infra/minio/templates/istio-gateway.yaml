@@ -1,0 +1,85 @@
+# ==============================================================================
+# ThreadForge — MinIO Istio Gateway + VirtualServices
+# platform/deploy/infra/minio/templates/istio-gateway.yaml
+# ==============================================================================
+# Purpose:
+# - Provide gateway-only access to MinIO API + Console
+# - Route traffic through Istio without MinIO-managed TLS material
+# - Bind domain: *.threadforge.local
+# ==============================================================================
+
+# ================================
+# 1. GATEWAY
+# ================================
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: minio-gateway
+  namespace: istio-system
+  labels:
+    app: minio
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "minio.threadforge.local"
+        - "console.threadforge.local"
+
+---
+# ================================
+# 2. VIRTUALSERVICE — MinIO API
+# ================================
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: minio-api
+  namespace: minio
+  labels:
+    app: minio
+spec:
+  hosts:
+    - "minio.threadforge.local"
+  gateways:
+    - istio-system/minio-gateway
+  http:
+    - name: minio-api-route
+      match:
+        - uri:
+            prefix: "/"
+      route:
+        - destination:
+            host: minio.minio.svc.cluster.local
+            port:
+              number: 9000
+
+---
+# ================================
+# 3. VIRTUALSERVICE — MinIO Console
+# ================================
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: minio-console
+  namespace: minio
+  labels:
+    app: minio
+spec:
+  hosts:
+    - "console.threadforge.local"
+  gateways:
+    - istio-system/minio-gateway
+  http:
+    - name: minio-console-route
+      match:
+        - uri:
+            prefix: "/"
+      route:
+        - destination:
+            host: minio.minio.svc.cluster.local
+            port:
+              number: 9001

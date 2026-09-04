@@ -1,0 +1,77 @@
+# platform/deploy/infra/loki/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: loki
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  serviceName: loki
+  template:
+    metadata:
+      annotations:
+        loki.operator.threadforge.io/bind-ip: "Ensure Loki binds IPv4 (0.0.0.0) so cluster IPv4 clients can connect; see issue: IPv6-only bind caused in-cluster ECONNREFUSED"
+        kyverno.io/verify-images: '{"registry.threadforge.local:30500/loki@sha256:40ec9159365409fd3f49370ca184ee20ef932711125673dd4979fbae422c0b9b":"pass","registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b":"pass","registry.threadforge.local:30500/istio/proxyv2:1.29.0":"pass"}'
+        sidecar.istio.io/proxyImage: 'registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b'
+      labels:
+        app: loki
+        app.kubernetes.io/name: loki
+        sidecar.istio.io/inject: "true"
+    spec:
+      serviceAccountName: loki-sa
+      priorityClassName: {{ .Values.singleBinary.priorityClassName | quote }}
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: loki
+          image: registry.threadforge.local:30500/loki@sha256:40ec9159365409fd3f49370ca184ee20ef932711125673dd4979fbae422c0b9b
+          command:
+            - sh
+            - -c
+            - |
+              exec /usr/bin/loki -config.file=/etc/loki/config.yaml -log.level=info -server.http-listen-address=0.0.0.0 -server.grpc-listen-address=0.0.0.0
+          ports:
+            - name: http
+              containerPort: 3100
+              protocol: TCP
+            - name: grpc
+              containerPort: 9096
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /ready
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 6
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: data
+              mountPath: /data
+          resources:
+{{ toYaml .Values.singleBinary.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: loki-config
+
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 10Gi

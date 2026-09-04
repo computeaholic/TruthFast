@@ -1,0 +1,38 @@
+namespace: threadforge
+
+pvc:
+  ledger: operator-ledger-pvc
+  snapshots: operator-snapshots-pvc
+
+ledger:
+  path: /var/threadforge/logs/operator/ledger/operator_ledger.jsonl
+  archive_dir: /var/threadforge/logs/operator/archive
+
+schedule:
+  rotation: "0 0 * * *"         # midnight
+  archival: "0 * * * *"         # hourly
+  snapshot: "*/30 * * * *"      # every 30 minutes
+
+image:
+  registry: "registry.threadforge.local:30500"
+
+  rotation:
+    repository: registry.threadforge.local:30500/runtime-ledger-rotation
+    digest: sha256:e0de2c09a306446d1a702a2f8deafd5dca9d573ea01f32d9c938394641af9dda
+
+  archival:
+    repository: registry.threadforge.local:30500/runtime-ledger-archival
+    digest: sha256:b79ccd3b6a241904a422b4d33bfd55762c8e9f4d6b10604c5c1221fd48a85100
+
+  snapshot:
+    repository: registry.threadforge.local:30500/runtime-snapshot
+    digest: sha256:4e86925b447ac974b8cd6a2190cc4e2127c0b6306d150e2b1278e530d8371fe4
+
+minio:
+  url: "http://minio.minio.svc.cluster.local:9000"
+  bucket: operator-ledger
+  secretName: minio-operator-sa
+
+observations:
+  enabled: false
+  path: /var/run/threadforge/observations

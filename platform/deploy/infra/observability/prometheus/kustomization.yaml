@@ -1,0 +1,7 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - decision-signature-alerts.yaml
+  - smp-alerts.yaml
+  - smp-alerts-extended.yaml

@@ -1,0 +1,204 @@
+---
+# ThreadForge North-South Enforcement: Gateway-Only Entry
+# Ensures external traffic ONLY enters via istio-ingressgateway
+# Tasks: 1 (block non-gateway), 3 (gateway-only guarantee), 5 (remove fallback paths)
+
+---
+# POLICY 1: Deny all NodePort services except istio-ingressgateway
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-nodeport-except-gateway
+  namespace: kyverno
+spec:
+  validationFailureAction: audit  # Will be enforced post-audit
+  rules:
+    - name: deny-nodeport-services
+      match:
+        resources:
+          kinds:
+            - Service
+      validate:
+        message: "NodePort services are not allowed except istio-ingressgateway in istio-system"
+        pattern:
+          spec:
+            type: "!NodePort"
+      exclude:
+        resources:
+          namespaces:
+            - istio-system
+          names:
+            - istio-ingressgateway
+
+---
+# POLICY 2: Deny all LoadBalancer services except istio-ingressgateway
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-loadbalancer-except-gateway
+  namespace: kyverno
+spec:
+  validationFailureAction: audit
+  rules:
+    - name: deny-loadbalancer-services
+      match:
+        resources:
+          kinds:
+            - Service
+      validate:
+        message: "LoadBalancer services are not allowed except istio-ingressgateway in istio-system"
+        pattern:
+          spec:
+            type: "!LoadBalancer"
+      exclude:
+        resources:
+          namespaces:
+            - istio-system
+          names:
+            - istio-ingressgateway
+
+---
+# POLICY 3: Deny pods with hostNetwork: true (prevents direct external binding)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-host-network
+  namespace: kyverno
+spec:
+  validationFailureAction: audit
+  rules:
+    - name: deny-host-network
+      match:
+        resources:
+          kinds:
+            - Pod
+      validate:
+        message: "hostNetwork is not allowed; external traffic must go through ingress gateway"
+        pattern:
+          spec:
+            hostNetwork: "false"
+
+---
+# POLICY 4: Deny ExternalIPs on services (prevents direct IP-based access)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-external-ips
+  namespace: kyverno
+spec:
+  validationFailureAction: audit
+  rules:
+    - name: deny-external-ips
+      match:
+        resources:
+          kinds:
+            - Service
+      validate:
+        message: "externalIPs are not allowed; use ingress gateway instead"
+        pattern:
+          spec:
+            =(externalIPs): []
+
+---
+# POLICY 5: Require Host header validation on all ingress routes
+# (Enforces Task 2: Strict Host Header Enforcement)
+apiVersion: networking.istio.io/v1beta1
+kind: RequestAuthenticationPolicy  # Optional: validates host headers
+metadata:
+  name: threadforge-require-valid-host
+  namespace: istio-system
+
+---
+# POLICY 6: Deny all Ingress resources (use Istio Gateway/VirtualService only)
+# This prevents Kubernetes Ingress from bypassing SPIRE enforcement
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-kubernetes-ingress
+  namespace: kyverno
+spec:
+  validationFailureAction: enforce
+  rules:
+    - name: deny-kubernetes-ingress
+      match:
+        resources:
+          kinds:
+            - networking.k8s.io/v1/Ingress
+      validate:
+        message: "Kubernetes Ingress is not allowed; use Istio Gateway + VirtualService instead"
+        pattern:
+          # Deny all ingress by matching nothing
+          kind: "Ingress"
+          metadata:
+            name: "?*"  # Always matches, thus always denied
+
+---
+# POLICY 7: Deny VirtualServices with wildcard hosts
+# (Enforces Task 5: Remove fallback paths)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-wildcard-hosts
+  namespace: kyverno
+spec:
+  validationFailureAction: audit
+  rules:
+    - name: deny-wildcard-virtualservice-hosts
+      match:
+        resources:
+          kinds:
+            - networking.istio.io/v1beta1/VirtualService
+      validate:
+        message: "Wildcard hosts (*) are not allowed on VirtualServices; specify exact hosts for SPIFFE binding"
+        pattern:
+          spec:
+            hosts:
+              - "!*"
+
+---
+# POLICY 8: Require VirtualServices to have explicit gateways
+# (Prevents mesh-internal VirtualServices from being exposed)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-virtualservice-gateways
+  namespace: kyverno
+spec:
+  validationFailureAction: audit
+  rules:
+    - name: require-gateway-reference
+      match:
+        resources:
+          kinds:
+            - networking.istio.io/v1beta1/VirtualService
+      validate:
+        message: "All VirtualServices must reference an explicit Gateway for isolation"
+        pattern:
+          spec:
+            gateways:
+              - "?*"
+
+---
+# POLICY 9: Deny all gateway servers without explicit host binding
+# (Enforces Task 3 & 4: Gateway-only + Host header)
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-gateway-host-binding
+  namespace: kyverno
+spec:
+  validationFailureAction: audit
+  rules:
+    - name: require-gateway-hosts
+      match:
+        resources:
+          kinds:
+            - networking.istio.io/v1beta1/Gateway
+      validate:
+        message: "Gateway servers must have explicit hosts bound (no wildcard *)"
+        pattern:
+          spec:
+            servers:
+              - hosts:
+                  - "!*"
+                  - "?*"  # At least one non-wildcard host required

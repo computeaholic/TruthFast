@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: smp-router
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: smp-router
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  endpoints:
+    - port: metrics
+      interval: 10s

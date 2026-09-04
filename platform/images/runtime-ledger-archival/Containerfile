@@ -1,0 +1,5 @@
+FROM registry.threadforge.local:30500/mirror/docker.io/library/alpine:3.20
+RUN apk add --no-cache curl bash
+COPY archival.sh /app/archival.sh
+RUN chmod +x /app/archival.sh
+ENTRYPOINT ["/app/archival.sh"]

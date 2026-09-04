@@ -1,0 +1,109 @@
+cluster: "cluster-alpha"
+trust_domain: "spiffe://identity.threadforge.local"
+
+tiers:
+  tier0: 0
+  tier1: 1
+  tier2: 2
+  tier3: 3
+  tier4: 4
+  tier5: 5
+  tier6: 6
+
+namespaces:
+  spire-system:
+    tier: tier0
+    serviceaccounts:
+      - spire-server
+      - spire-agent
+
+  sovereign-operator:
+    tier: tier0
+    serviceaccounts:
+      - sovereign-operator
+
+  istio-system:
+    tier: tier1
+    serviceaccounts:
+      - istiod
+      - istio-gateway
+
+  ingress-nginx:
+    tier: tier1
+    serviceaccounts:
+      - ingress-nginx
+
+  threadforge-system:
+    tier: tier2
+    serviceaccounts:
+      - reflex
+
+  router:
+    tier: tier2
+    serviceaccounts:
+      - smp-router
+      - vector-router
+      - navbus
+
+  api:
+    tier: tier2
+    serviceaccounts:
+      - api
+
+  workers:
+    tier: tier3
+    serviceaccounts:
+      - llm-worker
+      - rag-worker
+      - embed-worker
+      - lora-worker
+
+  postgres:
+    tier: tier4
+    serviceaccounts:
+      - postgres
+
+  qdrant:
+    tier: tier4
+    serviceaccounts:
+      - qdrant
+
+  vectordb:
+    tier: tier4
+    serviceaccounts:
+      - vectordb-operator
+
+  minio:
+    tier: tier4
+    serviceaccounts:
+      - minio
+
+  monitoring:
+    tier: tier5
+    serviceaccounts:
+      - prometheus
+      - alertmanager
+
+  grafana:
+    tier: tier5
+    serviceaccounts:
+      - grafana
+
+  tempo:
+    tier: tier5
+    serviceaccounts:
+      - tempo-sa
+
+  loki:
+    tier: tier5
+    serviceaccounts:
+      - loki
+      - promtail-sa
+
+  threadforge-apps:
+    tier: tier6
+    serviceaccounts:
+      - weaveflow
+      - civsim
+      - section-leader
+      - lora-agent

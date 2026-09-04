@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-spiffe-test
+  namespace: spire-system
+spec:
+  rules:
+  - from:
+    - source:
+        principals:
+        - spiffe://identity.threadforge.local/ns/spire-system/sa/spiffe-test

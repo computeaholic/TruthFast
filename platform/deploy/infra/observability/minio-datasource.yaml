@@ -1,0 +1,24 @@
+# ==============================================================================
+# ThreadForge — MinIO Grafana Datasource Patch
+# ==============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prom-grafana-datasource-minio
+  namespace: observability
+  labels:
+    grafana_datasource: "1"
+data:
+  minio.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: MinIO
+        type: prometheus
+        access: proxy
+        uid: minio-prom
+        url: http://prometheus-prom-kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+        isDefault: false
+        editable: true
+        jsonData:
+          timeInterval: "15s"

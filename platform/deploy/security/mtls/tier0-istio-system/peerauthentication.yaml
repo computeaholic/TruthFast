@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: tier0-istiod-strict
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      istio: pilot
+  mtls:
+    mode: STRICT

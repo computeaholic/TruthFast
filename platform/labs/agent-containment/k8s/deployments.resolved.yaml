@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: research-agent
+  namespace: agents-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: research-agent
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/proxyImage: registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+        sidecar.istio.io/userVolume: '{"istio-custom-root-cert":{"configMap":{"name":"istio-ca-root-cert"}}}'
+        sidecar.istio.io/userVolumeMount: '{"istio-custom-root-cert":{"mountPath":"/etc/certs","readOnly":true}}'
+      labels:
+        app: research-agent
+    spec:
+      serviceAccountName: research-agent
+      containers:
+        - name: research-agent
+          image: registry.threadforge.local:30500/agents-lab/research-agent@sha256:efceb80afdea2b2efcc0472cf6344285b1e97de17d4ce25ba68e9dba41d2c6d6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: SPIFFE_ID
+              value: spiffe://identity.threadforge.local/ns/agents-lab/sa/research-agent
+          ports:
+            - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer-agent
+  namespace: agents-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: writer-agent
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/proxyImage: registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+        sidecar.istio.io/userVolume: '{"istio-custom-root-cert":{"configMap":{"name":"istio-ca-root-cert"}}}'
+        sidecar.istio.io/userVolumeMount: '{"istio-custom-root-cert":{"mountPath":"/etc/certs","readOnly":true}}'
+      labels:
+        app: writer-agent
+    spec:
+      serviceAccountName: writer-agent
+      containers:
+        - name: writer-agent
+          image: registry.threadforge.local:30500/agents-lab/writer-agent@sha256:cb0c5c1dea9102f21baf49f978e28377174a6eb711a312fcff68c61c955640e5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: SPIFFE_ID
+              value: spiffe://identity.threadforge.local/ns/agents-lab/sa/writer-agent
+          ports:
+            - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: attacker-agent
+  namespace: agents-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: attacker-agent
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/proxyImage: registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+        sidecar.istio.io/userVolume: '{"istio-custom-root-cert":{"configMap":{"name":"istio-ca-root-cert"}}}'
+        sidecar.istio.io/userVolumeMount: '{"istio-custom-root-cert":{"mountPath":"/etc/certs","readOnly":true}}'
+      labels:
+        app: attacker-agent
+    spec:
+      serviceAccountName: attacker-agent
+      containers:
+        - name: attacker-agent
+          image: registry.threadforge.local:30500/agents-lab/attacker-agent@sha256:5a06684734199d5d01f569b1944ad808057fd9dd7bedb5e2f95bc2147a7ecae2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: SPIFFE_ID
+              value: spiffe://identity.threadforge.local/ns/agents-lab/sa/attacker-agent
+          ports:
+            - containerPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogue-agent
+  namespace: agents-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rogue-agent
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/proxyImage: registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+        sidecar.istio.io/userVolume: '{"istio-custom-root-cert":{"configMap":{"name":"istio-ca-root-cert"}}}'
+        sidecar.istio.io/userVolumeMount: '{"istio-custom-root-cert":{"mountPath":"/etc/certs","readOnly":true}}'
+      labels:
+        app: rogue-agent
+    spec:
+      serviceAccountName: rogue-agent
+      containers:
+        - name: rogue-agent
+          image: registry.threadforge.local:30500/agents-lab/rogue-agent@sha256:22ba4b8560f321e1550915ae768132743c7d94e1ddad410329dedc7d57b03586
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          env:
+            - name: SPIFFE_ID
+              value: spiffe://identity.threadforge.local/ns/agents-lab/sa/rogue-agent
+          ports:
+            - containerPort: 8000

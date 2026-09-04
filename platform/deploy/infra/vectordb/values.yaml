@@ -1,0 +1,23 @@
+# ==============================================================================
+# ThreadForge — Vector Engine Values (Final)
+# ==============================================================================
+
+image:
+  repository: registry.threadforge.local:30500/mirror/docker.io/library/postgres
+  digest: sha256:7c5f032614297f561716f82d069837db5e7648d38059cc7e07585a6e9bbd6ba1
+  pullPolicy: IfNotPresent
+
+postgres:
+  host: "postgres.threadforge.svc.cluster.local"
+  port: 5432
+  user: "threadforge"
+  password: ""             # always injected from Vault
+  db: "threadforge"
+
+gpu:
+  mode: "auto"             # auto | cuda | vulkan | cpu
+  request: "1"
+  memory: "8Gi"
+
+ane:
+  enabled: false

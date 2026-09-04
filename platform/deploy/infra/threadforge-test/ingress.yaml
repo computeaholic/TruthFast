@@ -1,0 +1,102 @@
+---
+# Gateway: accept HTTP traffic for the echo service
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: echo-gateway
+  namespace: threadforge-test
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "echo.threadforge.local"
+---
+# VirtualService: route all inbound HTTP to echo:80
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: echo
+  namespace: threadforge-test
+spec:
+  hosts:
+    - "echo.threadforge.local"
+  gateways:
+    - echo-gateway
+  http:
+    - match:
+        - uri:
+            exact: "/"
+      route:
+        - destination:
+            host: echo.threadforge-test.svc.cluster.local
+            port:
+              number: 80
+    - match:
+        - uri:
+            exact: "/health"
+      route:
+        - destination:
+            host: echo.threadforge-test.svc.cluster.local
+            port:
+              number: 80
+    - match:
+        - uri:
+            exact: "/healthz"
+      route:
+        - destination:
+            host: echo.threadforge-test.svc.cluster.local
+            port:
+              number: 80
+---
+# Allow all external traffic to reach the ingressgateway.
+# Enforcement (RBAC/mTLS) happens at the echo service sidecar — not at the gateway edge.
+# External clients do not present SPIFFE certificates; the gateway terminates external HTTP
+# and forwards via mTLS to the backend using its own SPIRE-issued workload identity.
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: threadforge-test-ingress-deny-sensitive-paths
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  action: DENY
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "80"
+            paths:
+              - "/admin"
+              - "/api/v1/operator"
+              - "/api/v1/operator/*"
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: threadforge-test-ingress-allow
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "80"
+            methods:
+              - GET
+            hosts:
+              - "echo.threadforge.local"
+            paths:
+              - "/"
+              - "/health"
+              - "/healthz"

@@ -1,0 +1,9 @@
+images:
+  - image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+  - image: registry.threadforge.local:30500/csi-node-reg-shim@sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2
+  - image: registry.threadforge.local:30500/csi-node-shim@sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57
+  - image: registry.threadforge.local:30500/minio/minio@sha256:9966a92a734f9411e32f4f41d7d9d826fcdc0f68c4e20b70295bd4e7c11f8a2f
+  - image: registry.threadforge.local:30500/mirror/registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:33ebe428e5995e2e58188344919800fb78f0ce82ef6e78642eafa7107d80b915
+  - image: registry.threadforge.local:30500/spiffe/spire-agent@sha256:0d3cebdf4e033edaa67ef1b4197696f853bb76f8970e25010237c7e3a7c98531
+  - image: registry.threadforge.local:30500/spiffe/spire-server@sha256:817a87c37a6b77ff74c95908160ee0555daac8d8269e2fd7ad2b6e41b86164d8
+  - image: registry.threadforge.local:30500/spire-csi-driver@sha256:b60682a1496b7ffb9fd1a58b5f1ca3e497068d22b042f80b3f7c19ec8824ac84

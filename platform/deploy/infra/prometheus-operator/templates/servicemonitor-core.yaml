@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: threadforge-core-services
+  namespace: observability
+  labels:
+    threadforge-monitor: enabled
+    threadforge.monitor/enabled: "true"
+spec:
+  selector:
+    matchLabels:
+      threadforge-monitor: "true"
+  namespaceSelector:
+    any: true
+  endpoints:
+    - port: metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      {{- include "prometheus.metricNameAsciiOnly" . | nindent 6 }}

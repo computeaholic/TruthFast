@@ -1,0 +1,54 @@
+name: Governance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: governance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    name: governance
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install development tooling
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/dev.txt
+
+      - name: CI constitution audit
+        run: |
+          set -euo pipefail
+          python scripts/verify/ci_audit.py
+
+      - name: Repository topology
+        run: |
+          set -euo pipefail
+          bash scripts/verify/verify_repository_topology.sh
+
+      - name: Canonical structure
+        run: |
+          set -euo pipefail
+          bash scripts/verify/verify_repo_canonical_structure.sh
+
+      - name: Diff check
+        run: |
+          set -euo pipefail
+          git diff --check

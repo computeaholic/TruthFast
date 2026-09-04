@@ -1,0 +1,20 @@
+groups:
+- name: smp-recordings
+  rules:
+  - record: threadforge:smp:dispatch_latency_p50
+    expr: histogram_quantile(0.5, sum(rate(smp_dispatch_latency_ms_bucket[5m])) by (le, priority))
+
+  - record: threadforge:smp:dispatch_latency_p95
+    expr: histogram_quantile(0.95, sum(rate(smp_dispatch_latency_ms_bucket[5m])) by (le, priority))
+
+  - record: threadforge:smp:dispatch_latency_p99
+    expr: histogram_quantile(0.99, sum(rate(smp_dispatch_latency_ms_bucket[5m])) by (le, priority))
+
+  - record: threadforge:smp:enqueue_rate_sec
+    expr: rate(smp_enqueued_total[1m])
+
+  - record: threadforge:smp:dequeue_rate_sec
+    expr: rate(smp_dequeued_total[1m])
+
+  - record: threadforge:smp:eviction_rate_sec
+    expr: rate(smp_evicted_total[1m])

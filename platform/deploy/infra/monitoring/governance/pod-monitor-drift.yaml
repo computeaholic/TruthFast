@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: drift-classifier
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      subsystem: drift-classifier
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 5s

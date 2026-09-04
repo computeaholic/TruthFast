@@ -1,0 +1,13 @@
+# platform/deploy/infra/prometheus/templates/prometheus-deny-any.yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-deny-any
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+  action: DENY
+  rules:
+    - {}

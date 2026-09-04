@@ -1,0 +1,33 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: router-auth-filter
+  namespace: threadforge
+spec:
+  workloadSelector:
+    labels:
+      app: router
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          portNumber: 443
+        proxy:
+          proxyVersion: "1.22"
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.lua
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
+            inlineCode: |
+              function envoy_on_request(request_handle)
+                local key = request_handle:headers():get("x-threadforge-key")
+                if key == nil or key ~= os.getenv("THREADFORGE_API_KEY") then
+                  request_handle:respond(
+                    {[":status"] = "401"},
+                    "Unauthorized"
+                  )
+                end
+              end

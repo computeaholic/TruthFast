@@ -1,0 +1,31 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: threadforge-test
+spec: {}
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingress-to-echo
+  namespace: threadforge-test
+spec:
+  selector:
+    matchLabels:
+      app: echo
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway-service-account"
+              - "identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway-service-account"
+              - "spiffe://identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway"
+              - "identity.threadforge.local/ns/istio-system/sa/istio-ingressgateway"
+              - "spiffe://identity.threadforge.local/ns/threadforge-test/sa/test-client"
+              - "identity.threadforge.local/ns/threadforge-test/sa/test-client"
+              - "spiffe://identity.threadforge.local/ns/observability/sa/prometheus"
+              - "identity.threadforge.local/ns/observability/sa/prometheus"
+              - "spiffe://identity.threadforge.local/ns/observability/sa/prometheus-operator"
+              - "identity.threadforge.local/ns/observability/sa/prometheus-operator"

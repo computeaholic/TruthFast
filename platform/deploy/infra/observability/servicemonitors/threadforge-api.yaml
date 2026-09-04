@@ -1,0 +1,40 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: threadforge-api
+  namespace: observability
+  labels:
+    threadforge-monitor: enabled
+    threadforge.io/component: api
+    threadforge.monitor/enabled: "true"
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-api
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 10s
+      scrapeTimeout: 8s
+      # Critical: avoid scraping pod IPs (Host header becomes 10.42.x.x, Envoy returns 503).
+      # Force service-DNS address so routing matches service identity.
+      relabelings:
+        - targetLabel: __address__
+          replacement: threadforge-api.threadforge.svc.cluster.local:8080
+      metricRelabelings:
+        - action: keep
+          regex: ^[A-Za-z_:][A-Za-z0-9_:]*$
+          sourceLabels: [__name__]
+        - action: replace
+          regex: ^(.*)[^\x00-\x7F](.*)$
+          replacement: ${1}_${2}
+          sourceLabels: [__name__]
+          targetLabel: __name__
+        - action: replace
+          regex: ^[^A-Za-z_:](.*)$
+          replacement: m_${1}
+          sourceLabels: [__name__]
+          targetLabel: __name__

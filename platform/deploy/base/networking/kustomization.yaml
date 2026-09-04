@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: networking-base
+
+# Networking infrastructure: namespace + Istio/NetworkPolicy
+resources:
+  - namespace.yaml
+
+labels:
+  - pairs:
+      component: networking
+      stack: service-mesh
+
+commonAnnotations:
+  description: "Networking infrastructure (Istio, service mesh)"
+  namespace: istio-system

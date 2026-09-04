@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: threadforge-minio-dashboards
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  tf-minio-artifact-lineage.json: |
+    <<TF_ARTIFACT_LINEAGE_JSON>>
+  tf-minio-bucket-health.json: |
+    <<TF_BUCKET_HEALTH_JSON>>
+  tf-minio-llm-flow.json: |
+    <<TF_LLM_FLOW_JSON>>
+  tf-minio-drift-detector.json: |
+    <<TF_DRIFT_DETECTOR_JSON>>

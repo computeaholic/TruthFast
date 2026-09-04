@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  labels:
+    app: threadforge-api
+data:
+  LOG_LEVEL: {{ .Values.env.LOG_LEVEL | quote }}
+  THREADFORGE_DEBUG_MODE: {{ .Values.env.THREADFORGE_DEBUG_MODE | quote }}
+  THREADFORGE_IGNORE_SCHEMA_WARNINGS: {{ .Values.env.THREADFORGE_IGNORE_SCHEMA_WARNINGS | quote }}
+  THREADFORGE_SPIRE_AGENT_SOCKET: {{ .Values.env.THREADFORGE_SPIRE_AGENT_SOCKET | quote }}

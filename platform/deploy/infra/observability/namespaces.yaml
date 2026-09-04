@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels:
+    istio-injection: enabled
+    pod-security.kubernetes.io/enforce: restricted
+    threadforge.io/mesh: allowed
+    threadforge-tier: observability

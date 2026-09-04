@@ -1,0 +1,125 @@
+{
+  "uid": "tf-minio-unified",
+  "title": "Infra — MinIO Unified Storage Console",
+  "datasource": "Prometheus",
+  "tags": ["threadforge", "minio", "unified", "console"],
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "version": 1,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Cluster Overview",
+      "id": 800
+    },
+    {
+      "type": "stat",
+      "title": "Drives Online",
+      "id": 801,
+      "gridPos": { "h": 3, "w": 3, "x": 0, "y": 1 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [{ "expr": "sum(minio_cluster_drive_online_total)" }]
+    },
+    {
+      "type": "stat",
+      "title": "Drives Offline",
+      "id": 802,
+      "colorMode": "critical",
+      "gridPos": { "h": 3, "w": 3, "x": 3, "y": 1 },
+      "description": "This metric is event-driven and indicates drive offline events. 'No data' indicates no offline events observed in the selected time range.",
+      "targets": [{ "expr": "sum(minio_cluster_drive_offline_total)" }]
+    },
+    {
+      "type": "stat",
+      "title": "S3 Requests/sec",
+      "id": 803,
+      "gridPos": { "h": 3, "w": 3, "x": 6, "y": 1 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [{ "expr": "rate(minio_s3_requests_total[1m])" }]
+    },
+    {
+      "type": "stat",
+      "title": "p95 Latency",
+      "id": 804,
+      "gridPos": { "h": 3, "w": 3, "x": 9, "y": 1 },
+      "description": "This metric is expected under normal traffic. 'No data' indicates no requests or missing instrumentation.",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(minio_s3_ttfb_seconds_bucket[1m])))"
+        }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "Storage Ops",
+      "id": 805
+    },
+
+    {
+      "type": "graph",
+      "title": "Read/Write IOPS",
+      "id": 806,
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 5 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        { "expr": "rate(minio_disk_usage_read_bytes[1m])", "legendFormat": "Read" },
+        { "expr": "rate(minio_disk_usage_written_bytes[1m])", "legendFormat": "Write" }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "Security & IAM",
+      "id": 807
+    },
+
+    {
+      "type": "graph",
+      "title": "Access Denied & Auth Failures",
+      "id": 808,
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 11 },
+      "description": "This metric is event-driven and is only emitted on access/auth failures. 'No data' indicates no failures observed in the selected time range.",
+      "targets": [
+        { "expr": "rate(minio_s3_requests_errors_total{error=\"AccessDenied\"}[1m])" },
+        { "expr": "rate(minio_auth_failed_total[1m])" }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "Lifecycle & ILM",
+      "id": 809
+    },
+
+    {
+      "type": "graph",
+      "title": "Expirations & Version Cleanup",
+      "id": 810,
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 17 },
+      "description": "This metric is event-driven and is only emitted on lifecycle / expiration events. 'No data' indicates no lifecycle events observed in the selected time range.",
+      "targets": [
+        { "expr": "rate(minio_lifecycle_expired_objects_total[5m])" },
+        { "expr": "rate(minio_object_delete_markers_total[5m])" }
+      ]
+    },
+
+    {
+      "type": "row",
+      "title": "Slow Path Detector",
+      "id": 811
+    },
+
+    {
+      "type": "graph",
+      "title": "High Latency Requests",
+      "id": 812,
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 23 },
+      "description": "This metric is expected under normal traffic. 'No data' indicates no requests or missing instrumentation.",
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum by (le) (rate(minio_s3_ttfb_seconds_bucket[1m])))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(minio_s3_ttfb_seconds_bucket[1m])))", "legendFormat": "p99" }
+      ]
+    }
+  ]
+}

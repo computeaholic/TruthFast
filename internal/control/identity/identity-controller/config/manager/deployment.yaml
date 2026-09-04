@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-controller
+  namespace: spire-system
+  labels:
+    app: identity-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-controller
+  template:
+    metadata:
+      labels:
+        app: identity-controller
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      serviceAccountName: identity-controller
+      containers:
+        - name: manager
+          image: threadforge:30500/identity-controller:local
+          imagePullPolicy: Always
+          command:
+            - /manager
+          args:
+            - "--metrics-bind-address=:8080"
+            - "--health-probe-bind-address=:8081"
+          volumeMounts:
+            - name: spire-admin-socket
+              mountPath: /run/spire/private
+              readOnly: true
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+      volumes:
+        - name: spire-admin-socket
+          hostPath:
+            path: /run/spire/private
+            type: Directory

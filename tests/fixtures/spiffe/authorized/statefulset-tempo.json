@@ -1,0 +1,6 @@
+{
+  "metadata": { "name": "tempo", "namespace": "tempo", "annotations": { "threadforge.io/phase-override": "FROZEN", "threadforge.io/phase-override-identity": "spiffe://identity.threadforge.local/ns/threadforge/sa/jeff" }, "labels": { "threadforge.io/workload-class": "dependency-gated" } },
+  "spec": {
+    "template": { "spec": { "containers": [ { "name": "tempo", "startupProbe": {}, "readinessProbe": {} } ] } }
+  }
+}

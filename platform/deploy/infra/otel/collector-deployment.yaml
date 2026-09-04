@@ -1,0 +1,331 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: threadforge-collector
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: threadforge-collector
+rules:
+  - apiGroups: [""]
+    resources:
+      ["nodes", "nodes/proxy", "nodes/metrics", "services", "endpoints", "pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["extensions"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics", "/metrics/cadvisor"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: threadforge-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: threadforge-collector
+subjects:
+  - kind: ServiceAccount
+    name: threadforge-collector
+    namespace: observability
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: threadforge-collector
+  namespace: observability
+  labels:
+    app: threadforge-collector
+spec:
+  ports:
+    # OTLP gRPC receiver (TLS)
+    - name: grpc-otlp
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    # OTLP HTTP receiver (TLS)
+    - name: http-otlp
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    # Health check
+    - name: http-healthz
+      port: 13133
+      targetPort: 13133
+      protocol: TCP
+    # Prometheus metrics
+    - name: http-metrics
+      port: 8888
+      targetPort: 8888
+      protocol: TCP
+  selector:
+    app: threadforge-collector
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: threadforge-collector-config
+  namespace: observability
+data:
+  collector.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          # OTLP gRPC receiver (plaintext from sidecar; sidecar handles TLS to external clients)
+          grpc:
+            endpoint: 0.0.0.0:4317
+          # OTLP HTTP receiver (plaintext from sidecar; sidecar handles TLS to external clients)
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch: {}
+      tail_sampling:
+        policies:
+          - name: always_keep_system
+            string_attribute:
+              key: slo.category
+              values:
+                - safety
+                - capsule
+            type: string_attribute
+          - name: drift_high
+            numeric_attribute:
+              key: drift.score
+              min_value: 1
+            type: numeric_attribute
+          - name: slow
+            numeric_attribute:
+              key: slo.duration_ms
+              min_value: 250
+            type: numeric_attribute
+          - name: storage
+            string_attribute:
+              key: slo.category
+              values:
+                - storage
+            type: string_attribute
+          - name: reservoir
+            probabilistic:
+              sampling_percentage: 20
+            type: probabilistic
+
+    exporters:
+      debug: {}
+      otlphttp:
+        endpoint: http://tempo.observability.svc.cluster.local:4318
+        tls:
+          insecure: true
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+        path: /
+
+    service:
+      extensions:
+        - health_check
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+      pipelines:
+        traces:
+          receivers:
+            - otlp
+          processors:
+            - batch
+            - tail_sampling
+          exporters:
+            - otlphttp
+            - debug
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: threadforge-collector
+  namespace: observability
+  labels:
+    app: threadforge-collector
+    app.kubernetes.io/name: threadforge-collector
+    app.kubernetes.io/component: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: threadforge-collector
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: threadforge-collector
+        security.threadforge.io/pod: restricted
+      annotations:
+        # Hold until proxy starts to ensure TLS is ready
+        proxy.istio.io/config: '{ "holdApplicationUntilProxyStarts": true }'
+        kyverno.io/verify-images: '{"registry.threadforge.local:30500/opentelemetry-collector-contrib@sha256:020daa1130d84af199dc2060d6dc3867f350e438f36629a640a7f4a0d0ffbfb8":"pass","registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b":"pass","registry.threadforge.local:30500/istio/proxyv2:1.29.0":"pass"}'
+        sidecar.istio.io/proxyImage: 'registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b'
+        # Prometheus scrape annotations
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8888"
+        prometheus.io/path: "/metrics"
+    spec:
+      priorityClassName: threadforge-medium
+      serviceAccountName: threadforge-collector
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      # Wait for sidecar to be ready before starting collector
+      initContainers: []
+
+      containers:
+        - name: otc-container
+          image: registry.threadforge.local:30500/opentelemetry-collector-contrib@sha256:020daa1130d84af199dc2060d6dc3867f350e438f36629a640a7f4a0d0ffbfb8
+          imagePullPolicy: IfNotPresent
+
+          args:
+            - "--config=/conf/collector.yaml"
+
+          ports:
+            - name: grpc-otlp
+              containerPort: 4317
+              protocol: TCP
+            - name: http-otlp
+              containerPort: 4318
+              protocol: TCP
+            - name: http-healthz
+              containerPort: 13133
+              protocol: TCP
+            - name: http-metrics
+              containerPort: 8888
+              protocol: TCP
+
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  containerName: otc-container
+                  resource: limits.memory
+            - name: GOMAXPROCS
+              valueFrom:
+                resourceFieldRef:
+                  containerName: otc-container
+                  resource: limits.cpu
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+
+          volumeMounts:
+            - name: collector-config
+              mountPath: /conf
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+            - name: workload-certs
+              mountPath: /var/run/secrets/tls
+              readOnly: true
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http-healthz
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http-healthz
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          startupProbe:
+            httpGet:
+              path: /
+              port: http-healthz
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
+
+      volumes:
+        - name: collector-config
+          configMap:
+            name: threadforge-collector-config
+            items:
+              - key: collector.yaml
+                path: collector.yaml
+        - name: tmp
+          emptyDir: {}
+        # Workload certs from SPIRE CSI driver or Istio
+        - name: workload-certs
+          projected:
+            sources:
+              # Try to use SPIRE-issued workload certificates
+              - secret:
+                  name: threadforge-collector-cert
+                  items:
+                    - key: tls.crt
+                      path: tls.crt
+                    - key: tls.key
+                      path: tls.key
+                  optional: true
+              # Fallback: Istio will inject certs here
+              - serviceAccountToken:
+                  path: serviceaccount.token
+                  expirationSeconds: 3600
+
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: threadforge-collector
+  namespace: observability
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: threadforge-collector

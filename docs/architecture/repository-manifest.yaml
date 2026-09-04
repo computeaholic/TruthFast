@@ -1,0 +1,301 @@
+version: 1
+repository: TruthFast
+authority: repository_information_model
+project_state: release_candidate
+source_of_truth:
+  model: docs/architecture/16-Repository-Information-Model.md
+  glossary: docs/CANONICAL/ENGINEERING_LEXICON.md
+  navigation: docs/index.md
+  topology_validator: scripts/verify/verify_repository_topology.sh
+
+documents:
+  - path: docs/Agent-Containment.md
+    owner: Architecture
+    purpose: Authoritative constitutional assurance thesis and native containment whitepaper
+    consumers:
+      - engineers
+      - security architects
+      - reviewers
+      - certification authorities
+    lifecycle: authored
+    validation_entry_points:
+      - markdown link validation
+      - scripts/verify/verify_repository_topology.sh
+    landing_page: docs/Agent-Containment.md
+
+  - path: docs/architecture/17-Concept-Index.md
+    owner: Architecture
+    purpose: Canonical concept ownership graph for the architectural vocabulary
+    consumers:
+      - engineers
+      - reviewers
+      - validators
+    lifecycle: authored
+    validation_entry_points:
+      - markdown link validation
+      - scripts/verify/verify_repository_topology.sh
+    landing_page: docs/architecture/17-Concept-Index.md
+
+  - path: docs/architecture/ENGINEERING_DOCTRINE.md
+    owner: Architecture
+    purpose: Concise implementation-independent review doctrine for current TruthFast engineering
+    consumers:
+      - engineers
+      - reviewers
+      - maintainers
+    lifecycle: authored
+    validation_entry_points:
+      - markdown link validation
+      - pytest tests/test_research_doctrine_matrix.py
+    landing_page: docs/architecture/ENGINEERING_DOCTRINE.md
+
+directories:
+  - path: api
+    owner: Runtime API
+    purpose: Public runtime API surface and HTTP entrypoints
+    allowed_artifacts:
+      - containerfiles
+      - python_modules
+      - request_handlers
+      - request_models
+    prohibited_artifacts:
+      - runtime evidence
+      - proof outputs
+      - historical reports
+      - generated documentation
+    dependencies:
+      - internal
+      - platform
+    consumers:
+      - runtime clients
+      - integration tests
+      - deployment manifests
+    lifecycle: authored
+    validation_entry_points:
+      - pytest tests/test_api_prod_values_image_repo.py
+      - make validate-all
+    landing_page: api/README.md
+
+  - path: internal
+    owner: Core Implementation
+    purpose: Internal packages and implementation details that support runtime behavior
+    allowed_artifacts:
+      - python_packages
+      - go_packages
+      - helper_modules
+      - shared schemas
+    prohibited_artifacts:
+      - documentation-only pages
+      - proof outputs
+      - archive content
+    dependencies:
+      - docs/architecture
+      - scripts
+    consumers:
+      - platform
+      - scripts
+      - tests
+    lifecycle: authored
+    validation_entry_points:
+      - pytest
+      - make validate-all
+    landing_page: internal/README.md
+
+  - path: platform
+    owner: Platform Runtime
+    purpose: Runtime deployment, build, and cluster substrate
+    allowed_artifacts:
+      - kubernetes manifests
+      - build definitions
+      - runtime configuration
+      - platform modules
+    prohibited_artifacts:
+      - historical reports
+      - ad hoc proof logs
+      - temporary validation output
+    dependencies:
+      - scripts
+      - docs/CANONICAL
+      - docs/architecture
+    consumers:
+      - bootstrap
+      - preload
+      - validation scripts
+    lifecycle: authored
+    validation_entry_points:
+      - make validate-all
+      - scripts/infra/bootstrap.sh
+      - scripts/infra/preload_registry.sh
+    landing_page: platform/README.md
+
+  - path: scripts
+    owner: Automation
+    purpose: Orchestration, verification, proof, and supply-chain automation
+    allowed_artifacts:
+      - shell scripts
+      - python scripts
+      - helper libraries
+      - generated site helpers
+    prohibited_artifacts:
+      - runtime logs
+      - evidence archives
+      - handwritten deployment manifests
+    dependencies:
+      - platform
+      - docs/architecture
+    consumers:
+      - make targets
+      - CI
+      - operators
+    lifecycle: authored
+    validation_entry_points:
+      - make proof
+      - make validate-all
+    landing_page: scripts/README.md
+
+  - path: tests
+    owner: Verification
+    purpose: Regression tests, invariant checks, and proof coverage
+    allowed_artifacts:
+      - pytest modules
+      - shell tests
+      - validation fixtures
+    prohibited_artifacts:
+      - runtime evidence
+      - production manifests
+      - ad hoc reports
+    dependencies:
+      - scripts
+      - platform
+      - docs/architecture
+    consumers:
+      - make validate-all
+      - developers
+    lifecycle: authored
+    validation_entry_points:
+      - pytest
+      - make validate-all
+    landing_page: tests/README.md
+
+  - path: docs
+    owner: Documentation
+    purpose: Canonical repository documentation and architecture guidance
+    allowed_artifacts:
+      - markdown
+      - diagrams
+      - mkdocs navigation
+      - schemas that are part of documentation
+    prohibited_artifacts:
+      - runtime outputs
+      - generated build products
+      - scratch logs
+    dependencies:
+      - docs/architecture
+      - docs/CANONICAL
+      - docs/operations
+    consumers:
+      - engineers
+      - reviewers
+      - automation
+    lifecycle: authored
+    validation_entry_points:
+      - mkdocs build
+      - scripts/verify/verify_repository_topology.sh
+    landing_page: docs/index.md
+
+  - path: artifacts
+    owner: Generated Evidence
+    purpose: Generated proof, certification, and validation artifacts
+    allowed_artifacts:
+      - proof outputs
+      - validation evidence
+      - generated catalogs
+      - reproducibility traces
+    prohibited_artifacts:
+      - authored documentation
+      - source code
+      - historical narrative reports
+    dependencies:
+      - scripts
+      - tests
+    consumers:
+      - proof verifiers
+      - certification workflows
+    lifecycle: generated
+    validation_entry_points:
+      - make proof
+      - make validate-all
+    landing_page: docs/releases/README.md
+
+  - path: ADR
+    owner: Architecture
+    purpose: Architectural decisions and constitutional change records
+    allowed_artifacts:
+      - adr markdown
+      - decision records
+    prohibited_artifacts:
+      - implementation code
+      - runtime evidence
+      - generated outputs
+    dependencies:
+      - docs/architecture
+    consumers:
+      - architecture review
+      - governance
+    lifecycle: authored
+    validation_entry_points:
+      - markdown link validation
+    landing_page: ADR/README.md
+
+  - path: reports
+    owner: Historical and Research Records
+    purpose: Dated audit, convergence, forensic, and research records retained with explicit authority boundaries
+    allowed_artifacts:
+      - historical markdown reports
+      - research doctrine records
+    prohibited_artifacts:
+      - active documentation
+      - runtime code
+      - generated build products
+    dependencies:
+      - docs
+    consumers:
+      - reviewers
+      - auditors
+    lifecycle: historical
+    validation_entry_points:
+      - markdown link validation
+    landing_page: reports/README.md
+
+  - path: 10-Operating-Model
+    owner: Operating Model
+    purpose: Portable operating-model patterns and reference artifacts
+    allowed_artifacts:
+      - operating model docs
+      - engineering pattern references
+    prohibited_artifacts:
+      - runtime outputs
+      - build artifacts
+    dependencies:
+      - docs
+    consumers:
+      - operators
+      - reviewers
+    lifecycle: authored
+    validation_entry_points:
+      - markdown link validation
+    landing_page: 10-Operating-Model/README.md
+
+traceability:
+  architecture_to_implementation:
+    - docs/architecture
+    - platform
+    - scripts
+    - tests
+    - artifacts
+  evidence_to_architecture:
+    - artifacts
+    - reports
+  docs_navigation:
+    - docs/index.md
+    - docs/START_HERE.md

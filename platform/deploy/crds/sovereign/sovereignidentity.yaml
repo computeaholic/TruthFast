@@ -1,0 +1,47 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sovereignidentities.threadforge.io
+spec:
+  group: threadforge.io
+  scope: Namespaced
+  names:
+    plural: sovereignidentities
+    singular: sovereignidentity
+    kind: SovereignIdentity
+    shortNames:
+      - svid
+      - sid
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                spiffeID:
+                  type: string
+                selectors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      value:
+                        type: string
+                workload:
+                  type: object
+                  properties:
+                    namespace:
+                      type: string
+                    serviceAccount:
+                      type: string
+                    labels:
+                      type: object
+                      additionalProperties:
+                        type: string

@@ -1,0 +1,12 @@
+{
+  "metadata": { "name": "postgres", "namespace": "postgres" },
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          { "name": "postgres", "image": "postgres:14" }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "authority": "DESCRIPTIVE_REFERENCE_METADATA_ONLY",
+  "qualification_authority": false,
+  "original_review_sha": "8f6401e14a62c501553665a2219bcc4b40eb6049",
+  "original_runtime_qualified_sha": "219de001a82e4de584ea363057c8f68d2fe550bb",
+  "final_runtime_qualified_sha": "0ddae102badf2a93fe4fdb3934ad9a36db4c8c84",
+  "qualification_date": "2026-08-28",
+  "current_requalification": "PASS",
+  "counts": {
+    "systems": 54,
+    "native_v1_qualified": 31,
+    "operator_tooling": 5,
+    "supported_demo": 3,
+    "secondary_canonical": 4,
+    "advisory": 3,
+    "experimental": 2,
+    "compatibility": 2,
+    "historical": 3,
+    "dead": 1,
+    "unknown": 0,
+    "edges": 77,
+    "supported_entrypoints": 13,
+    "supported_demos": 4,
+    "proof_guarantees": 28
+  },
+  "sources": {
+    "support_contract": "platform/config/support_contract.json",
+    "system_inventory_json": "docs/architecture/system-model/system_inventory.json",
+    "system_inventory_csv": "docs/architecture/system-model/system_inventory.csv",
+    "edge_graph": "docs/architecture/system-model/edge_graph.json",
+    "edge_table": "docs/architecture/system-model/system_edges.tsv",
+    "authority_mapping": "docs/architecture/system-model/authority_mapping.json",
+    "state_ownership": "docs/architecture/system-model/state_ownership.json",
+    "claim_evidence": "docs/architecture/system-model/claim_evidence.json"
+  },
+  "taxonomy": {
+    "support_tier": [
+      "SUPPORTED_V1",
+      "SECONDARY",
+      "ADVISORY",
+      "EXPERIMENTAL",
+      "COMPATIBILITY",
+      "HISTORICAL",
+      "DEAD"
+    ],
+    "qualification_scope": [
+      "NATIVE_V1_QUALIFIED",
+      "SUPPORTED_DEMO",
+      "SECONDARY_UNQUALIFIED",
+      "SOURCE_ONLY",
+      "OPERATOR_TOOLING",
+      "HISTORICAL",
+      "NONE"
+    ]
+  },
+  "defect_disposition": {
+    "DEF-001": "CLOSED_BY_SUPPORT_RECLASSIFICATION",
+    "DEF-002": "CLOSED_QUALIFIED_24_OF_24",
+    "DEF-003": "CLOSED_BY_NON_HEALING_BOUNDED_ACTIVE_ASSURANCE"
+  }
+}

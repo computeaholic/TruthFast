@@ -1,0 +1,4 @@
+# ARCHIVAL — Service is managed by the operator (created from OpenTelemetryCollector CR)
+# Service is intentionally removed from active templates. A cluster-level service will be
+# created by the OpenTelemetry operator as appropriate for the otel-gateway CR.
+# See platform/deploy/infra/otel/policy.yaml for the canonical operator-managed configuration.

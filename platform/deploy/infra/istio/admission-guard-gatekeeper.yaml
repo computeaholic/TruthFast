@@ -1,0 +1,48 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: k8sdenyismodifyistiosidecarcm
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sDenyIsioSidecarCM
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sdenyismodifyistiosidecarcm
+
+        violation[{
+          "msg": msg,
+          "details": {"userAgent": input.review.userAgent}
+        }] {
+          # Admission requests come in as input.review
+          kind := input.review.kind.kind
+          ns := input.review.namespace
+          name := input.review.name
+          op := input.review.operation
+
+          # Match the specific resource
+          kind == "ConfigMap"
+          ns == "istio-system"
+          name == "istio-sidecar-injector"
+
+          # Only deny UPDATE or PATCH operations (writes)
+          op == "UPDATE" || op == "PATCH"
+
+          # Allow when user agent contains 'helm'
+          not contains(tolower(input.review.userAgent), "helm")
+
+          msg := sprintf("Updates to istio-sidecar-injector are restricted to Helm; rejecting userAgent=%s", [input.review.userAgent])
+        }
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sDenyIsioSidecarCM
+metadata:
+  name: deny-update-istio-sidecar-injector
+spec:
+  match:
+    kinds:
+      - apiGroups: ["" ]
+        kinds: ["ConfigMap"]
+    namespaces: ["istio-system"]

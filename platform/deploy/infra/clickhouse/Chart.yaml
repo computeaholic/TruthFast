@@ -1,0 +1,6 @@
+apiVersion: v2
+name: clickhouse
+description: ThreadForge Value Plane - ClickHouse (inert, HA-capable)
+type: application
+version: 0.1.0
+appVersion: "23.8"

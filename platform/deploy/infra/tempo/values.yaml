@@ -1,0 +1,97 @@
+# =====================================================================
+# ThreadForge — Tempo Values (Unified Chart)
+# Deterministic tracing backend for the observability plane.
+# Storage: MinIO (S3-compatible)
+# Mode: Monolithic (SingleZero) — perfect for local + clustered Lima nodes
+# =====================================================================
+
+replicaCount: 1
+
+image:
+  repository: registry.threadforge.local:30500/tempo
+  tag: "2.5.0"
+  digest: "sha256:0f168afdf979b3796c01f26786bce250f4b9d3293b3e640a8199fe90d48e5c3a"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3100
+
+# ---------------------------------------------------------------------
+# Persistence (PVC via local-path)
+# ---------------------------------------------------------------------
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClassName: standard
+
+# ---------------------------------------------------------------------
+# ThreadForge Storage Configuration (S3 → MinIO)
+# ---------------------------------------------------------------------
+tempo:
+  retention: 48h
+  search_enabled: true
+
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+
+  metrics_generator:
+    enabled: true
+    processors:
+      - spanmetrics
+
+  # Listener overrides (allow explicit binding via values)
+  listeners:
+    otlp:
+      grpc: "0.0.0.0:4317"
+      http: "0.0.0.0:4318"
+  server:
+    http_listen_address: "0.0.0.0"
+
+# ---------------------------------------------------------------------
+# Pod Security (restricted profile)
+# ---------------------------------------------------------------------
+securityContext:
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+
+# ---------------------------------------------------------------------
+# Resource Requests / Limits
+# ---------------------------------------------------------------------
+priorityClassName: threadforge-medium
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 1Gi
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+
+# ---------------------------------------------------------------------
+# NetworkPolicy labels
+# (tempo templates will reference these)
+# ---------------------------------------------------------------------
+labels:
+  threadforge.io/tier: "observability"
+  app.kubernetes.io/component: "tempo"
+
+# ---------------------------------------------------------------------
+# Istio sidecar injection
+# ---------------------------------------------------------------------
+istio:
+  injection: enabled
+
+# ---------------------------------------------------------------------
+# Environment injection (MinIO credentials)
+# These secrets must exist:
+#   - minio-secrets (namespace: minio)
+# ---------------------------------------------------------------------
+# Disable external usage reporting by default for isolated clusters
+# Set to true to allow outbound reporting to stats.grafana.org via egress gateway
+reporting:
+  enabled: false

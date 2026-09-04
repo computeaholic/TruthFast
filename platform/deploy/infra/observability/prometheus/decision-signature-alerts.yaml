@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: decision-signature-alerts
+  namespace: monitoring
+spec:
+  groups:
+  - name: decision-signature.rules
+    rules:
+      - alert: DecisionSignatureVerificationFailures
+        expr: increase(decision_signature_verification_failures_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "DecisionRecord signature verification failures detected"
+          description: "One or more DecisionRecord signature verification failures occurred in the last 5 minutes. This indicates an authority trust problem and should be investigated immediately."
+
+      - alert: PhaseBDecisionSignatureFailuresDetected
+        expr: increase(decision_signature_verification_failures_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Decision signature verification failures detected"
+          description: "Phase B detected one or more DecisionRecord signature verification failures over the last 5m. Investigate Phase A logs and ledger."

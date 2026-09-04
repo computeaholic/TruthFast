@@ -1,0 +1,122 @@
+{
+  "uid": "threadforge-smp-operator",
+  "title": "Runtime — SMP & Operator Overview",
+  "description": "Panels render only where underlying metrics are present. Empty panels indicate intentionally uninstrumented components.",
+  "datasource": "Prometheus",
+  "tags": ["threadforge", "smp", "operator", "governance"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "SMP Queue Depth",
+      "id": 1,
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "smp_queue_depth",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Starvation Events (Total)",
+      "id": 2,
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "description": "This metric is event-driven and is only emitted on failure. 'No data' indicates no failures observed in the selected time range.",
+      "targets": [
+        {
+          "expr": "smp_starvation_events_total",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Queue Depth by Priority",
+      "id": 3,
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 6 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "smp_queue_depth_by_priority",
+          "legendFormat": "Priority {{priority}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Oldest Message Age by Priority (seconds)",
+      "id": 4,
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 6 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "smp_queue_oldest_age_by_priority_seconds",
+          "legendFormat": "Priority {{priority}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "SMP Enqueue / Dequeue Rate",
+      "id": 5,
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 6 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "rate(smp_enqueued_total[1m])",
+          "legendFormat": "Enqueue / sec",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(smp_dequeued_total[1m])",
+          "legendFormat": "Dequeue / sec",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Operator Pressure Signal Active",
+      "id": 6,
+      "gridPos": { "x": 0, "y": 22, "w": 6, "h": 4 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "smp_queue_depth >= 25",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["last"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "System Health Summary",
+      "id": 7,
+      "gridPos": { "x": 6, "y": 22, "w": 6, "h": 4 },
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "smp_queue_depth < 25",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["last"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    }
+  ]
+}

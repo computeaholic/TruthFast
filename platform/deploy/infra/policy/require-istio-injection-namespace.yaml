@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-istio-injection-namespace
+  annotations:
+    policies.kyverno.io/title: ThreadForge Require Istio Injection Namespace Label
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Namespace
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: require-istio-injection-label
+      match:
+        any:
+          - resources:
+              kinds:
+                - Namespace
+      exclude:
+        any:
+          - resources:
+              names:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - spire-system
+                - istio-system
+                - kyverno
+      validate:
+        message: "Namespace must enable Istio injection"
+        pattern:
+          metadata:
+            labels:
+              istio-injection: "enabled"

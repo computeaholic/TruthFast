@@ -1,0 +1,19 @@
+image:
+  repository: registry.threadforge.local:30500/threadforge/vector-router
+  digest: sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f
+  pullPolicy: IfNotPresent
+
+operatorAI:
+  host: "ella-core.ella-core.svc.cluster.local"
+  port: 8081
+
+qdrant:
+  host: "qdrant.qdrant.svc.cluster.local"
+  port: 6333
+
+pgvector:
+  host: "postgres.db.svc.cluster.local"
+  port: 5432
+  db: threadforge
+  user: threadforge
+  password: threadforge

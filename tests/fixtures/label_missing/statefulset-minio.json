@@ -1,0 +1,12 @@
+{
+  "metadata": { "name": "minio", "namespace": "minio" },
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          { "name": "minio", "image": "minio/minio:RELEASE.2025-12-01" }
+        ]
+      }
+    }
+  }
+}

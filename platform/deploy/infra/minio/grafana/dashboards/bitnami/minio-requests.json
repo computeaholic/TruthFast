@@ -1,0 +1,132 @@
+{
+  "uid": "minio-requests",
+  "title": "MinIO Requests (Bitnami)",
+  "tags": [
+    "minio",
+    "bitnami",
+    "requests"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total S3 Requests",
+      "id": 100,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "Prometheus",
+      "description": "This metric is expected in a healthy system. 'No data' indicates missing instrumentation or scrape failure.",
+      "targets": [
+        {
+          "expr": "sum(minio_s3_requests_total)",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "4xx Errors",
+      "id": 101,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "datasource": "Prometheus",
+      "description": "This metric is event-driven and is only emitted on error. 'No data' indicates no 4xx errors observed in the selected time range.",
+      "targets": [
+        {
+          "expr": "sum(minio_s3_requests_total{status_code=~\"4..\"})",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "5xx Errors",
+      "id": 102,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "datasource": "Prometheus",
+      "description": "This metric is event-driven and is only emitted on error. 'No data' indicates no 5xx errors observed in the selected time range.",
+      "targets": [
+        {
+          "expr": "sum(minio_s3_requests_total{status_code=~\"5..\"})",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "graph",
+      "title": "Requests per Second",
+      "id": 103,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(minio_s3_requests_total[2m])",
+          "legendFormat": "{{method}} {{status_code}}"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Requests by Method",
+      "id": 104,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 11
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum by (method) (rate(minio_s3_requests_total[5m]))",
+          "legendFormat": "{{method}}"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "Request Errors by Type",
+      "id": 105,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "rate(minio_s3_requests_total{status_code=~\"4..\"}[5m])",
+          "legendFormat": "4xx"
+        },
+        {
+          "expr": "rate(minio_s3_requests_total{status_code=~\"5..\"}[5m])",
+          "legendFormat": "5xx"
+        }
+      ],
+      "description": "This metric is event-driven and emitted only on failure. ‘No data’ indicates no events in the selected time range."
+    }
+  ]
+}

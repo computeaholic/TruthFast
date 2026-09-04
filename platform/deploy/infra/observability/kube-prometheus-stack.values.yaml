@@ -1,0 +1,46 @@
+crds:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+    enableAdminAPI: false
+    externalLabels:
+      threadforge.io/tier: "5"
+      threadforge.io/plane: "observability"
+
+    retention: 7d
+    scrapeInterval: 15s
+
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 65534
+    podMetadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+
+alertmanager:
+  enabled: true
+
+grafana:
+  enabled: false   # Grafana already deployed via your chart
+
+kubeStateMetrics:
+  enabled: true
+
+nodeExporter:
+  enabled: true
+
+prometheusOperator:
+  enabled: true
+
+  admissionWebhooks:
+    patch:
+      podAnnotations:
+        sidecar.istio.io/inject: "false"
+
+  podAnnotations:
+    traffic.sidecar.istio.io/excludeOutboundIPRanges: "10.43.0.0/16"

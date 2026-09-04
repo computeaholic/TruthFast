@@ -1,0 +1,3 @@
+# ARCHIVAL — lineage ConfigMap removed
+# Lineage enrichment is implemented inside the otel-gateway OpenTelemetryCollector CR
+# using standard processors (attributes/resource/transform) and is tracked in docs.

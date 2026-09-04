@@ -1,0 +1,12 @@
+[Unit]
+Description=K3s Audit Metrics Exporter (prometheus text)
+After=network.target
+
+[Service]
+Type=simple
+# Replace /REPO_PATH with your repository absolute path before installing
+ExecStart=/usr/bin/socat TCP-LISTEN:9108,bind=127.0.0.1,reuseaddr,fork EXEC:"/bin/bash /REPO_PATH/deploy/infra/k3s/audit/metrics/audit_metrics_exporter.sh"
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

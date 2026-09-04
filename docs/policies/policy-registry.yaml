@@ -1,0 +1,46 @@
+policies:
+  - name: storage_latency
+    description: "Is storage latency within acceptable bounds to safely accept new work."
+    decision_metric: policy_decision
+    reason_metric: policy_reason_code
+    posture_included: true
+    fail_closed: true
+    owner: Storage / Observability SRE
+    blast_radius: "Storage subsystem and dependent consumers"
+    pressure_signals:
+      - name: policy_pressure_margin
+        description: "p95 margin (0.25 - p95)"
+      - name: policy_pressure_volatility
+        description: "abs(p95_5m - p95_1h)"
+    volatility_threshold: 0.1
+    counterfactuals:
+      - name: policy_cf_threshold_0_2
+        description: "Would p95 < 0.2?"
+      - name: policy_cf_threshold_0_3
+        description: "Would p95 < 0.3?"
+    causality_observed: true
+    unease_signals:
+      - name: policy_unease_allow_under_pressure
+        description: "Decision ALLOW while margin negative"
+      - name: policy_unease_deny_missing_input
+        description: "Decision DENY due to missing input"
+      - name: policy_unease_volatility_breach
+        description: "Volatility exceeded acceptable delta"
+
+  - name: spire_operational
+    description: "Is the SPIRE server operational for identity issuance and bundle distribution."
+    decision_metric: policy_decision
+    reason_metric: policy_reason_code
+    posture_included: true
+    fail_closed: true
+    owner: Identity SRE
+    blast_radius: "Identity subsystem and downstream workload SVID issuance"
+    pressure_signals:
+      - name: policy_pressure_spire_uptime
+        description: "avg over 5m of up{job=~'.*spire.*'} (fractional uptime)"
+    counterfactuals: []
+    volatility_not_applicable: true
+    causality_observed: true
+    unease_signals:
+      - name: policy_unease_spire_deny_missing_input
+        description: "Decision DENY due to missing 'up' metric for SPIRE"

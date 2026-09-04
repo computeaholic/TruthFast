@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# Tracked copy (also installed into .git/hooks/) — pre-push governance checks
+set -euo pipefail
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+# Block pushing main
+if [ "$branch" = "main" ] || [ "$branch" = "refs/heads/main" ]; then
+  echo "ERROR: pushing directly to 'main' is forbidden by governance." >&2
+  exit 1
+fi
+
+echo "[pre-push] Running quick pre-push checks: alembic-heads, schema-scan, unit-tests, docs, strict audit"
+
+# 1) Single Alembic head check
+python3 - <<'PY'
+import glob,re,sys
+files=glob.glob('db/alembic/versions/*.py')
+rev_to_down={}
+rev_set=set()
+for f in files:
+    s=open(f).read()
+    mrev=re.search(r"^revision\s*=\s*['\"]([^'\"]+)['\"]", s, flags=re.M)
+    mdown=re.search(r"^down_revision\s*=\s*['\"]([^'\"]+)['\"]", s, flags=re.M)
+    if mrev:
+        rev=mrev.group(1)
+        down=mdown.group(1) if mdown else None
+        rev_to_down[rev]=down
+        rev_set.add(rev)
+down_values=set(v for v in rev_to_down.values() if v)
+heads=[r for r in rev_set if r not in down_values]
+if len(heads)>1:
+    print('ERROR: multiple alembic heads detected locally:', heads)
+    sys.exit(2)
+print('alembic heads OK:', heads)
+PY
+
+# 2) Block CREATE TABLE in schema SQL changes (staged/committed)
+# Senior-grade behavior:
+# - If the staged blob for a schema SQL file contains a CREATE TABLE
+#   declaration, block the push (this is a direct test of the file
+#   content that will be pushed).
+# - Otherwise, inspect the staged patch for *added* lines only and
+#   search those added lines for CREATE TABLE. Ignore diff headers and
+#   hunk metadata to avoid false positives.
+if git diff --cached --name-only | grep -E "^(schemas/postgres/|deploy/infra/postgres/migrations/).*\.sql$" >/dev/null 2>&1; then
+  for f in $(git diff --cached --name-only | grep -E "^(schemas/postgres/|deploy/infra/postgres/migrations/).*\.sql$"); do
+    # If the staged blob contains CREATE TABLE, fail immediately.
+    if git show :"$f" >/dev/null 2>&1; then
+      if git show :"$f" | grep -i -n -E 'CREATE[[:space:]]+TABLE' >/dev/null 2>&1; then
+        echo "ERROR: 'CREATE TABLE' not allowed in schema SQL file: $f" >&2
+        git --no-pager diff --staged -- "$f" || true
+        exit 1
+      fi
+    fi
+
+    # Now inspect the staged patch for added lines only. We use awk to
+    # strip the leading '+' and ignore lines that are diff headers
+    # ('+++ b/...') or hunk markers ('@@'), then search the remaining
+    # added content for CREATE TABLE.
+    if git diff --cached --unified=0 -- "$f" >/dev/null 2>&1; then
+      added_lines=$(git diff --cached --unified=0 -- "$f" | \
+        awk '/^\+/{if($0 !~ /^\+\+\+ / && $0 !~ /^\+@@/) print substr($0,2)}') || true
+      if [ -n """$added_lines""" ] && printf "%s" "$added_lines" | grep -i -n -E 'CREATE[[:space:]]+TABLE' >/dev/null 2>&1; then
+        echo "ERROR: 'CREATE TABLE' not allowed in staged additions for schema SQL file: $f" >&2
+        git --no-pager diff --staged -- "$f" || true
+        exit 1
+      fi
+    fi
+  done
+fi
+
+# 3) Run unit tests (fast gate)
+TEST_PYTHON=""
+if [ -x ".venv/bin/python" ]; then
+  TEST_PYTHON=".venv/bin/python"
+elif [ -n "${VIRTUAL_ENV:-}" ] && [ -x "$VIRTUAL_ENV/bin/python" ]; then
+  TEST_PYTHON="$VIRTUAL_ENV/bin/python"
+elif command -v python3 >/dev/null 2>&1; then
+  TEST_PYTHON="$(command -v python3)"
+fi
+
+if [ -n "$TEST_PYTHON" ]; then
+  echo "[pre-push] running unit tests (no integration) with $TEST_PYTHON"
+  "$TEST_PYTHON" -m pytest -q -m "not integration" || { echo "Unit tests failed — push blocked" >&2; exit 1; }
+else
+  echo "[pre-push] no python available — skipping unit test gate" >&2
+fi
+
+if command -v make >/dev/null 2>&1; then
+  tmp_site_dir="$(mktemp -d)"
+  trap 'rm -rf "$tmp_site_dir"' EXIT
+  echo "[pre-push] running docs validation: make docs-verify"
+  THREADFORGE_MKDOCS_SITE_DIR="$tmp_site_dir" MAKEFLAGS= make docs-verify || { echo "Docs validation failed — push blocked" >&2; exit 1; }
+else
+  echo "[pre-push] make not available — skipping docs validation gate" >&2
+fi
+
+# 4) Run canonical audit surface self-check (fast failure, runtime-independent)
+if command -v make >/dev/null 2>&1; then
+  echo "[pre-push] running: make audit-check"
+  MAKEFLAGS= make audit-check || { echo "Audit surface self-check failed — push blocked" >&2; exit 1; }
+else
+  echo "[pre-push] make not available in PATH — skipping strict audit gate" >&2
+fi
+
+# 5) Supply-chain closure gate (fast text scan)
+if command -v make >/dev/null 2>&1; then
+  echo "[pre-push] running: make supply-chain-verify"
+  MAKEFLAGS= make supply-chain-verify || { echo "Supply-chain verify failed — push blocked" >&2; exit 1; }
+else
+  echo "[pre-push] make not available in PATH — skipping supply-chain gate" >&2
+fi
+
+echo "[pre-push] checks passed"
+
+exit 0

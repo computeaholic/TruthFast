@@ -1,0 +1,295 @@
+# Phase G Verification: Examples of Rejected and Accepted Manifests
+# These examples demonstrate enforcement in action.
+
+---
+# POLICY 1: block-argocd-auto-sync
+# ============================================================================
+
+# ❌ REJECTED: Application with auto-sync enabled
+# Reason: syncPolicy.automated=true violates manual-sync constraint
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-auto-sync-REJECTED
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/threadforge/threadforge
+    path: deploy
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:                  # ❌ FORBIDDEN: auto-sync enabled
+      prune: true
+      selfHeal: true
+
+# ✅ ACCEPTED: Application with manual sync only
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-manual-sync-ACCEPTED
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/threadforge/threadforge
+    path: deploy
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy: {}              # ✅ ALLOWED: empty syncPolicy = manual sync only
+
+---
+# POLICY 2: block-crossplane-provisioning
+# ============================================================================
+
+# ❌ REJECTED: Composition with AWS Subnet provisioning
+# Reason: ManagedResource (AWS primitive) forbidden, only ConfigMap allowed
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: aws-network-REJECTED
+spec:
+  compositeTypeRef:
+    apiVersion: threadforge.io/v1alpha1
+    kind: XNetworkClaim
+  resources:
+  - name: subnet
+    base:
+      apiVersion: ec2.aws.upbound.io/v1beta1    # ❌ FORBIDDEN: AWS provider
+      kind: Subnet
+      spec:
+        forProvider:
+          vpcId: ""
+          cidrBlock: "10.0.1.0/24"
+
+# ✅ ACCEPTED: Composition with ConfigMap binding only
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: network-binding-ACCEPTED
+spec:
+  compositeTypeRef:
+    apiVersion: threadforge.io/v1alpha1
+    kind: XNetworkClaim
+  resources:
+  - name: network-binding
+    base:
+      apiVersion: v1              # ✅ ALLOWED: Kubernetes core API
+      kind: ConfigMap
+      metadata:
+        name: network-binding
+      data:
+        network-id: ""
+        vpc-id: ""
+
+---
+# POLICY 3: require-claim-approval
+# ============================================================================
+
+# ❌ REJECTED: Claim without approval label
+# Reason: threadforge.io/approved=true label required
+apiVersion: threadforge.io/v1alpha1
+kind: XNetworkClaim
+metadata:
+  name: prod-network-REJECTED
+  namespace: threadforge
+  labels:
+    environment: prod
+    # ❌ MISSING: threadforge.io/approved=true
+spec:
+  parameters:
+    vpcId: vpc-abc123def456
+    environment: prod
+
+# ✅ ACCEPTED: Claim with explicit approval label
+apiVersion: threadforge.io/v1alpha1
+kind: XNetworkClaim
+metadata:
+  name: prod-network-ACCEPTED
+  namespace: threadforge
+  labels:
+    environment: prod
+    threadforge.io/approved: "true"    # ✅ REQUIRED: explicit approval
+spec:
+  parameters:
+    vpcId: vpc-abc123def456
+    environment: prod
+
+---
+# POLICY 4: block-example-claims
+# ============================================================================
+
+# ❌ REJECTED: Example claim from example-claims.yaml without approval
+# Reason: Example claims must not be applied without explicit approval override
+apiVersion: threadforge.io/v1alpha1
+kind: XNetworkClaim
+metadata:
+  name: example-staging-network-REJECTED
+  namespace: threadforge
+  labels:
+    environment: staging
+    # ❌ MISSING: threadforge.io/approved=true
+    # Even though this is from example-claims.yaml, it requires explicit approval
+spec:
+  parameters:
+    vpcId: vpc-staging-example
+    environment: staging
+
+# ✅ ACCEPTED: Example claim with explicit approval override
+apiVersion: threadforge.io/v1alpha1
+kind: XNetworkClaim
+metadata:
+  name: example-staging-network-ACCEPTED
+  namespace: threadforge
+  labels:
+    environment: staging
+    threadforge.io/approved: "true"    # ✅ ALLOWED: explicit approval override applied
+spec:
+  parameters:
+    vpcId: vpc-staging-example
+    environment: staging
+
+---
+# POLICY 5: validate-infra-references
+# ============================================================================
+
+# ❌ REJECTED: Claim referencing non-existent VPC
+# Reason: vpcId must correspond to entry in OpenTofu inventory ConfigMap
+apiVersion: threadforge.io/v1alpha1
+kind: XNetworkClaim
+metadata:
+  name: phantom-vpc-REJECTED
+  namespace: threadforge
+  labels:
+    threadforge.io/approved: "true"
+spec:
+  parameters:
+    vpcId: vpc-does-not-exist-12345    # ❌ REJECTED: Not in OpenTofu outputs
+    environment: prod
+
+# ✅ ACCEPTED: Claim referencing real OpenTofu output
+apiVersion: threadforge.io/v1alpha1
+kind: XNetworkClaim
+metadata:
+  name: valid-vpc-ACCEPTED
+  namespace: threadforge
+  labels:
+    threadforge.io/approved: "true"
+spec:
+  parameters:
+    vpcId: vpc-abc123def456            # ✅ ALLOWED: Exists in infra-inventory ConfigMap
+    environment: prod
+
+---
+# RBAC ENFORCEMENT: Crossplane Permissions
+# ============================================================================
+
+# ❌ REJECTED: Crossplane attempts to create CRD
+# Reason: RBAC role does not permit CustomResourceDefinition operations
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: xenextworks.threadforge.io
+spec:
+  names:
+    kind: XEnetwork
+    plural: xenetworks
+  scope: Namespaced
+# ❌ Crossplane SA has no rbac.apiGroups: ["apiextensions.k8s.io"] permission
+# Admission rejected by RBAC enforcement
+
+# ✅ ACCEPTED: Crossplane creates ConfigMap (within permissions)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: network-binding-output
+  namespace: threadforge
+data:
+  vpcId: vpc-abc123def456
+  environment: prod
+# ✅ Crossplane SA has ALLOW on ConfigMaps (create, patch, delete)
+
+---
+# ❌ REJECTED: Crossplane attempts to modify Argo Application
+# Reason: RBAC role does not permit argoproj.io/applications operations
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-app-REJECTED
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+# ❌ Crossplane SA has no rbac.apiGroups: ["argoproj.io"] permission
+# Admission rejected by RBAC enforcement
+
+---
+# RBAC ENFORCEMENT: Argo CD Permissions
+# ============================================================================
+
+# ❌ REJECTED: Argo CD attempts to modify Application sync policy (self-modification)
+# Reason: RBAC role does not permit PATCH on applications
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-app
+  namespace: argocd
+spec:
+  syncPolicy:
+    automated:
+      prune: true
+# ❌ Argo CD SA has no rbac.verbs: ["patch"] on applications
+# Admission rejected by RBAC enforcement (can READ, cannot MODIFY)
+
+# ✅ ACCEPTED: Argo CD reads Application definition and deploys manifests
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-app
+  namespace: argocd
+spec:
+  source:
+    repoURL: https://github.com/threadforge/threadforge
+    path: deploy
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy: {}
+# ✅ Argo CD SA can READ applications, PATCH deployments
+# Admission accepted by RBAC enforcement
+
+---
+# NETWORKPOLICY ENFORCEMENT: Crossplane Egress
+# ============================================================================
+
+# ❌ REJECTED: Crossplane pod attempts egress to AWS API
+# Reason: NetworkPolicy blocks egress to external IPs on port 443
+# Pod: crossplane-xyzabc in crossplane-system
+# Destination: ec2.us-east-1.amazonaws.com:443
+# NetworkPolicy: crossplane-api-only
+# Result: Connection timeout (no route to AWS)
+
+# ✅ ACCEPTED: Crossplane pod egress to Kubernetes API
+# Pod: crossplane-xyzabc in crossplane-system
+# Destination: kube-apiserver:6443
+# NetworkPolicy: crossplane-api-only
+# Result: Connection established
+
+---
+# NETWORKPOLICY ENFORCEMENT: Argo CD Egress
+# ============================================================================
+
+# ❌ REJECTED: Argo CD attempts egress to AWS Secrets Manager
+# Reason: NetworkPolicy allows only Git HTTPS (port 443 to specific CIDRs)
+# Pod: argocd-app-controller-xyz in argocd
+# Destination: secretsmanager.us-east-1.amazonaws.com:443
+# NetworkPolicy: argocd-git-only
+# Result: Connection blocked (not in allowed CIDR + port combination)
+
+# ✅ ACCEPTED: Argo CD egress to GitHub repository
+# Pod: argocd-app-controller-xyz in argocd
+# Destination: github.com:443
+# NetworkPolicy: argocd-git-only
+# Result: Connection established
+

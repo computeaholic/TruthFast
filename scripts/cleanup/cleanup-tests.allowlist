@@ -1,0 +1,26 @@
+# Allowlist for cleanup-tests.sh
+# Format: namespace/name
+# Intentionally retained pods (reviewer-curated)
+default/testlog
+default/testlog2
+default/testlog3
+default/testlog4
+default/testlog5
+loki/loki-test-logger-3
+loki/curl-test-allow
+loki/promtail-test-sa
+default/ni
+observability/test-connect
+observability/test-tcp
+observability/debug
+tempo/debug
+mesh-test/curl-inject-mesh-test
+forgesec/forgesec-pen-test-gbvk2
+# Additional retained pods discovered by hygiene-check
+default/csi-debug-threadforge
+default/debug-reg-local
+default/nettest
+default/nonmesh-debug
+default/test-json
+observability/s3test
+tempo/query-debug

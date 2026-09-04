@@ -1,0 +1,6 @@
+policies:
+  - name: drift_high
+    type: numeric_attribute
+    numeric_attribute:
+      key: drift.score
+      min_value: 0.5

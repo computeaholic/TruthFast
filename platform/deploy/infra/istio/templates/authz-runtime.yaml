@@ -1,0 +1,15 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-runtime-execution
+  namespace: threadforge-system
+spec:
+  selector:
+    matchLabels:
+      app: threadforge-runtime
+  rules:
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/client/*"
+              - "spiffe://identity.threadforge.local/worker/*"

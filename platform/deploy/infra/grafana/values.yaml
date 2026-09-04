@@ -1,0 +1,133 @@
+# ==========================================================
+# ThreadForge — Grafana Unified Values
+# ==========================================================
+
+replicaCount: 1
+
+image:
+  repository: registry.threadforge.local:30500/grafana
+  tag: "11.2.2"
+  digest: "sha256:3d0a9cf19db093e616b8731b4ae7ed476c8f69ab5e47cac71b12dfae8536a7c2"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+  annotations: {}
+
+# ----------------------------------------------------------
+# Persistence (ThreadForge Standard)
+# ----------------------------------------------------------
+persistence:
+  enabled: true
+  storageClassName: standard
+  size: 5Gi
+
+# ----------------------------------------------------------
+# Pod Security & Runtime Hardening
+# ----------------------------------------------------------
+securityContext:
+  runAsUser: 472
+  runAsGroup: 472
+  fsGroup: 472
+
+podAnnotations:
+  sidecar.opentelemetry.io/inject: "false"
+
+podLabels:
+  threadforge-tier: observability
+  app: grafana
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 1
+    memory: 2Gi
+
+# ----------------------------------------------------------
+# Admin Credentials (from Kubernetes Secret)
+# ----------------------------------------------------------
+admin:
+  user: "admin"
+  existingSecret: grafana-admin-secret
+  existingSecretPasswordKey: password
+
+# Additional environment variables to set in the Grafana container (e.g., GF_INSTALL_PLUGINS)
+env:
+  - name: GF_INSTALL_PLUGINS
+    value: "vertamedia-clickhouse-datasource"
+
+# ----------------------------------------------------------
+# Datasources (UNIFIED)
+# ----------------------------------------------------------
+datasources:
+  prometheus:
+    url: http://prometheus.observability.svc.cluster.local:9090
+
+  tempo:
+    url: http://tempo.observability.svc.cluster.local:3100
+
+  loki:
+    url: http://loki.observability.svc.cluster.local:3100
+
+# Additional datasources to be rendered into the grafana datasources ConfigMap
+extraDatasources:
+  clickhouse:
+    name: "ClickHouse-Value-Plane"
+    type: "vertamedia-clickhouse-datasource"
+    access: "proxy"
+    isDefault: false
+    editable: false
+    jsonData:
+      host: "clickhouse.threadforge-system.svc.cluster.local"
+      port: 9000
+      database: "value_plane"
+      protocol: "native"
+      username: "default"
+      tlsSkipVerify: true
+      defaultTable: "cost_model"
+    secureJsonData: {}
+
+# ----------------------------------------------------------
+# Dashboards
+# ----------------------------------------------------------
+dashboards:
+  enabled: true
+  defaultFolder: ThreadForge
+
+dashboardProviders:
+  - name: threadforge
+    orgId: 1
+    folder: ThreadForge
+    folderUid: threadforge
+    type: file
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards/threadforge
+
+# ----------------------------------------------------------
+# Istio Integration
+# ----------------------------------------------------------
+istio:
+  enabled: false
+
+  # Domain for the public + internal routes
+  domains:
+    public: grafana.threadforge.local
+    internal: grafana.internal.threadforge.local
+
+  tls:
+    certificateName: grafana-gateway-cert
+    secretName: grafana-gateway-tls
+
+# ----------------------------------------------------------
+# Identity + Zero-Trust Settings
+# (Rendered in templates/)
+# ----------------------------------------------------------
+identity:
+  serviceAccount: grafana-sa
+
+mtls:
+  enabled: true

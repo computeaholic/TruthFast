@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observability
+  labels:
+    threadforge.io/owned-by: grafana-chart
+  annotations:
+    threadforge.io/authority: image-only
+    threadforge.io/provisioning: immutable
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        access: proxy
+        editable: false
+        url: {{ .Values.datasources.prometheus.url }}
+        isDefault: true
+
+      - name: Loki
+        type: loki
+        uid: loki
+        access: proxy
+        editable: false
+        url: {{ .Values.datasources.loki.url }}
+
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        access: proxy
+        editable: false
+        url: {{ .Values.datasources.tempo.url }}
+        jsonData:
+          httpMethod: GET
+          serviceMap: {}
+          nodeGraph:
+            enabled: true
+          search:
+            hide: false
+          lokiSearch:
+            datasourceUid: loki
+
+{{- if .Values.extraDatasources }}
+{{- range $key, $ds := .Values.extraDatasources }}
+
+      - name: {{ $ds.name }}
+        type: {{ $ds.type }}
+        access: {{ $ds.access }}
+{{- if hasKey $ds "isDefault" }}
+        isDefault: {{ $ds.isDefault }}
+{{- end }}
+{{- if (hasKey $ds "editable") }}
+        editable: {{ $ds.editable }}
+{{- end }}
+{{- if $ds.jsonData }}
+        jsonData:
+{{- if hasKey $ds.jsonData "host" }}
+          host: {{ $ds.jsonData.host }}
+{{- end }}
+{{- if hasKey $ds.jsonData "port" }}
+          port: {{ $ds.jsonData.port }}
+{{- end }}
+{{- if hasKey $ds.jsonData "database" }}
+          database: {{ $ds.jsonData.database }}
+{{- end }}
+{{- if hasKey $ds.jsonData "protocol" }}
+          protocol: {{ $ds.jsonData.protocol }}
+{{- end }}
+{{- if hasKey $ds.jsonData "username" }}
+          username: {{ $ds.jsonData.username }}
+{{- end }}
+{{- if hasKey $ds.jsonData "tlsSkipVerify" }}
+          tlsSkipVerify: {{ $ds.jsonData.tlsSkipVerify }}
+{{- end }}
+{{- if hasKey $ds.jsonData "defaultTable" }}
+          defaultTable: {{ $ds.jsonData.defaultTable }}
+{{- end }}
+{{- end }}
+{{- if hasKey $ds "secureJsonData" }}
+{{- if not $ds.secureJsonData }}
+        secureJsonData: {}
+{{- else }}
+        secureJsonData:
+{{ toYaml $ds.secureJsonData | indent 10 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,95 @@
+global:
+  rbac:
+    create: true
+
+# The 'observability' namespace is managed externally (not by this chart). Do not create or own it via Helm.
+
+prometheus:
+  enabled: true
+
+  prometheusSpec:
+    replicas: 1
+
+    retention: 5d
+    retentionSize: "8GiB"
+
+    scrapeInterval: "15s"
+    evaluationInterval: "15s"
+
+    # Metric names are restricted to ASCII for maximum compatibility
+    # with downstream tooling, federation, and audit systems.
+    metricNameValidationScheme: "ascii"
+    metricNameEscapingScheme: "ascii"
+
+    # Whether the installed Prometheus CRD supports server-side metric name validation fields.
+    # When true, the CR will include metricNameValidationScheme and metricNameEscapingScheme.
+    supportsMetricNameValidation: false
+
+    externalLabels:
+      cluster: threadforge-alpha
+
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+    resources:
+      requests:
+        cpu: 250m
+        memory: 1Gi
+      limits:
+        memory: 3Gi
+
+    additionalScrapeConfigs:
+      - job_name: "blackbox"
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        scrape_interval: 15s
+        static_configs:
+          - targets:
+              - https://api.threadforge.local/health
+              - https://smp.threadforge.local/health
+              - https://navbus.threadforge.local/health
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: instance
+
+alertmanager:
+  enabled: true
+  # Alertmanager discovery: allow specifying explicit allowed namespaces.
+  # Alertmanager discovery is intentionally namespace-scoped but flexible
+  # to allow additional Alertmanager instances without Prometheus rewiring.
+  allowedNamespaces:
+    - observability
+  alertmanagerSpec:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: 1Gi
+
+kubeStateMetrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+nodeExporter:
+  enabled: true
+
+kubeRBACProxy:
+  enabled: true

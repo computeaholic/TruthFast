@@ -1,0 +1,102 @@
+name: Engineering Work Item
+description: A scoped, auditable engineering task (bug, hygiene, CI, tooling, refactor)
+title: "[AREA] Short, factual description"
+labels: ["needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Engineering Work Item
+        This issue represents a **real, actionable engineering task**.
+        Nothing here is speculative. Nothing is ignored.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - CI / Workflow
+        - Lint / Hygiene
+        - Test Failure
+        - Tooling / DevEx
+        - SQL / Database
+        - Identity / Auth
+        - Docs (Engineering)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: affected-area
+    attributes:
+      label: Affected Area(s)
+      description: Files, workflows, or subsystems involved
+      placeholder: ".github/workflows/repository-quality.yml, schemas/postgres/*"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement (facts only)
+      description: What is broken, failing, or missing — no theory.
+      placeholder: |
+        CI fails before jobs start due to malformed workflow YAML.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, error messages, links, run IDs, screenshots.
+      placeholder: |
+        - Run ID: 21274140995
+        - Error: workflow aborted, jobs array empty
+        - VS Code diagnostics attached
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope & Constraints
+      description: What this issue will and will not change.
+      placeholder: |
+        - No runtime logic changes
+        - Tooling / hygiene only
+        - Small, auditable commits
+    validations:
+      required: true
+
+  - type: textarea
+    id: success
+    attributes:
+      label: Definition of Done
+      description: Objective, verifiable end state.
+      placeholder: |
+        - CI runs start successfully
+        - No YAML validation errors
+        - Lint parity between CI and local
+    validations:
+      required: true
+
+  - type: dropdown
+    id: blocking
+    attributes:
+      label: Is this blocking other work?
+      options:
+        - Yes — must be fixed first
+        - No — can proceed in parallel
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        🔒 **Rule**: This issue may not be closed without either:
+        - a merged PR, or
+        - a documented decision with rationale.

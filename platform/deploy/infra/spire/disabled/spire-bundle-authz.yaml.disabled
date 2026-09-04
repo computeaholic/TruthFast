@@ -1,0 +1,20 @@
+{{- if .Values.bundleService.enabled }}
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: spire-bundle-authz
+  namespace: spire-system
+spec:
+  selector:
+    matchLabels:
+      app: spire-bundle
+  action: ALLOW
+  rules:
+{{- range $ns := .Values.bundleService.allowedNamespaces }}
+  - from:
+    - source:
+        principals:
+        - "identity.threadforge.local/ns/{{$ns}}/sa/*"
+        - "identity.threadforge.local/ns/{{$ns}}/sa/*"
+{{- end }}
+{{- end }}

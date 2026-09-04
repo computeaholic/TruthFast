@@ -1,0 +1,108 @@
+site_name: TruthFast
+site_description: "Constitutional assurance architecture for autonomous execution."
+site_url: https://localhost:8000 # Local development URL
+
+repo_name: computeaholic/TruthFast
+repo_url: https://github.com/computeaholic/TruthFast
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.tracking
+    - content.code.annotate
+    - content.tabs.link
+    - search.highlight
+    - search.share
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: teal
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Overview:
+      - Constitutional Assurance: Agent-Containment.md
+      - Home: index.md
+      - Start Here: START_HERE.md
+      - Repository Information Model: architecture/16-Repository-Information-Model.md
+  - Architecture:
+      - System Atlas: architecture/SYSTEM_ATLAS.md
+      - Engineering Doctrine: architecture/ENGINEERING_DOCTRINE.md
+      - Assurance Reference Architecture: architecture/00-ThreadForge-Assurance-Reference-Architecture.md
+      - Constitution: architecture/01-Constitution.md
+      - Principles: architecture/02-Constitutional-Principles.md
+      - Assurance Capabilities: architecture/03-Assurance-Capabilities.md
+      - Claims: architecture/04-Constitutional-Claims.md
+      - Evidence Contracts: architecture/05-Evidence-Contracts.md
+      - Proof Architecture: architecture/06-Proof-Architecture.md
+      - Certification Architecture: architecture/07-Certification-Architecture.md
+      - Provider Architecture: architecture/08-Provider-Architecture.md
+      - Capability Bindings: architecture/09-Capability-Bindings.md
+      - Profiles: architecture/10-Profiles.md
+      - Native Reference Implementation: architecture/11-Native-Reference-Implementation.md
+      - BigBang Profile: architecture/12-BigBang-Profile.md
+      - Vocabulary: CANONICAL/ENGINEERING_LEXICON.md
+      - Governance: architecture/14-Governance.md
+      - Migration Strategy: architecture/15-Migration-Strategy.md
+      - Concept Index: architecture/17-Concept-Index.md
+      - Machine-Readable System Model: architecture/system-model/README.md
+      - Post-V1 Architectural Assets: architecture/POST_V1_ARCHITECTURAL_ASSETS.md
+      - Architecture Manifest: architecture/_manifest.md
+  - Canonical:
+      - Overview: CANONICAL/README.md
+      - Architecture: CANONICAL/ARCHITECTURE.md
+      - Audit Model: CANONICAL/AUDIT_MODEL.md
+      - Identity: CANONICAL/IDENTITY.md
+      - Observability: CANONICAL/OBSERVABILITY.md
+      - Policy Enforcement: CANONICAL/POLICY_ENFORCEMENT.md
+      - Proof Contract: CANONICAL/PROOF_CONTRACT.md
+      - Proof Model: CANONICAL/PROOF_MODEL.md
+      - Red Team: CANONICAL/REDTEAM.md
+      - Runbook: CANONICAL/RUNBOOK.md
+      - Security Model: CANONICAL/SECURITY_MODEL.md
+      - Supply Chain: CANONICAL/SUPPLY_CHAIN.md
+      - Trust Model: CANONICAL/TRUST_MODEL.md
+  - Operations:
+      - Overview: operations/README.md
+      - Observability: operations/OBSERVABILITY.md
+  - Governance:
+      - Overview: governance/README.md
+      - Registry Diagnostic Isolation: governance/REGISTRY_DIAGNOSTIC_ISOLATION_PLAN.md
+      - Registry Governance Enforcement: governance/REGISTRY_GOVERNANCE_ENFORCEMENT_PLAN.md
+      - Registry Promotion Boundary: governance/REGISTRY_PROMOTION_BOUNDARY.md
+      - Registry Retention Policy: governance/REGISTRY_RETENTION_POLICY.md
+  - Lifecycle:
+      - Overview: lifecycle/README.md
+      - Registry Purge Execution Matrix: lifecycle/REGISTRY_PURGE_EXECUTION_MATRIX.md
+      - Registry Retention Classification: lifecycle/REGISTRY_RETENTION_CLASSIFICATION.md
+  - Policies:
+      - Overview: policies/README.md
+  - Releases:
+      - Overview: releases/README.md
+      - Certification Baseline: releases/CERTIFICATION_BASELINE.md
+  - Release:
+      - Public Release Provenance: releases/PUBLIC_RELEASE_PROVENANCE.md
+      - Certification Baseline (historical): releases/CERTIFICATION_BASELINE.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - codehilite
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/computeaholic
+      name: Jeff (computeaholic)

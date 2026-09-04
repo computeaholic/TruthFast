@@ -1,0 +1,5 @@
+FROM alpine:3.18
+RUN apk add --no-cache ca-certificates
+COPY csi-node-reg-proxy /usr/local/bin/csi-node-reg-proxy
+RUN chmod +x /usr/local/bin/csi-node-reg-proxy
+ENTRYPOINT ["/usr/local/bin/csi-node-reg-proxy"]

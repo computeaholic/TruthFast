@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spire-cli-runner
+  namespace: spire-system
+spec:
+  nodeName: threadforge
+  restartPolicy: Never
+  containers:
+  - name: spire-cli
+    image: registry.threadforge.local:30500/spiffe/spire-server@sha256:817a87c37a6b77ff74c95908160ee0555daac8d8269e2fd7ad2b6e41b86164d8
+    command: ["/opt/spire/bin/spire-server","entry","create","-spiffeID","spiffe://identity.threadforge.local/ns/minio/sa/minio-envoy","-selector","k8s:ns:minio","-selector","k8s:sa:minio-envoy-sa","-ttl","3600","-socketPath","/tmp/spire-server/private/api.sock"]
+    resources:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    volumeMounts:
+    - name: server-socket
+      mountPath: /tmp/spire-server/private
+  volumes:
+  - name: server-socket
+    hostPath:
+      path: /tmp/spire-server/private
+      type: DirectoryOrCreate

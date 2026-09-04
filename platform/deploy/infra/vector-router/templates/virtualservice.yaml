@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: vector-router
+spec:
+  hosts:
+    - vector-router
+  http:
+    - name: primary-route
+      match:
+        - uri:
+            prefix: "/vector"
+      route:
+        - destination:
+            host: vector-router
+            subset: stable
+          weight: 100

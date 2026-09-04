@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: spire-workload-test
+  namespace: default
+spec:
+  serviceAccountName: default
+  containers:
+  - name: test
+    image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:ac9c255664075e199f0527b3ba61b0d09a907bde8e699777469dd0c9c43ba004
+    command: ["sleep", "3600"]
+    resources:
+      requests:
+        cpu: 25m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+    volumeMounts:
+    - name: spire-socket
+      mountPath: /run/spire/socket
+      readOnly: true
+  volumes:
+  - name: spire-socket
+    hostPath:
+      path: /run/spire/socket
+      type: Directory

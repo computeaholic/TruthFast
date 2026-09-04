@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "active_guarantees": [
+    "admission_enforced",
+    "audit_logging",
+    "cert_rotation_continuity",
+    "east_west_isolation",
+    "existing_session_fail_closed",
+    "north_south_boundary",
+    "rbac_resolution",
+    "sidecar_enforcement",
+    "tenant_isolation"
+  ],
+  "active_top_level_fields": [
+    "admission_rejection",
+    "ephemeral_containers_blocked"
+  ],
+  "compatibility_aliases": {
+    "read_only_guarantees": "passive_guarantees"
+  },
+  "proof_heals_canonical_state": false,
+  "canonical_proof_mutation_mode": "bounded_active_assurance"
+}

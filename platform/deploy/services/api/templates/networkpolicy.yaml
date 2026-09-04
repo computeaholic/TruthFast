@@ -1,0 +1,94 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: threadforge-api-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: threadforge-api
+
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+        # Allow traffic only from Istio ingress gateway
+        - namespaceSelector:
+            matchLabels:
+              istio-injection: disabled
+          podSelector:
+            matchLabels:
+              istio: ingressgateway
+
+        # Allow in-mesh traffic (strict mTLS)
+        - namespaceSelector:
+            matchLabels:
+              istio-injection: enabled
+
+      ports:
+        - protocol: TCP
+          port: 8080
+
+  egress:
+    # DNS egress (required for pod to resolve any service names)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+
+    # Istio control plane egress (required for sidecar certificate signing)
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - port: 15012
+          protocol: TCP
+        - port: 15014
+          protocol: TCP
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: minio
+      ports:
+        - port: 9000
+          protocol: TCP
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - port: 8200
+          protocol: TCP
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgres
+      ports:
+        - port: 5432
+          protocol: TCP
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: qdrant
+      ports:
+        - port: 6333
+          protocol: TCP
+
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - port: 6379
+          protocol: TCP

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-prometheus
+  namespace: kube-system
+data:
+  prometheus.server: |
+    prometheus.threadforge.local:53 {
+        errors
+        rewrite name exact prometheus.threadforge.local prometheus-k8s.monitoring.svc.cluster.local
+        forward . /etc/resolv.conf
+    }

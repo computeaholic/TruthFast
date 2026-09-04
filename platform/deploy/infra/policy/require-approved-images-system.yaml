@@ -1,0 +1,102 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-approved-images-system
+  annotations:
+    policies.kyverno.io/title: ThreadForge Require Approved Images In System Namespaces
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Pod
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: require-approved-system-images
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - kube-system
+                - istio-system
+                - kyverno
+      preconditions:
+        all:
+          - key: "{{ request.operation || 'BACKGROUND' }}"
+            operator: AnyIn
+            value:
+              - CREATE
+              - UPDATE
+      validate:
+        message: "Only approved system images are allowed"
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.containers[].image || `[]` }}"
+                operator: AnyNotIn
+                value:
+                  # ── bitnami/kubectl (cleanup jobs) ────────────────────────
+                  - bitnami/kubectl:1.28.5
+                  - registry.threadforge.local:30500/mirror/docker.io/bitnami/kubectl:1.31.4@sha256:a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+                  # ── kyverno controllers ───────────────────────────────────
+                  - registry.threadforge.local:30500/kyverno/background-controller@sha256:148e3f0f5f0c84f3cf1428f5460b680c15d1e190f3e6182e2e02ff177071a5be
+                  - registry.threadforge.local:30500/kyverno/background-controller:v1.12.6@sha256:148e3f0f5f0c84f3cf1428f5460b680c15d1e190f3e6182e2e02ff177071a5be
+                  - registry.threadforge.local:30500/kyverno/cleanup-controller@sha256:72be48bd94266ae87f9ad6567d8f8a6c1ef6ca173adb8c8bcceab7c1c9b9a242
+                  - registry.threadforge.local:30500/kyverno/cleanup-controller:v1.12.6@sha256:72be48bd94266ae87f9ad6567d8f8a6c1ef6ca173adb8c8bcceab7c1c9b9a242
+                  - registry.threadforge.local:30500/kyverno/kyvernopre@sha256:94e787023a71c1a2850388a9fe190b45156684fe7f20f59132edfe6b57e17d31
+                  - registry.threadforge.local:30500/kyverno/kyvernopre:v1.12.6@sha256:94e787023a71c1a2850388a9fe190b45156684fe7f20f59132edfe6b57e17d31
+                  - registry.threadforge.local:30500/kyverno/kyverno@sha256:2e1af149ebf318b67233c519225b403ca0500c657b347553c74627ccb6f369f7
+                  - registry.threadforge.local:30500/kyverno/kyverno:v1.12.6@sha256:2e1af149ebf318b67233c519225b403ca0500c657b347553c74627ccb6f369f7
+                  - registry.threadforge.local:30500/kyverno/reports-controller@sha256:aa878cc71678d45d63775a0014244b5d238dfcfcd4e79ad8be3158d08e7b71b2
+                  - registry.threadforge.local:30500/kyverno/reports-controller:v1.12.6@sha256:aa878cc71678d45d63775a0014244b5d238dfcfcd4e79ad8be3158d08e7b71b2
+                  # ── kube-system ───────────────────────────────────────────
+                  # ── istio-system ──────────────────────────────────────────
+                  - registry.threadforge.local:30500/istio/pilot@sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f
+                  - registry.threadforge.local:30500/istio/pilot:1.29.0@sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f
+                  - registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+                  - registry.threadforge.local:30500/istio/proxyv2:1.29.0@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+                  # ── spire-csr (all current and historical) ────────────────
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+              - key: "{{ request.object.spec.initContainers[].image || `[]` }}"
+                operator: AnyNotIn
+                value:
+                  # ── bitnami/kubectl (cleanup jobs) ────────────────────────
+                  - bitnami/kubectl:1.28.5
+                  - registry.threadforge.local:30500/mirror/docker.io/bitnami/kubectl:1.31.4@sha256:a84ef19c1c38286cb674c90182bd8b4e1d11ed4e089e5994f553cbe5d67d9068
+                  # ── kyverno pre-init ──────────────────────────────────────
+                  - registry.threadforge.local:30500/kyverno/background-controller@sha256:148e3f0f5f0c84f3cf1428f5460b680c15d1e190f3e6182e2e02ff177071a5be
+                  - registry.threadforge.local:30500/kyverno/background-controller:v1.12.6@sha256:148e3f0f5f0c84f3cf1428f5460b680c15d1e190f3e6182e2e02ff177071a5be
+                  - registry.threadforge.local:30500/kyverno/cleanup-controller@sha256:72be48bd94266ae87f9ad6567d8f8a6c1ef6ca173adb8c8bcceab7c1c9b9a242
+                  - registry.threadforge.local:30500/kyverno/cleanup-controller:v1.12.6@sha256:72be48bd94266ae87f9ad6567d8f8a6c1ef6ca173adb8c8bcceab7c1c9b9a242
+                  - registry.threadforge.local:30500/kyverno/kyvernopre@sha256:94e787023a71c1a2850388a9fe190b45156684fe7f20f59132edfe6b57e17d31
+                  - registry.threadforge.local:30500/kyverno/kyvernopre:v1.12.6@sha256:94e787023a71c1a2850388a9fe190b45156684fe7f20f59132edfe6b57e17d31
+                  - registry.threadforge.local:30500/kyverno/kyverno@sha256:2e1af149ebf318b67233c519225b403ca0500c657b347553c74627ccb6f369f7
+                  - registry.threadforge.local:30500/kyverno/kyverno:v1.12.6@sha256:2e1af149ebf318b67233c519225b403ca0500c657b347553c74627ccb6f369f7
+                  - registry.threadforge.local:30500/kyverno/reports-controller@sha256:aa878cc71678d45d63775a0014244b5d238dfcfcd4e79ad8be3158d08e7b71b2
+                  - registry.threadforge.local:30500/kyverno/reports-controller:v1.12.6@sha256:aa878cc71678d45d63775a0014244b5d238dfcfcd4e79ad8be3158d08e7b71b2
+                  # ── kube-system ───────────────────────────────────────────
+                  # ── istio-system ──────────────────────────────────────────
+                  - registry.threadforge.local:30500/istio/pilot@sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f
+                  - registry.threadforge.local:30500/istio/pilot:1.29.0@sha256:32515653577393f5e6375ccc1350a0cf0aabdd733f8fe9265bb51003a10be26f
+                  - registry.threadforge.local:30500/istio/proxyv2@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+                  - registry.threadforge.local:30500/istio/proxyv2:1.29.0@sha256:2f78ddd13cbf6f600c8bebb9f05b21f9b14e047ec5f8c88ef9f50abc8e14466b
+                  # ── spire-csr ─────────────────────────────────────────────
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+                  - registry.threadforge.local:30500/spire-csr@sha256:f8d8dbf953d65fb5a4f5a75647f783ca08c108c5dcc8da55a9ff3346279d471f
+              - key: "{{ request.object.spec.ephemeralContainers[].image || `[]` }}"
+                operator: AnyNotIn
+                value:
+                  # ── ephemeral containers should never be used in system namespaces ──

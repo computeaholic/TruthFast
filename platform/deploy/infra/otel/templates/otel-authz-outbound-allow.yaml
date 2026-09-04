@@ -1,0 +1,72 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: otel-outbound-allow
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: otel-gateway
+  action: ALLOW
+  rules:
+
+    # Allow gateway to reach Tempo (traces)
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/runtime/sa/operator-api"
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/vector-router/sa/vector-router"
+      to:
+        - operation:
+            hosts:
+              - "tempo.observability.svc.cluster.local"
+            ports: ["4317"]
+
+    # Allow gateway to reach Loki (logs)
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/runtime/sa/operator-api"
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/vector-router/sa/vector-router"
+      to:
+        - operation:
+            hosts:
+              - "loki.observability.svc.cluster.local"
+            ports: ["3100"]
+
+    # Allow gateway to reach Prometheus remote_write (metrics)
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/runtime/sa/operator-api"
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/vector-router/sa/vector-router"
+      to:
+        - operation:
+            hosts:
+              - "prometheus-operated.monitoring.svc.cluster.local"
+            ports: ["9090"]
+
+    # Allow DNS egress (port 53) for name lookups
+    - to:
+        - operation:
+            ports: ["53"]
+
+    # Allow health-check probes (allow outbound checks if the gateway needs to call readiness endpoints)
+    - to:
+        - operation:
+            ports: ["13133"]
+
+    # Allow OTel agent → gateway OTLP (agents forward to gateway on 4317)
+    - from:
+        - source:
+            principals:
+              - "spiffe://identity.threadforge.local/ns/observability/sa/otel-agent"
+      to:
+        - operation:
+            ports: ["4317"]

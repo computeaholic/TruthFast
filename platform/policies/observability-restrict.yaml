@@ -1,0 +1,39 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: observability-deny-threadforge-test
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: tempo
+  action: DENY
+  rules:
+    - from:
+        - source:
+            namespaces:
+              - threadforge-test
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: observability-allow-internal
+  namespace: observability
+spec:
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            namespaces:
+              - observability
+    - from:
+        - source:
+            namespaces:
+              - istio-system
+      to:
+        - operation:
+            ports:
+              - "3000"
+              - "9090"
+              - "3100"
+              - "8888"

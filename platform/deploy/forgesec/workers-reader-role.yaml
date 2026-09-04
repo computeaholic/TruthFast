@@ -1,0 +1,29 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: forgesec-workers-reader
+  namespace: forgesec
+  labels:
+    security.threadforge.local/role: boundary-validator
+rules:
+  # Allow read-only inspection of worker Deployments.
+  # This is required to assert ServiceAccount discipline at runtime.
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: forgesec-workers-reader-binding
+  namespace: forgesec
+  labels:
+    security.threadforge.local/role: boundary-validator
+subjects:
+  - kind: ServiceAccount
+    name: forgesec-sa
+    namespace: forgesec
+roleRef:
+  kind: Role
+  name: forgesec-workers-reader
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blackbox-exporter
+  namespace: observability
+  labels:
+    threadforge.io/component: blackbox
+spec:
+  selector:
+    matchLabels:
+      app: blackbox-exporter
+  namespaceSelector:
+    matchNames:
+      - observability
+  endpoints:
+    - port: http
+      interval: 10s
+      scrapeTimeout: 8s
+      path: /probe
+      params:
+        module: [http_2xx]
+      metricRelabelings:
+        - sourceLabels: [__param_target]
+          targetLabel: target
+      {{- include "prometheus.metricNameAsciiOnly" . | nindent 6 }}

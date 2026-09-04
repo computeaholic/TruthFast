@@ -1,0 +1,4 @@
+replicaCount: 2
+ingress:
+  enabled: true
+  host: dashboard.threadforge.prod

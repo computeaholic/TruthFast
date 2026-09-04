@@ -1,0 +1,12 @@
+# platform/deploy/infra/grafana/templates/peer-auth.yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: grafana-mtls
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  mtls:
+    mode: STRICT

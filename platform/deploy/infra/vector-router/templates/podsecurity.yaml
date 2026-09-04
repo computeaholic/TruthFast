@@ -1,0 +1,17 @@
+apiVersion: policy/v1
+kind: PodSecurityPolicy
+metadata:
+  name: vector-router-restricted
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  requiredDropCapabilities:
+    - ALL
+  runAsUser:
+    rule: MustRunAsNonRoot
+  fsGroup:
+    rule: MustRunAs
+    ranges:
+      - min: 1000
+        max: 65535

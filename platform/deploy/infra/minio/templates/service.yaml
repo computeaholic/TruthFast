@@ -1,0 +1,18 @@
+# platform/deploy/infra/minio/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: minio
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: minio
+  ports:
+    - name: http-s3
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+
+    - name: http-console
+      port: {{ .Values.consoleService.port }}
+      targetPort: {{ .Values.consoleService.port }}

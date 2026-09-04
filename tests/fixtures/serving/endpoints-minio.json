@@ -1,0 +1,3 @@
+{
+  "items": [ { "metadata": { "name": "minio" }, "subsets": [ { "addresses": [ { "ip": "10.42.0.140" } ] } ] } ]
+}

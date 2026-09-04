@@ -1,0 +1,135 @@
+{
+  "uid": "tf-minio-iam-security",
+  "title": "Infra — MinIO IAM & Security Events",
+  "datasource": "Prometheus",
+  "tags": [
+    "threadforge",
+    "minio",
+    "iam",
+    "security"
+  ],
+  "schemaVersion": 39,
+  "refresh": "5s",
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Access Denied Events",
+      "id": 500,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(minio_s3_requests_errors_total{error=\"AccessDenied\"}[2m]))"
+        }
+      ],
+      "description": "This metric is event-driven and emitted only on failure. ‘No data’ indicates no events in the selected time range."
+    },
+    {
+      "type": "stat",
+      "title": "Invalid Signatures",
+      "id": 501,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "colorMode": "critical",
+      "datasource": "Prometheus",
+      "targets": [
+        {
+          "expr": "sum(rate(minio_s3_requests_errors_total{error=\"SignatureDoesNotMatch\"}[2m]))"
+        }
+      ],
+      "description": "This metric is event-driven and emitted only on failure. ‘No data’ indicates no events in the selected time range."
+    },
+    {
+      "type": "graph",
+      "title": "STS Token Issuance",
+      "id": 502,
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "rate(minio_iam_sts_requests_total[2m])",
+          "legendFormat": "STS Req"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "graph",
+      "title": "IAM Policy Evaluation Time",
+      "id": 503,
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(minio_iam_policy_latency_seconds_bucket[2m])))",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(minio_iam_policy_latency_seconds_bucket[2m])))",
+          "legendFormat": "p99"
+        }
+      ],
+      "description": "This metric requires an optional exporter that is not deployed in this environment. ‘No data’ is expected."
+    },
+    {
+      "type": "table",
+      "title": "Top IAM Denies (By User/Policy)",
+      "id": 504,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "topk(20, rate(minio_iam_access_denied_total[2m]))",
+          "legendFormat": "{{user}} — {{policy}}"
+        }
+      ],
+      "description": "This metric is event-driven and emitted only on failure. ‘No data’ indicates no events in the selected time range."
+    },
+    {
+      "type": "graph",
+      "title": "AuthN Brute Force & Abuse",
+      "id": 505,
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(minio_auth_failed_total[30s]))",
+          "legendFormat": "Auth Failures"
+        }
+      ],
+      "thresholds": [
+        {
+          "color": "red",
+          "value": "10"
+        }
+      ],
+      "description": "This metric is event-driven and emitted only on failure. ‘No data’ indicates no events in the selected time range."
+    }
+  ]
+}

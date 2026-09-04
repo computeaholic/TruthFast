@@ -1,0 +1,23 @@
+# ------------------------------------------------------------------------------
+# ThreadForge Governance Defaults
+# ------------------------------------------------------------------------------
+
+governance:
+  actuator:
+    enabled: false          # HARD DEFAULT — NO EXECUTION
+    requireApproval: true   # Must pass plan approval pipeline
+    requireSignature: true  # SPIRE SVID required
+    allowAutoExecution: false
+
+    # Metadata required when enabling execution
+    enablement:
+      requireActor: true
+      requireReason: true
+
+  observability:
+    emitGrafanaMetrics: true
+    emitGrafanaEvents: true
+
+  safety:
+    immutableByDefault: true
+    overrideRequiresHuman: true

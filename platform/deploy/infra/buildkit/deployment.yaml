@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: buildkit
+  namespace: build-system
+  labels:
+    app.kubernetes.io/name: buildkit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: buildkit
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: buildkit
+    spec:
+      serviceAccountName: buildkit
+      nodeSelector:
+        build: "true"        # requires a small dedicated builder node pool
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "buildkit"
+          effect: "NoSchedule"
+      securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+        runAsGroup: 0
+      containers:
+        - name: buildkitd
+          # Buildkit image pinned to verified digest to ensure reproducible builds.
+          image: registry.threadforge.local:30500/mirror/docker.io/moby/buildkit@sha256:7a9e2a8abc3428a555ade8db975f899241d4f5d242fb5599dedd4a0f97e8fc04
+          args: ["--addr", "tcp://0.0.0.0:1234"]
+          securityContext:
+            seccompProfile:
+              type: Localhost
+              localhostProfile: "profiles/buildkit.json"
+            runAsNonRoot: false
+            runAsUser: 0
+            allowPrivilegeEscalation: true
+            privileged: true
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["SYS_ADMIN"]
+          ports:
+            - name: control
+              containerPort: 1234
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          livenessProbe:
+            tcpSocket:
+              port: 1234
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 1234
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: archive
+              mountPath: /var/backups/registry-archive
+              readOnly: false
+            - name: registry-credentials
+              mountPath: /etc/registry-creds
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+              readOnly: false
+            - name: varlib
+              mountPath: /var/lib/buildkit
+              readOnly: false
+            - name: registry-ca
+              mountPath: /etc/registry-ca
+              readOnly: true
+          lifecycle:
+            postStart:
+              exec:
+                command: ["sh","-c","if [ -f /etc/registry-ca/ca.crt ]; then cat /etc/registry-ca/ca.crt >> /etc/ssl/certs/ca-certificates.crt; fi"]
+      volumes:
+        - name: archive
+          persistentVolumeClaim:
+            claimName: registry-archive-pvc
+        - name: registry-credentials
+          secret:
+            secretName: registry-credentials
+            optional: true
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: varlib
+          emptyDir: {}
+        - name: registry-ca
+          secret:
+            secretName: registry-tls-secret
+            optional: true
+
+# Notes:
+# - The buildkit service should be exposed as ClusterIP and only reachable inside the cluster or via authenticated CI runners.
+# - The registry credentials secret should contain dockerconfigjson and a REGISTRY_CA cert bundle if required.

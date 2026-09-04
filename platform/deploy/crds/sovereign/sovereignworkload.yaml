@@ -1,0 +1,53 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sovereignworkloads.threadforge.io
+spec:
+  group: threadforge.io
+  scope: Namespaced
+  names:
+    plural: sovereignworkloads
+    singular: sovereignworkload
+    kind: SovereignWorkload
+    shortNames:
+      - swl
+      - swork
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                identityRef:
+                  type: string
+                meshPolicy:
+                  type: object
+                  properties:
+                    mode:
+                      type: string
+                      enum:
+                        - STRICT
+                        - PERMISSIVE
+                    allowFrom:
+                      type: array
+                      items:
+                        type: string
+                resources:
+                  type: object
+                  properties:
+                    cpu:
+                      type: string
+                    memory:
+                      type: string
+                autoscale:
+                  type: object
+                  properties:
+                    min:
+                      type: integer
+                    max:
+                      type: integer

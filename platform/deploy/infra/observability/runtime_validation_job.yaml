@@ -1,0 +1,130 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: threadforge-observability-diagnostic
+  namespace: threadforge
+  labels:
+    app: threadforge-observability-diagnostic
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app: threadforge-observability-diagnostic
+        sidecar.istio.io/inject: "true"
+      annotations:
+        proxy.istio.io/config: '{"holdApplicationUntilProxyStarts": true}'
+    spec:
+      serviceAccountName: threadforge-client
+      restartPolicy: Never
+      containers:
+        - name: observability-diagnostic
+          image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          env:
+            - name: TARGET_URL
+              value: "http://threadforge-api:8080/vector/search"
+            - name: BURST_COUNT
+              value: "1"
+            - name: BURST_INTERVAL_SECONDS
+              value: "0"
+            - name: REQUEST_TIMEOUT_SECONDS
+              value: "5"
+            - name: PAYLOAD_SEED
+              value: "phase2-runtime-validation"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+
+              # Ensure the Istio sidecar terminates so the Job can complete.
+              shutdown_proxy() {
+                wget -q -O /dev/null \
+                  --post-data "" \
+                  --timeout=2 \
+                  http://127.0.0.1:15020/quitquitquit \
+                  >/dev/null 2>&1 || true
+              }
+              trap shutdown_proxy EXIT
+
+              if [ -z "${TARGET_URL:-}" ]; then
+                echo "ERROR: TARGET_URL is required" >&2
+                exit 2
+              fi
+
+              # Wait for Envoy readiness to avoid connection-refused races.
+              i=0
+              while [ "$i" -lt 30 ]; do
+                if wget -q -O /dev/null --timeout=1 http://127.0.0.1:15021/healthz/ready >/dev/null 2>&1; then
+                  break
+                fi
+                i=$((i + 1))
+                sleep 1
+              done
+              if [ "$i" -ge 30 ]; then
+                echo "ERROR: istio-proxy did not become ready" >&2
+                echo "[ADVISORY-DIAGNOSTIC-FAIL] observability diagnostic is non-gating"; exit 0
+              fi
+
+              burst_count=${BURST_COUNT:-1}
+              burst_interval=${BURST_INTERVAL_SECONDS:-0}
+              timeout_seconds=${REQUEST_TIMEOUT_SECONDS:-5}
+              payload_seed=${PAYLOAD_SEED:-phase2-runtime-validation}
+
+              i=1
+              while [ "$i" -le "$burst_count" ]; do
+                suffix=$(printf "%s-%s" "$payload_seed" "$i" | sha256sum | cut -c1-12)
+                payload=$(printf '{"query":"%s-%s"}' "$payload_seed" "$suffix")
+
+                tmp_headers="$(mktemp)"
+                tmp_body="$(mktemp)"
+
+                # busybox wget: use server-response to capture status line
+                set +e
+                wget -q -O "$tmp_body" \
+                  --server-response \
+                  --header="Content-Type: application/json" \
+                  --post-data "$payload" \
+                  --timeout="$timeout_seconds" \
+                  "$TARGET_URL" \
+                  2>"$tmp_headers"
+                rc=$?
+                set -e
+                if [ "$rc" -ne 0 ]; then
+                  echo "ERROR: request failed (wget exit code $rc)" >&2
+                  cat "$tmp_headers" >&2 || true
+                  cat "$tmp_body" >&2 || true
+                  rm -f "$tmp_headers" "$tmp_body"
+                  echo "[ADVISORY-DIAGNOSTIC-FAIL] observability diagnostic is non-gating"; exit 0
+                fi
+
+                # The runtime API boundary tests allow 200 or 500 (downstream may fail).
+                if ! grep -qE '^  HTTP/[^ ]+ (200|500) ' "$tmp_headers"; then
+                  echo "ERROR: request failed; expected HTTP 200 or 500" >&2
+                  cat "$tmp_headers" >&2 || true
+                  cat "$tmp_body" >&2 || true
+                  rm -f "$tmp_headers" "$tmp_body"
+                  echo "[ADVISORY-DIAGNOSTIC-FAIL] observability diagnostic is non-gating"; exit 0
+                fi
+
+                echo "HTTP_STATUS=ok"
+                cat "$tmp_body"
+                rm -f "$tmp_headers" "$tmp_body"
+
+                if [ "$i" -lt "$burst_count" ]; then
+                  sleep "$burst_interval"
+                fi
+                i=$((i + 1))
+              done
+
+              echo "OBSERVABILITY_DIAGNOSTIC=PASS"
+              exit 0

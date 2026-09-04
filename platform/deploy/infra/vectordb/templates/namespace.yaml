@@ -1,0 +1,13 @@
+# ==============================================================================
+# ThreadForge — Vector Engine Namespace
+# Zero-trust, Istio-enabled, hardened namespace for vector operations
+# ==============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vectordb
+  labels:
+    threadforge.io/zone: data-plane
+    threadforge.io/mesh: allowed
+    istio-injection: enabled

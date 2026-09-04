@@ -1,0 +1,33 @@
+# ==============================================================================
+# ThreadForge — Vector Engine Zero-Trust NetworkPolicy
+# ==============================================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vectordb-zero-trust
+  namespace: vectordb
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    - from:
+        # allow traffic only from API + workers + postgres
+        - namespaceSelector:
+            matchLabels:
+              threadforge.io/mesh: allowed
+      ports:
+        - protocol: TCP
+          port: 5432
+
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              threadforge.io/mesh: allowed
+      ports:
+        - protocol: TCP
+          port: 5432

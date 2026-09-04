@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: apiserver-metrics-check
+  namespace: observability
+  labels:
+    sidecar.istio.io/inject: "false"
+spec:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: curl
+      image: registry.threadforge.local:30500/mirror/docker.io/curlimages/curl@sha256:00ad3093ef7b465fb9852fbf82704ddb1fff8ec5d9206a131c5e4eda875df94f
+      command:
+        - sh
+        - -c
+        - |
+          TOKEN=$(cat /etc/prometheus/apiserver-token/token 2>/dev/null || true)
+          echo "token len: ${#TOKEN}"
+          curl -sS -I --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt -H "Authorization: Bearer $TOKEN" -H "Accept: application/openmetrics-text, text/plain; q=0.5" https://kubernetes.default.svc:443/metrics -m 10 || true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 200m
+          memory: 128Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        runAsUser: 1000
+        runAsNonRoot: true
+      volumeMounts:
+        - name: token
+          mountPath: /etc/prometheus/apiserver-token
+          readOnly: true
+  volumes:
+    - name: token
+      secret:
+        secretName: prometheus-apiserver-scrape-token
+  restartPolicy: Never

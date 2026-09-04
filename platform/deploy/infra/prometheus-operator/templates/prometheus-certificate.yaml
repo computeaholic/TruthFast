@@ -1,0 +1,23 @@
+# ==========================================================
+# Prometheus TLS Certificate (mTLS + SPIFFE identity)
+# ==========================================================
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-tls
+  namespace: istio-system   # mTLS certificates live in control-plane ns
+  labels:
+    app: prometheus
+spec:
+  secretName: prometheus-tls-secret
+  duration: 2160h        # 90 days
+  renewBefore: 360h      # 15 days
+  commonName: "kube-prometheus-stack-prometheus.observability.svc.cluster.local"
+  dnsNames:
+    - "kube-prometheus-stack-prometheus.observability.svc.cluster.local"
+    - "prometheus-operated.observability.svc.cluster.local"
+    - "prometheus.threadforge.local"
+    - "prometheus.internal.threadforge.local"
+  issuerRef:
+    name: threadforge-ca
+    kind: ClusterIssuer

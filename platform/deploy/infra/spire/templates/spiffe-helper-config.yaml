@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spiffe-helper-config
+  namespace: {{ .Release.Namespace }}
+data:
+  helper.conf: |
+    # Use the configured SPIRE agent workload API socket path from values
+    agent_address = "unix://{{ .Values.spireAgent.workloadApi.socketPath }}"
+
+    svid {
+      path = "/tmp/svid.pem"
+      key_path = "/tmp/key.pem"
+      bundle_path = "/tmp/bundle.pem"
+    }

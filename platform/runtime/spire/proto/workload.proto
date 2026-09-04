@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package spiffe.workload.v1;
+
+service SpiffeWorkloadAPI {
+  rpc FetchX509SVID(FetchX509SVIDRequest) returns (X509SVIDResponse) {}
+}
+
+message FetchX509SVIDRequest {}
+
+message X509SVID {
+  string spiffe_id = 1;
+  bytes x509_svid = 2; // DER or PEM
+}
+
+message X509SVIDResponse {
+  repeated X509SVID svids = 1;
+  bytes bundle = 2; // PEM bundle
+}

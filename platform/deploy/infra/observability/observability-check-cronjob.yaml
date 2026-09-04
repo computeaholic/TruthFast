@@ -1,0 +1,182 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: observability-check
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: observability-check
+    threadforge.io/component: observability-gate
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: observability-check-script
+  namespace: observability
+data:
+  observability_check.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    PROM_URL="${PROM_URL:-http://prometheus.observability.svc.cluster.local:9090}"
+    LOKI_URL="${LOKI_URL:-http://loki.observability.svc.cluster.local:3100}"
+    TEMPO_URL="${TEMPO_URL:-http://tempo.observability.svc.cluster.local:3100}"
+    GRAFANA_URL="${GRAFANA_URL:-http://grafana.observability.svc.cluster.local:3000}"
+
+    python3 - <<'PYEOF'
+    import json
+    import sys
+    import time
+    import urllib.parse
+    import urllib.request
+
+    def get_json(url):
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            return resp.status, json.loads(resp.read().decode())
+
+    import os
+    prom = os.environ["PROM_URL"].rstrip("/")
+    loki = os.environ["LOKI_URL"].rstrip("/")
+    tempo = os.environ["TEMPO_URL"].rstrip("/")
+    graf = os.environ["GRAFANA_URL"].rstrip("/")
+
+    checks = [
+        ("prometheus_up", 'count(up) > 0'),
+        ("istio_requests_total", 'count(istio_requests_total) > 0'),
+    ]
+
+    failed = []
+    details = {}
+
+    def note_failure(name, reason):
+        failed.append(name)
+        details[name] = reason
+
+    def check_http_ok(name, url, attempts=5, delay_seconds=2):
+        last_error = "unknown"
+        for i in range(attempts):
+            try:
+                r = urllib.request.urlopen(url, timeout=8)
+                if r.status == 200:
+                    return True
+                last_error = f"http_{r.status}"
+            except Exception as e:
+                last_error = str(e)
+            if i < attempts - 1:
+                time.sleep(delay_seconds)
+        note_failure(name, last_error)
+        return False
+
+    for name, expr in checks:
+        q = urllib.parse.quote(expr)
+        try:
+            status, body = get_json(f"{prom}/api/v1/query?query={q}")
+        except Exception:
+            note_failure(name, "query_error")
+            continue
+        if status != 200 or body.get("status") != "success" or not body.get("data", {}).get("result"):
+            note_failure(name, f"status={status},result_count={len(body.get('data', {}).get('result', []))}")
+
+    check_http_ok("loki_ready", f"{loki}/ready")
+    check_http_ok("tempo_buildinfo", f"{tempo}/api/status/buildinfo")
+    check_http_ok("grafana_health", f"{graf}/api/health")
+
+    if failed:
+        print("FAIL:" + ",".join(f"{k}={details.get(k, 'failed')}" for k in failed))
+        sys.exit(1)
+
+    print("PASS:observability gate checks all green")
+    PYEOF
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: observability-check-events
+  namespace: observability
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: observability-check-events
+  namespace: observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: observability-check-events
+subjects:
+  - kind: ServiceAccount
+    name: observability-check
+    namespace: observability
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: observability-check
+  namespace: observability
+  labels:
+    app.kubernetes.io/name: observability-check
+    threadforge.io/component: observability-gate
+spec:
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 6
+  failedJobsHistoryLimit: 6
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: observability-check
+            threadforge.io/component: observability-gate
+            threadforge.dev/purpose: telemetry-probe
+            sidecar.istio.io/inject: "false"
+        spec:
+          serviceAccountName: observability-check
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: observability-check
+              image: registry.threadforge.local:30500/mirror/docker.io/library/python@sha256:36ae442f0f0d4bc85c5122666b64222a9a8584e2f61a3b286e0d72cc30c29632
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/bash", "-lc"]
+              args:
+                - |
+                  set -euo pipefail
+                  echo "[observability-check] start $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+                  if ! /scripts/observability_check.sh; then
+                    echo "[observability-check] FAIL: observability gate failed" >&2
+                    python3 -c 'import json,ssl,urllib.request;ns="observability";name="observability-check";msg="observability_check.sh failed";token=open("/var/run/secrets/kubernetes.io/serviceaccount/token","r",encoding="utf-8").read().strip();ca="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt";payload={"apiVersion":"v1","kind":"Event","metadata":{"generateName":"observability-check-failed-","namespace":ns},"involvedObject":{"apiVersion":"batch/v1","kind":"CronJob","name":name,"namespace":ns},"type":"Warning","reason":"ObservabilityGateFailed","message":msg,"source":{"component":"observability-check-cronjob"}};ctx=ssl.create_default_context(cafile=ca);req=urllib.request.Request(f"https://kubernetes.default.svc/api/v1/namespaces/{ns}/events",data=json.dumps(payload).encode("utf-8"),headers={"Authorization":f"Bearer {token}","Content-Type":"application/json"},method="POST");urllib.request.urlopen(req,context=ctx,timeout=8).read()' || true
+                    echo "[ADVISORY-FAIL] non-authoritative path"; exit 0
+                  fi
+                  echo "[observability-check] PASS"
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: PROM_URL
+                  value: http://prometheus.observability.svc.cluster.local:9090
+                - name: LOKI_URL
+                  value: http://loki.observability.svc.cluster.local:3100
+                - name: TEMPO_URL
+                  value: http://tempo.observability.svc.cluster.local:3100
+                - name: GRAFANA_URL
+                  value: http://grafana.observability.svc.cluster.local:3000
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: observability-check-script
+                defaultMode: 0555

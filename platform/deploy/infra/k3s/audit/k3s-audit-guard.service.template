@@ -1,0 +1,6 @@
+[Unit]
+Description=K3s Audit Log Guard
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /REPO_PATH/deploy/infra/k3s/audit/scripts/audit_log_guard.sh

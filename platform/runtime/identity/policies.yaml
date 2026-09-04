@@ -1,0 +1,137 @@
+# Path: runtime/identity/policies.yaml
+# ThreadForge Identity → Capability Policy Definitions
+#
+# Phase 8: Identity → Capability → Authority
+# Policies define what identities are authorized to do.
+#
+# Rules:
+# - Deny-by-default: capabilities must be explicitly granted
+# - No implicit inheritance or heuristics
+# - Capabilities are strings, not enums (policy-defined)
+# - Authority is derived from identity via policy, never inferred
+
+policies:
+  # Tier 0: Kernel Root Authority
+  - match:
+      tier: "tier0"
+    grant:
+      - "kernel.execute"
+      - "governance.override"
+      - "actuation.approve"
+      - "execution.request"
+      - "vector.read"
+      - "vector.write"
+      - "vector.embed"
+      - "vector.route" # Restricted: tier0 only
+      - "storage.read"
+      - "storage.write"
+      - "storage.list"
+      - "ledger.write"
+      - "telemetry.read"
+      - "telemetry.write"
+      - "authority.delegate" # Phase 9: Can issue delegations
+      - "authority.revoke" # Phase 9: Can revoke delegations
+    policy_name: "kernel_root"
+
+  # Tier 1: System Services
+  - match:
+      tier: "tier1"
+    grant:
+      - "execution.request"
+      - "vector.read"
+      - "vector.embed"
+      - "storage.read"
+      - "storage.list"
+      - "ledger.read"
+      - "telemetry.write"
+    policy_name: "system_services"
+
+  # Tier 2: User Workloads
+  - match:
+      tier: "tier2"
+    grant:
+      - "execution.request"
+      - "vector.read"
+      - "storage.read"
+      - "storage.list"
+    policy_name: "user_workloads"
+
+  # Tier 3: Restricted Access
+  - match:
+      tier: "tier3"
+    grant:
+      - "vector.read"
+    policy_name: "restricted_access"
+
+  # Service-Specific: Operator AI
+  - match:
+      service_account: "operator-ai"
+    grant:
+      - "kernel.execute"
+      - "governance.evaluate"
+      - "governance.override"
+      - "actuation.approve"
+      - "execution.request"
+      - "vector.read"
+      - "vector.write"
+      - "vector.embed"
+      - "vector.route" # Restricted: operator-ai only
+      - "storage.read"
+      - "storage.write"
+      - "storage.list"
+      - "ledger.write"
+      - "telemetry.read"
+      - "telemetry.write"
+      - "authority.delegate" # Phase 9: Can issue delegations
+      - "authority.revoke" # Phase 9: Can revoke delegations
+    policy_name: "operator_ai"
+
+  # Service-Specific: Governance Service
+  - match:
+      service_account: "governance"
+    grant:
+      - "governance.evaluate"
+      - "governance.override"
+      - "ledger.read"
+      - "telemetry.read"
+    policy_name: "governance_service"
+
+  # Service-Specific: Actuation Service
+  - match:
+      service_account: "actuator"
+    grant:
+      - "actuation.approve"
+      - "execution.request"
+      - "ledger.write"
+      - "telemetry.write"
+    policy_name: "actuation_service"
+
+  # ForgeSec: Auth Stimulus (Tier B authenticated testing)
+  - match:
+      service_account: "forgesec-auth-stimulus"
+    grant:
+      - "execution.request"
+      - "vector.read"
+      - "vector.write"
+    policy_name: "forgesec_auth_stimulus"
+
+  # Namespace-Specific: ThreadForge System
+  - match:
+      namespace: "threadforge"
+      tier: "system"
+    grant:
+      - "kernel.execute"
+      - "governance.override"
+      - "actuation.approve"
+      - "execution.request"
+      - "vector.read"
+      - "vector.write"
+      - "vector.embed"
+      - "vector.route" # Restricted: system tier only
+      - "storage.read"
+      - "storage.write"
+      - "storage.list"
+      - "ledger.write"
+      - "telemetry.read"
+      - "telemetry.write"
+    policy_name: "threadforge_system"

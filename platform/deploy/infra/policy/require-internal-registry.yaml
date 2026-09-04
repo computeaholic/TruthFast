@@ -1,0 +1,40 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-internal-registry
+  annotations:
+    policies.kyverno.io/title: ThreadForge Require Internal Registry
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Pod
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: require-internal-registry
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - istio-system
+                - kyverno
+                - local-path-storage
+      validate:
+        message: "Only images from registry.threadforge.local:30500 are allowed"
+        pattern:
+          spec:
+            containers:
+              - image: "registry.threadforge.local:30500/*"
+            =(initContainers):
+              - image: "registry.threadforge.local:30500/*"
+            =(ephemeralContainers):
+              - image: "registry.threadforge.local:30500/*"

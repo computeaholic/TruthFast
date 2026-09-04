@@ -1,0 +1,35 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: threadforge-critical
+value: 1000000
+globalDefault: false
+description: Critical ThreadForge identity and mesh control-plane workloads.
+preemptionPolicy: PreemptLowerPriority
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: threadforge-high
+value: 500000
+globalDefault: false
+description: High-priority ThreadForge enforcement and admission workloads.
+preemptionPolicy: PreemptLowerPriority
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: threadforge-medium
+value: 100000
+globalDefault: false
+description: Medium-priority ThreadForge observability workloads.
+preemptionPolicy: PreemptLowerPriority
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: threadforge-low
+value: 10000
+globalDefault: false
+description: Low-priority ThreadForge debug, proof-client, and transient workloads.
+preemptionPolicy: PreemptLowerPriority

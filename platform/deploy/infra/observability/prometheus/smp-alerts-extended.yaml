@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: observability-smp-extended-alerts
+  namespace: monitoring
+spec:
+  groups:
+  - name: smp-dispatcher.extended.rules
+    rules:
+
+    # --------------------------------------------------
+    # Dispatch Latency
+    # --------------------------------------------------
+    - alert: SMPDispatchLatencyHigh
+      expr: histogram_quantile(0.95, sum(rate(smp_dispatch_latency_ms_bucket[5m])) by (le)) > 100
+      for: 30s
+      labels:
+        severity: warning
+        subsystem: smp
+      annotations:
+        summary: "SMP dispatch latency high (p95 > 100ms)"
+        description: "The 95th percentile dispatch latency over the last 5m exceeds 100ms."
+
+    # --------------------------------------------------
+    # Eviction Surge
+    # --------------------------------------------------
+    - alert: SMPEvictionSurge
+      expr: rate(smp_evicted_total[1m]) > 0
+      for: 30s
+      labels:
+        severity: warning
+        subsystem: smp
+      annotations:
+        summary: "SMP evictions observed"
+        description: "Envelopes are being evicted due to admission pressure. Check queue depth and operators."

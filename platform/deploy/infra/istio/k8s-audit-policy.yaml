@@ -1,0 +1,32 @@
+apiVersion: audit.k8s.io/v1
+kind: Policy
+metadata:
+  name: istio-mutation-audit
+rules:
+  - level: RequestResponse
+    verbs:
+      - update
+      - patch
+      - apply
+      - create
+      - delete
+    resources:
+      - group: ""
+        resources: ["configmaps"]
+      - group: "apps"
+        resources: ["deployments", "statefulsets"]
+      - group: "networking.istio.io"
+        resources: ["networkpolicies"]
+    namespaces: ["istio-system"]
+
+  # Catch-all metadata for other events to retain basic context
+  - level: Metadata
+    resources:
+      - group: ""
+        resources: ["configmaps", "secrets"]
+      - group: "apps"
+        resources: ["deployments", "statefulsets"]
+    # other namespaces included at metadata level
+
+  # Default: omit request/response payloads for everything else
+  - level: None

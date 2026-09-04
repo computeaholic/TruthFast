@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: loki
+  labels:
+    istio-injection: disabled
+    threadforge.io/mesh: allowed
+    name: loki

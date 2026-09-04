@@ -1,0 +1,26 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: writer-allow
+  namespace: agents-lab
+spec:
+  selector:
+    matchLabels:
+      app: writer-agent
+  rules:
+    - from:
+        - source:
+            principals:
+              - spiffe://identity.threadforge.local/ns/agents-lab/sa/research-agent
+              - spiffe://identity.threadforge.local/ns/agents-lab/sa/research-agent
+        - source:
+            serviceAccounts:
+              - agents-lab/research-agent
+      to:
+        - operation:
+            ports:
+              - "8000"
+            paths:
+              - /write
+            methods:
+              - POST

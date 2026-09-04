@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: router-restrict
+  namespace: router
+spec:
+  podSelector:
+    matchLabels:
+      app: router
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              threadforge.io/mesh: allowed
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              istio-system: "true"
+      ports:
+        - port: 15443
+          protocol: TCP

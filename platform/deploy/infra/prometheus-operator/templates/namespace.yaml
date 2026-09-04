@@ -1,0 +1,2 @@
+# Namespace manifest removed: the 'observability' namespace is externally managed and must not be created by this chart.
+# This prevents Helm from claiming ownership of the namespace and preserves existing cluster ownership.

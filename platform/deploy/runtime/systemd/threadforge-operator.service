@@ -1,0 +1,27 @@
+[Unit]
+Description=ThreadForge Runtime Operator
+After=network.target
+# If SPIRE agent is expected to be present, ensure ordering but do not make it mandatory
+# (SPIRE is optional for process liveness; ordering is for operational clarity)
+Wants=spire-agent.service
+
+[Service]
+Type=simple
+User=threadforge
+Group=threadforge
+# Explicit invocation with python3 module form per lifecycle spec
+ExecStart=/usr/bin/python3 -m runtime.start
+WorkingDirectory=/opt/threadforge
+# Environment variables should be provided via drop-ins or an environment file managed by ops
+EnvironmentFile=-/etc/threadforge/operator.env
+Restart=on-failure
+RestartSec=5s
+# Limit restarts: avoid aggressive crash looping
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# File system and permission guidance (ops/security should review)
+# Consider ReadWritePaths= or tmpfiles.d for persistent local buffers
+
+[Install]
+WantedBy=multi-user.target

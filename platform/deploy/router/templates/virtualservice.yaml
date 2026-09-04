@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: router-vs
+  namespace: threadforge
+spec:
+  hosts:
+    - "router.threadforge.svc.cluster.local"
+    - "router.threadforge.svc.cluster.local"
+  gateways:
+    - threadforge/router-public-gateway
+    - threadforge/router-mesh-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /generate
+      retries:
+        attempts: 3
+        perTryTimeout: 3s
+      fault:
+        abort:
+          percentage:
+            value: 0
+      route:
+        - destination:
+            host: router
+            port:
+              number: 8080

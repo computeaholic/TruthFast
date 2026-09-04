@@ -1,0 +1,24 @@
+{{- if .Values.bundleService.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: spire-bundle-vs
+  namespace: spire-system
+spec:
+  hosts:
+  - "{{ .Values.bundleService.gatewayHost | default "spire-bundle-gateway.spire-system.svc" }}"
+  - "{{ printf "%s.%s" (.Values.bundleService.gatewayHost | default "spire-bundle-gateway.spire-system.svc") "svc.cluster.local" }}"
+  gateways:
+  - spire-bundle-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/bundle.crt"
+    rewrite:
+      uri: "/bundle.crt"
+    route:
+    - destination:
+        host: spire-bundle.spire-system.svc
+        port:
+          number: {{ .Values.bundleService.port | default 8443 }}
+{{- end }}

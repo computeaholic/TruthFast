@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: threadforge-api
+  labels:
+    app: threadforge-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: threadforge-api
+  template:
+    metadata:
+      labels:
+        app: threadforge-api
+        sidecar.istio.io/inject: "true"
+      annotations:
+        security.istio.io/tlsMode: "istio"
+        checksum/api-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+
+      containers:
+      - name: api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+        command: ["uvicorn"]
+        args:
+          - "runtime.api.app:app"
+          - "--host=0.0.0.0"
+          - "--port=8080"
+          - "--proxy-headers"
+
+        envFrom:
+          - configMapRef:
+              name: api-config
+          - secretRef:
+              name: api-secret
+
+        env:
+          - name: SPIFFE_TRUST_DOMAIN
+            value: identity.threadforge.local
+          - name: THREADFORGE_AUTHORITY_PRIVATE_KEY_PATH
+            value: /var/run/secrets/threadforge/signing-key/signing-key.pem
+{{- if .Values.observations.enabled }}
+          - name: OBSERVATION_DIR
+            value: "{{ .Values.observations.path }}"
+{{- end }}
+
+        ports:
+        - containerPort: 8080
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 1
+            memory: 512Mi
+
+        # Phase P1.6: Mount capability matrix and intent registry ConfigMaps
+        volumeMounts:
+        - name: capability-matrix
+          mountPath: /etc/threadforge/capability-matrix.yaml
+          subPath: capability-matrix.yaml
+          readOnly: true
+        - name: intent-registry
+          mountPath: /etc/threadforge/intents.yaml
+          subPath: intents.yaml
+          readOnly: true
+        - name: ppit-policy
+          mountPath: /etc/threadforge/ppit-policy.yaml
+          subPath: ppit-policy.yaml
+          readOnly: true
+        - name: identity-policies
+          mountPath: /app/runtime/identity/policies.yaml
+          subPath: policies.yaml
+          readOnly: true
+        - name: tier-b-aas
+          mountPath: /app/artifacts/aas
+          readOnly: true
+        # SPIRE socket for authority establishment
+        - name: spire-sockets
+          mountPath: /run/spire/sockets
+          readOnly: true
+        # Authority signing key
+        - name: authority-signing-key
+          mountPath: /var/run/secrets/threadforge/signing-key
+          readOnly: true
+{{- if .Values.observations.enabled }}
+        - name: observations
+          mountPath: "{{ .Values.observations.path }}"
+{{- end }}
+
+      # Phase P1.6: ConfigMap volumes for policy externalization
+      volumes:
+      - name: capability-matrix
+        configMap:
+          name: capability-matrix
+          items:
+          - key: matrix.yaml
+            path: capability-matrix.yaml
+      - name: intent-registry
+        configMap:
+          name: intent-registry
+          items:
+          - key: intents.yaml
+            path: intents.yaml
+      - name: ppit-policy
+        configMap:
+          name: ppit-policy
+          items:
+          - key: ppit-policy.yaml
+            path: ppit-policy.yaml
+      - name: identity-policies
+        configMap:
+          name: identity-policies
+          items:
+          - key: policies.yaml
+            path: policies.yaml
+      - name: tier-b-aas
+        configMap:
+          name: tier-b-aas
+      # SPIRE socket via hostPath (matches SPIRE agent socket location)
+      - name: spire-sockets
+        hostPath:
+          path: /run/spire/sockets
+          type: Directory
+      # Authority signing key secret
+      - name: authority-signing-key
+        secret:
+          secretName: authority-signing-key{{- if .Values.observations.enabled }}
+        - name: observations
+          emptyDir: {}
+{{- end }}

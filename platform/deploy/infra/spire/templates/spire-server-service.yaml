@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spire-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  ports:
+    - name: grpc
+      port: 8081
+    - name: tcp-bundle
+      port: 8443
+      targetPort: 8443
+    - name: http-metrics
+      port: 9091
+      targetPort: 9091
+  selector:
+    app: spire-server

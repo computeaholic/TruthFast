@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-envoy-bootstrap
+  namespace: minio
+data:
+  envoy.yaml: |
+    node:
+      id: "minio-envoy"
+      cluster: "minio-envoy"
+    admin:
+      access_log_path: /tmp/admin_access.log
+      address:
+        socket_address:
+          address: 127.0.0.1
+          port_value: 9901
+    static_resources:
+      listeners:
+        - name: listener_mtls
+          address:
+            socket_address:
+              address: 0.0.0.0
+              port_value: 8443
+          filter_chains:
+            - transport_socket:
+                name: envoy.transport_sockets.tls
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  common_tls_context:
+                    tls_certificate_sds_secret_configs:
+                      - name: spiffe://identity.threadforge.local/ns/minio/sa/minio-envoy
+                        sds_config:
+                          api_config_source:
+                            api_type: GRPC
+                            grpc_services:
+                              - envoy_grpc:
+                                  cluster_name: spire_agent
+                    validation_context_sds_secret_config:
+                      name: spiffe://identity.threadforge.local
+                      sds_config:
+                        api_config_source:
+                          api_type: GRPC
+                          grpc_services:
+                            - envoy_grpc:
+                                cluster_name: spire_agent
+                  require_client_certificate: true
+              filters:
+                - name: envoy.filters.network.rbac
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.filters.network.rbac.v3.RBAC
+                    stat_prefix: minio_rbac
+                    rules:
+                      action: ALLOW
+                      policies:
+                        require_blackbox:
+                          permissions:
+                            - any: true
+                          principals:
+                            - authenticated:
+                                principal_name:
+                                  exact: "spiffe://identity.threadforge.local/ns/observability/sa/blackbox"
+                - name: envoy.filters.network.http_connection_manager
+                  typed_config:
+                    "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                    stat_prefix: ingress_http
+                    route_config:
+                      name: local_route
+                      virtual_hosts:
+                        - name: minio
+                          domains: ["*"]
+                          routes:
+                            - match: { prefix: "/" }
+                              route: { cluster: minio_upstream }
+                    http_filters:
+                      - name: envoy.filters.http.router
+                        typed_config:
+                          "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+      clusters:
+        - name: spire_agent
+          type: STATIC
+          connect_timeout: 5s
+          http2_protocol_options: {}
+          load_assignment:
+            cluster_name: spire_agent
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        pipe:
+                          path: /run/spire/sockets/socket
+        - name: minio_upstream
+          connect_timeout: 5s
+          type: STRICT_DNS
+          lb_policy: ROUND_ROBIN
+          load_assignment:
+            cluster_name: minio_upstream
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        socket_address:
+                          address: minio.minio.svc.cluster.local
+                          port_value: 9000
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio-envoy-sa
+  namespace: minio
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-envoy
+  namespace: minio
+  labels:
+    app: minio-envoy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio-envoy
+  template:
+    metadata:
+      labels:
+        app: minio-envoy
+        sidecar.istio.io/inject: "false"
+      annotations:
+        traffic.sidecar.istio.io/excludeInboundPorts: "8443"
+    spec:
+      serviceAccountName: minio-envoy-sa
+      containers:
+        - name: envoy
+          image: registry.threadforge.local:30500/mirror/docker.io/envoyproxy/envoy@sha256:deb1d3a3cfc53d9306465426b4cc2b9443bea4b6100f2a0caf224ce3be23c0ad
+          args: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "info"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          ports:
+            - containerPort: 8443
+              name: https
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+            - name: spire-socket
+              mountPath: /run/spire/sockets
+              readOnly: true
+      volumes:
+        - name: envoy-config
+          configMap:
+            name: minio-envoy-bootstrap
+            items:
+              - key: envoy.yaml
+                path: envoy.yaml
+        - name: spire-socket
+          hostPath:
+            path: /run/spire/sockets
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-envoy
+  namespace: minio
+  labels:
+    app: minio-envoy
+spec:
+  selector:
+    app: minio-envoy
+  ports:
+    - name: https
+      port: 8443
+      targetPort: 8443
+  type: ClusterIP

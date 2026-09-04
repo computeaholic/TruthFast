@@ -1,0 +1,15 @@
+authorized_principals:
+  - "spiffe://identity.threadforge.local/ns/admin/sa/ops-team"
+
+tempo:
+  principals:
+    - "spiffe://identity.threadforge.local/ns/threadforge/sa/jeff"
+  allowed_phases:
+    - FROZEN
+    - CREATED
+
+namespace:monitoring:
+  principals:
+    - "spiffe://identity.threadforge.local/ns/monitoring/sa/oncall"
+  allowed_phases:
+    - FROZEN

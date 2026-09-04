@@ -1,0 +1,20 @@
+# Test fixture for intent registry
+# Located at: tests/fixtures/intents.yaml
+registry:
+  internal:
+    literal:
+      - identity.demand
+      - observe.envoy.certs
+      - storage.router
+      - storage.admin
+      - governance.override
+    patterns:
+      - "kernel.execute.*"
+      - "governance.*"
+  user_facing:
+    - vector.embed
+    - vector.read
+    - vector.write
+    - vector.delete
+    - storage.read
+    - storage.write

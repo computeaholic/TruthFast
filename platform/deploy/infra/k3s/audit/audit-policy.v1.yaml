@@ -1,0 +1,13 @@
+# Audit Policy v1
+# Canonical source of truth for k3s apiserver audit
+# Do not edit live file directly. Use scripts/deploy_k3s_audit_policy.sh
+# Live file SHA256 (as imported): 49c088df5c0d0c77c1520d025e4f5571f9e4077463bae990a07b8c527031699d
+
+apiVersion: audit.k8s.io/v1
+kind: Policy
+
+rules:
+  - level: RequestResponse
+    resources:
+      - group: "*"
+        resources: ["*"]

@@ -1,0 +1,26 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: spiffe-identity-edges
+  namespace: monitoring
+spec:
+  groups:
+  - name: spiffe.graph
+    rules:
+    - record: spiffe_identity_edge
+      expr: |
+        sum by (source_principal, destination_principal) (
+          istio_requests_total
+        )
+    - record: spiffe_identity_edge_new
+      expr: |
+        spiffe_identity_edge
+          unless
+        spiffe_identity_edge offset 24h
+    - alert: IdentityGraphDriftDetected
+      expr: spiffe_identity_edge_new > 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "New SPIFFE identity communication path detected"

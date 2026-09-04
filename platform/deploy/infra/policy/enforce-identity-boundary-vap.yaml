@@ -1,0 +1,197 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: threadforge-enforce-identity-boundary-pods
+  labels:
+    threadforge.io/layer: identity-boundary
+    threadforge.io/default-deny: "true"
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  variables:
+    - name: exemptNamespaces
+      expression: >-
+        ['kube-system', 'kube-public', 'kube-node-lease', 'istio-system',
+         'spire-system', 'spire', 'kyverno', 'cert-manager']
+    - name: namespaceLabels
+      expression: >-
+        has(namespaceObject.metadata) && has(namespaceObject.metadata.labels) ? namespaceObject.metadata.labels : {}
+    - name: namespaceParticipatesInMesh
+      expression: >-
+        request.namespace in variables.exemptNamespaces ||
+        ('istio-injection' in variables.namespaceLabels && variables.namespaceLabels['istio-injection'] == 'enabled')
+    - name: serviceAccountName
+      expression: >-
+        has(object.spec.serviceAccountName) ? object.spec.serviceAccountName : ''
+    - name: hasSidecarOptOut
+      expression: >-
+        has(object.metadata.annotations) &&
+        'sidecar.istio.io/inject' in object.metadata.annotations &&
+        object.metadata.annotations['sidecar.istio.io/inject'] == 'false'
+    - name: hasFakeSpiffeEnv
+      expression: >-
+        object.spec.containers.exists(c,
+          has(c.env) &&
+          c.env.exists(e, e.name in ['SPIFFE_ENDPOINT_SOCKET', 'GRPC_XDS_BOOTSTRAP'])
+        )
+  validations:
+    - expression: variables.namespaceParticipatesInMesh
+      message: >-
+        [DENIED_POLICY] Identity boundary is default-deny: workloads are only allowed in
+        namespaces that explicitly set istio-injection=enabled.
+    - expression: variables.serviceAccountName != '' && variables.serviceAccountName != 'default'
+      message: >-
+        [DENIED_POLICY] Identity-bound workloads must set a non-default serviceAccountName.
+    - expression: '!variables.hasSidecarOptOut'
+      message: >-
+        [DENIED_POLICY] sidecar.istio.io/inject=false is forbidden cluster-wide.
+    - expression: '!variables.hasFakeSpiffeEnv'
+      message: >-
+        [DENIED_POLICY] Manual SPIFFE_ENDPOINT_SOCKET or GRPC_XDS_BOOTSTRAP injection is forbidden.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: threadforge-enforce-identity-boundary-pods-binding
+spec:
+  policyName: threadforge-enforce-identity-boundary-pods
+  validationActions: [Deny]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: threadforge-enforce-identity-boundary-workloads
+  labels:
+    threadforge.io/layer: identity-boundary
+    threadforge.io/default-deny: "true"
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["deployments", "statefulsets", "daemonsets"]
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["jobs"]
+  variables:
+    - name: exemptNamespaces
+      expression: >-
+        ['kube-system', 'kube-public', 'kube-node-lease', 'istio-system',
+         'spire-system', 'spire', 'kyverno', 'cert-manager']
+    - name: namespaceLabels
+      expression: >-
+        has(namespaceObject.metadata) && has(namespaceObject.metadata.labels) ? namespaceObject.metadata.labels : {}
+    - name: namespaceParticipatesInMesh
+      expression: >-
+        request.namespace in variables.exemptNamespaces ||
+        ('istio-injection' in variables.namespaceLabels && variables.namespaceLabels['istio-injection'] == 'enabled')
+    - name: serviceAccountName
+      expression: >-
+        has(object.spec.template.spec.serviceAccountName) ? object.spec.template.spec.serviceAccountName : ''
+    - name: hasSidecarOptOut
+      expression: >-
+        has(object.spec.template.metadata) &&
+        has(object.spec.template.metadata.annotations) &&
+        'sidecar.istio.io/inject' in object.spec.template.metadata.annotations &&
+        object.spec.template.metadata.annotations['sidecar.istio.io/inject'] == 'false'
+    - name: hasFakeSpiffeEnv
+      expression: >-
+        object.spec.template.spec.containers.exists(c,
+          has(c.env) &&
+          c.env.exists(e, e.name in ['SPIFFE_ENDPOINT_SOCKET', 'GRPC_XDS_BOOTSTRAP'])
+        )
+  validations:
+    - expression: variables.namespaceParticipatesInMesh
+      message: >-
+        [DENIED_POLICY] Identity boundary is default-deny: workloads are only allowed in
+        namespaces that explicitly set istio-injection=enabled.
+    - expression: variables.serviceAccountName != '' && variables.serviceAccountName != 'default'
+      message: >-
+        [DENIED_POLICY] Identity-bound workloads must set a non-default serviceAccountName.
+    - expression: '!variables.hasSidecarOptOut'
+      message: >-
+        [DENIED_POLICY] sidecar.istio.io/inject=false is forbidden cluster-wide.
+    - expression: '!variables.hasFakeSpiffeEnv'
+      message: >-
+        [DENIED_POLICY] Manual SPIFFE_ENDPOINT_SOCKET or GRPC_XDS_BOOTSTRAP injection is forbidden.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: threadforge-enforce-identity-boundary-workloads-binding
+spec:
+  policyName: threadforge-enforce-identity-boundary-workloads
+  validationActions: [Deny]
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: threadforge-enforce-identity-boundary-cronjobs
+  labels:
+    threadforge.io/layer: identity-boundary
+    threadforge.io/default-deny: "true"
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["batch"]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["cronjobs"]
+  variables:
+    - name: exemptNamespaces
+      expression: >-
+        ['kube-system', 'kube-public', 'kube-node-lease', 'istio-system',
+         'spire-system', 'spire', 'kyverno', 'cert-manager']
+    - name: namespaceLabels
+      expression: >-
+        has(namespaceObject.metadata) && has(namespaceObject.metadata.labels) ? namespaceObject.metadata.labels : {}
+    - name: namespaceParticipatesInMesh
+      expression: >-
+        request.namespace in variables.exemptNamespaces ||
+        ('istio-injection' in variables.namespaceLabels && variables.namespaceLabels['istio-injection'] == 'enabled')
+    - name: serviceAccountName
+      expression: >-
+        has(object.spec.jobTemplate.spec.template.spec.serviceAccountName) ? object.spec.jobTemplate.spec.template.spec.serviceAccountName : ''
+    - name: hasSidecarOptOut
+      expression: >-
+        has(object.spec.jobTemplate.spec.template.metadata) &&
+        has(object.spec.jobTemplate.spec.template.metadata.annotations) &&
+        'sidecar.istio.io/inject' in object.spec.jobTemplate.spec.template.metadata.annotations &&
+        object.spec.jobTemplate.spec.template.metadata.annotations['sidecar.istio.io/inject'] == 'false'
+    - name: hasFakeSpiffeEnv
+      expression: >-
+        object.spec.jobTemplate.spec.template.spec.containers.exists(c,
+          has(c.env) &&
+          c.env.exists(e, e.name in ['SPIFFE_ENDPOINT_SOCKET', 'GRPC_XDS_BOOTSTRAP'])
+        )
+  validations:
+    - expression: variables.namespaceParticipatesInMesh
+      message: >-
+        [DENIED_POLICY] Identity boundary is default-deny: workloads are only allowed in
+        namespaces that explicitly set istio-injection=enabled.
+    - expression: variables.serviceAccountName != '' && variables.serviceAccountName != 'default'
+      message: >-
+        [DENIED_POLICY] Identity-bound workloads must set a non-default serviceAccountName.
+    - expression: '!variables.hasSidecarOptOut'
+      message: >-
+        [DENIED_POLICY] sidecar.istio.io/inject=false is forbidden cluster-wide.
+    - expression: '!variables.hasFakeSpiffeEnv'
+      message: >-
+        [DENIED_POLICY] Manual SPIFFE_ENDPOINT_SOCKET or GRPC_XDS_BOOTSTRAP injection is forbidden.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: threadforge-enforce-identity-boundary-cronjobs-binding
+spec:
+  policyName: threadforge-enforce-identity-boundary-cronjobs
+  validationActions: [Deny]

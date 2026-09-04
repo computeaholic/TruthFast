@@ -1,0 +1,17 @@
+templates:
+  sidecar: |
+    containers:
+      - name: istio-proxy
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 15020
+          initialDelaySeconds: {{ .Values.sidecar.readiness.initialDelaySeconds | int }}
+          periodSeconds: {{ .Values.sidecar.readiness.periodSeconds | int }}
+          failureThreshold: {{ .Values.sidecar.readiness.failureThreshold | int }}
+        startupProbe:
+          failureThreshold: {{ .Values.sidecar.startup.failureThreshold | int }}
+    # boolean helper pattern expected by tests
+    {{ $priv := (eq (annotation .ObjectMeta `sidecar.istio.io/privileged`) "true") }}
+    allowPrivilegeEscalation: {{ if $priv }}true{{ else }}false{{ end }}
+    privileged: {{ if $priv }}true{{ else }}false{{ end }}

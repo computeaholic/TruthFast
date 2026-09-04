@@ -1,0 +1,12 @@
+{
+  "metadata": { "name": "tempo", "namespace": "tempo", "labels": { "threadforge.io/workload-class": "dependency-gated" }, "annotations": { "threadforge.io/phase-override": "FROZEN", "threadforge.io/phase-override-identity": "jeff@threadforge.local" } },
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          { "name": "tempo", "startupProbe": {}, "readinessProbe": {}, "image": "grafana/tempo:2.5.0" }
+        ]
+      }
+    }
+  }
+}

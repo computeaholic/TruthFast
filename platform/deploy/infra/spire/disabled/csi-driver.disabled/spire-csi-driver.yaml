@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spire-spiffe-csi-driver
+  namespace: spire-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spire-spiffe-csi-driver
+  namespace: spire-system
+spec:
+  selector:
+    matchLabels:
+      app: spire-spiffe-csi-driver
+  template:
+    metadata:
+      labels:
+        app: spire-spiffe-csi-driver
+    spec:
+      serviceAccountName: spire-spiffe-csi-driver
+      containers:
+        - name: spire-spiffe-csi-driver
+          image: registry.threadforge.local:30500/mirror/ghcr.io/spiffe/spire-csi-driver@sha256:1009bdf05b43b7c20ff0ca84fbc589c1c936314c80cb0314de01b1fa63720b35
+          imagePullPolicy: Always
+          args:
+            - --csi-socket-path=/spiffe-csi/driver.sock
+            - --workload-api-socket-dir=/spire-agent-socket
+            - --log-level=info
+          ports:
+            - containerPort: 9808
+              name: healthz
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: /spire-agent-socket
+              readOnly: true
+            - name: csi-plugin-dir
+              mountPath: /spiffe-csi
+        - name: csi-node-driver-registrar
+          image: registry.threadforge.local:30500/mirror/registry.k8s.io/sig-storage/csi-node-driver-registrar@sha256:f2e398ff0e39264041e1c3a7b4470eeb84e48a6fa90ea011f198961c6f5a5fa2
+          imagePullPolicy: Always
+          args:
+            - --csi-address=/csi/csi.sock
+            - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.spiffe.io/csi.sock
+            - --health-port=9809
+          ports:
+            - containerPort: 9809
+              name: healthz-registrar
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: healthz-registrar
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          volumeMounts:
+            - name: csi-plugin-dir
+              mountPath: /csi
+              readOnly: true
+            - name: registration-dir
+              mountPath: /registration
+      volumes:
+        - name: spire-agent-socket
+          hostPath:
+            path: /run/spire/agent-sockets
+            type: Directory
+        - name: spiffe-csi
+          emptyDir: {}
+        - name: csi-plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi.spiffe.io
+            type: DirectoryOrCreate
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+---
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: csi.spiffe.io
+spec:
+  attachRequired: false
+  podInfoOnMount: true

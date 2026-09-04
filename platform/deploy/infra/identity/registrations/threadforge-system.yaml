@@ -1,0 +1,41 @@
+apiVersion: identity.threadforge.local/v1
+kind: IdentityRegistration
+metadata:
+  name: threadforge-client
+  namespace: threadforge-system
+spec:
+  spiffeId: spiffe://identity.threadforge.local/tier/tier2/cluster-alpha/ns/threadforge-system/sa/threadforge-client/role/client
+  parentId: spiffe://identity.threadforge.local/spire/agent/k8s_psat/threadforge/fa9e2c90-accd-4c9f-9e65-0e8b53b64af6
+  selectors:
+    - type: k8s
+      value: ns:threadforge-system
+    - type: k8s
+      value: sa:threadforge-client
+---
+apiVersion: identity.threadforge.local/v1
+kind: IdentityRegistration
+metadata:
+  name: threadforge-runtime
+  namespace: threadforge-system
+spec:
+  spiffeId: spiffe://identity.threadforge.local/tier/tier2/cluster-alpha/ns/threadforge-system/sa/threadforge-runtime/role/runtime-executor
+  parentId: spiffe://identity.threadforge.local/spire/agent/k8s_psat/threadforge/fa9e2c90-accd-4c9f-9e65-0e8b53b64af6
+  selectors:
+    - type: k8s
+      value: ns:threadforge-system
+    - type: k8s
+      value: sa:threadforge-runtime
+---
+apiVersion: identity.threadforge.local/v1
+kind: IdentityRegistration
+metadata:
+  name: istio-ingressgateway
+  namespace: istio-system
+spec:
+  spiffeId: spiffe://identity.threadforge.local/tier/tier1/cluster-alpha/ns/istio-system/sa/istio-ingressgateway/role/ingress
+  parentId: spiffe://identity.threadforge.local/spire/agent/k8s_psat/threadforge/fa9e2c90-accd-4c9f-9e65-0e8b53b64af6
+  selectors:
+    - type: k8s
+      value: ns:istio-system
+    - type: k8s
+      value: sa:istio-ingressgateway

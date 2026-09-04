@@ -1,0 +1,223 @@
+# Phase G Enforcement: RBAC Manifests for Authority Boundaries
+# These manifests enforce what each component CAN and CANNOT do.
+# Fail-closed: Deny-by-default, explicit allow only.
+
+---
+# ServiceAccount for Crossplane with minimal permissions
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: crossplane
+  namespace: crossplane-system
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/component: crossplane
+
+---
+# Role: Crossplane can only manage claims and bindings, NOT CRDs or Argo Apps
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crossplane-claim-manager
+  labels:
+    threadforge.io/governance: "true"
+spec:
+  rules:
+  # Claims: READ/WATCH only (claims drive composition, but cannot escalate)
+  - apiGroups: ["threadforge.io"]
+    resources: ["xnetworkclaims", "xclusterslaims", "xstorageclaims"]
+    verbs: ["get", "list", "watch"]
+
+  # Compositions: READ only (runtime cannot modify composition definitions)
+  - apiGroups: ["apiextensions.crossplane.io"]
+    resources: ["compositions"]
+    verbs: ["get", "list", "watch"]
+
+  # ConfigMaps: CREATE/PATCH/DELETE (binding targets only)
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "patch", "delete", "get", "list"]
+
+  # Secrets: READ only (for provider credentials, no modification)
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+
+  # FORBIDDEN (NOT in rules):
+  # - apiGroups: ["apiextensions.k8s.io"]
+  #   resources: ["customresourcedefinitions"]
+  #   verbs: ["*"]              <-- CRD modification DENIED
+  #
+  # - apiGroups: ["argoproj.io"]
+  #   resources: ["applications"]
+  #   verbs: ["*"]              <-- Argo modification DENIED
+  #
+  # - apiGroups: [""]
+  #   resources: ["services"]
+  #   verbs: ["*"]              <-- Cloud API access DENIED (egress controlled via NetworkPolicy)
+
+---
+# RoleBinding: Bind crossplane SA to claim-manager role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: crossplane-claim-manager-binding
+  labels:
+    threadforge.io/governance: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: crossplane-claim-manager
+subjects:
+- kind: ServiceAccount
+  name: crossplane
+  namespace: crossplane-system
+
+---
+# ServiceAccount for Argo CD with restricted permissions
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-application-controller
+  namespace: argocd
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/component: argocd
+
+---
+# Role: Argo CD can manage Applications but CANNOT modify itself
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: argocd-application-controller-restricted
+  labels:
+    threadforge.io/governance: "true"
+spec:
+  rules:
+  # Applications: READ only (cannot modify application definitions)
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "list", "watch"]
+
+  # AppProjects: READ only (cannot modify AppProject definitions)
+  - apiGroups: ["argoproj.io"]
+    resources: ["appprojects"]
+    verbs: ["get", "list", "watch"]
+
+  # Repositories: READ only (cannot modify repository configuration)
+  - apiGroups: ["argoproj.io"]
+    resources: ["repositories"]
+    verbs: ["get", "list", "watch"]
+
+  # Deployments: CREATE/PATCH/DELETE (deploy manifests from Git)
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "daemonsets"]
+    verbs: ["create", "patch", "delete", "get", "list"]
+
+  # Pods: READ (monitor deployment status)
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["get", "list", "watch"]
+
+  # FORBIDDEN (NOT in rules):
+  # - apiGroups: ["argoproj.io"]
+  #   resources: ["applications"]
+  #   verbs: ["patch"]           <-- Cannot modify own sync policy (self-modification DENIED)
+  #
+  # - apiGroups: [""]
+  #   resources: ["secrets"]
+  #   verbs: ["*"]               <-- Cannot modify credentials (prevents privilege escalation)
+
+---
+# RoleBinding: Bind Argo CD SA to restricted role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: argocd-application-controller-restricted-binding
+  labels:
+    threadforge.io/governance: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argocd-application-controller-restricted
+subjects:
+- kind: ServiceAccount
+  name: argocd-application-controller
+  namespace: argocd
+
+---
+# ServiceAccount for audit and verification (read-only, no modification)
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: threadforge-auditor
+  namespace: threadforge
+  labels:
+    threadforge.io/governance: "true"
+    threadforge.io/component: auditor
+
+---
+# Role: Auditor can READ everything but MODIFY nothing
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: threadforge-auditor-reader
+  labels:
+    threadforge.io/governance: "true"
+spec:
+  rules:
+  # All read operations across all resources
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+
+  # Audit logs
+  - apiGroups: ["audit.k8s.io"]
+    resources: ["events"]
+    verbs: ["get", "list"]
+
+---
+# RoleBinding: Bind auditor SA to reader role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: threadforge-auditor-reader-binding
+  labels:
+    threadforge.io/governance: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: threadforge-auditor-reader
+subjects:
+- kind: ServiceAccount
+  name: threadforge-auditor
+  namespace: threadforge
+
+---
+# DenyAll: Deny all API calls by default, then selectively allow
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: deny-all
+  labels:
+    threadforge.io/governance: "true"
+rules: []  # Empty rules = deny all
+
+---
+# Default RoleBinding for all ServiceAccounts
+# This acts as a safety net: if a SA is not explicitly allowed, it is denied
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: deny-all-default
+  labels:
+    threadforge.io/governance: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: deny-all
+subjects:
+- kind: Group
+  name: system:serviceaccounts
+  apiGroup: rbac.authorization.k8s.io
+

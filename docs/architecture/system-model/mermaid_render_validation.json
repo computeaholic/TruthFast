@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "source_directory": "docs/architecture/SYSTEM_ATLAS.md",
+  "rendered_format": "SVG",
+  "renderer": "ghcr.io/mermaid-js/mermaid-cli/mermaid-cli@sha256:ed8df1d6ce4049724121f3e3f76c0d268b717d80483acca16fd37783de941879",
+  "renderer_dependency_scope": "ephemeral_container_only",
+  "total": 20,
+  "rendered": 20,
+  "render_failures": 0,
+  "representative_visual_inspection": [
+    "01_whole_system.mmd",
+    "05_mutation_authority.mmd",
+    "11_network_boundaries.mmd",
+    "13_runtime_kernel.mmd",
+    "19_system_dependency_graph.mmd"
+  ],
+  "inspection_result": "PASS: labels and trust zones readable at full resolution; support classes visually distinct; no collapsed nodes",
+  "results": [
+    {
+      "diagram": "01_whole_system.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "16a47654b471344dbbc38c1f9f5d1c36f1c742735c24afe7ed10fdf7875a2437",
+      "view_box": "0 0 3741.765625 578",
+      "width": 3741.765625,
+      "height": 578.0
+    },
+    {
+      "diagram": "02_bootstrap_lifecycle.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "3613944b3be70c62548d8a4a8365f86cd59a793d45fd0fe9e8a382fafb45b48c",
+      "view_box": "0 0 4183.75 273",
+      "width": 4183.75,
+      "height": 273.0
+    },
+    {
+      "diagram": "03_identity_trust.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "a4613e83f59ebc60789c9225024ff3c48a40b24afbc6035fdcd0b0e4a99e7d49",
+      "view_box": "0 0 4019.34375 377",
+      "width": 4019.34375,
+      "height": 377.0
+    },
+    {
+      "diagram": "04_request_authority_execution.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "349eb88d4b7caeedf0e9d026c80adfc630df4b87469fc18822ae9fd953790d91",
+      "view_box": "0 0 3478.625 401",
+      "width": 3478.625,
+      "height": 401.0
+    },
+    {
+      "diagram": "05_mutation_authority.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "3881fb839072c0a5205cba33eb0449122deabf0e019800d09ba3e23f69003163",
+      "view_box": "0 0 1942.890625 803",
+      "width": 1942.890625,
+      "height": 803.0
+    },
+    {
+      "diagram": "06_supply_chain.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "f42d98f784097d8157c7ea7eb968113f6f2ef95e4a6f19aa5c7b8b7116445a58",
+      "view_box": "0 0 4313.125 396",
+      "width": 4313.125,
+      "height": 396.0
+    },
+    {
+      "diagram": "07_proof_pipeline.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "19aef37245f715d4817675661c4bea38d1e8cb244ec14d374940357c43365f9e",
+      "view_box": "0 0 3847.75 273",
+      "width": 3847.75,
+      "height": 273.0
+    },
+    {
+      "diagram": "08_evidence_graph.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "8152378f865f93c6deeec9061d0309686379bf09fe231add75eb2417c40e7de9",
+      "view_box": "0 0 3088.828125 457",
+      "width": 3088.828125,
+      "height": 457.0
+    },
+    {
+      "diagram": "09_observability.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "ccd5799d5af01d6d0e78f8e16549696178d9cb684d04ee4198846109f67c5f6a",
+      "view_box": "0 0 2152.5625 455",
+      "width": 2152.5625,
+      "height": 455.0
+    },
+    {
+      "diagram": "10_audit_ledger.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "a3290d9be61ed645b7291d4145d7316cde9d79f0fbce89a991816c2d933aae0f",
+      "view_box": "0 0 2313.125 717",
+      "width": 2313.125,
+      "height": 717.0
+    },
+    {
+      "diagram": "11_network_boundaries.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "01150f8130d2629a4be80ee65fa8759aea0736d457030e4f6ef4bf0a4a4b1c05",
+      "view_box": "0 0 2482.890625 772.0499877929688",
+      "width": 2482.890625,
+      "height": 772.0499877929688
+    },
+    {
+      "diagram": "12_data_state.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "3450c84f68c62710dc6121a765929a3c3e955ae2e9330be2b800d85fd16c3304",
+      "view_box": "0 0 1407.609375 1180",
+      "width": 1407.609375,
+      "height": 1180.0
+    },
+    {
+      "diagram": "13_runtime_kernel.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "11d5d118d7b98e25bcdb1e420c9c00fe6326ba696947c521753f102d84f77e03",
+      "view_box": "0 0 2542.703125 712",
+      "width": 2542.703125,
+      "height": 712.0
+    },
+    {
+      "diagram": "14_civ.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "a54f1c4706ad3febe6e22d893cc9e5d79bb144df65dd41c6ae1558c004555094",
+      "view_box": "0 0 2873.890625 371",
+      "width": 2873.890625,
+      "height": 371.0
+    },
+    {
+      "diagram": "15_demo_paths.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "32443f19dc856a186e3abf5492365e268885c2e60e41e2befd4b3ca3a7a23fc6",
+      "view_box": "0 0 1895.265625 534",
+      "width": 1895.265625,
+      "height": 534.0
+    },
+    {
+      "diagram": "16_failure_propagation.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "1c1a025d5ba90a9dba0d87600ce914e680b88929b7108444d163e9dd8960c1df",
+      "view_box": "0 0 3132.734375 405",
+      "width": 3132.734375,
+      "height": 405.0
+    },
+    {
+      "diagram": "17_release_qualification.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "1c926bbbcbb92e5dcab42522b90378d1f4567ed640e38c26d9aed59cd9fbaa5d",
+      "view_box": "0 0 3525.5625 273",
+      "width": 3525.5625,
+      "height": 273.0
+    },
+    {
+      "diagram": "18_historical_strata.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "a8bf5d1c9bb3cf675cfd3e33e96e46c07f350a01cbeede6e000b04f97ae7906a",
+      "view_box": "0 0 2486.59375 395",
+      "width": 2486.59375,
+      "height": 395.0
+    },
+    {
+      "diagram": "19_system_dependency_graph.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "68cb3076fc4e83807881e71ed9f6a2f1f8ea9952c053654003d97c47da283f46",
+      "view_box": "0 0 2746.15625 351",
+      "width": 2746.15625,
+      "height": 351.0
+    },
+    {
+      "diagram": "20_forward_architecture_opportunities.mmd",
+      "rendered": true,
+      "render_error": null,
+      "svg_sha256": "b07cd0e0a4422cfe69262a43e376e39861276a9973dbc8d0e57939a2aa64404e",
+      "view_box": "0 0 1867.609375 606",
+      "width": 1867.609375,
+      "height": 606.0
+    }
+  ]
+}

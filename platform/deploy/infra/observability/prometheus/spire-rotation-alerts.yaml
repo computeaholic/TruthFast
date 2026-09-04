@@ -1,0 +1,94 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: spire-authority-alerts
+  namespace: monitoring
+spec:
+  groups:
+  - name: spire-authority-rotation.rules
+    interval: 30s
+    rules:
+
+    # --------------------------------------------------
+    # Authority Expiration Warning
+    # --------------------------------------------------
+    - alert: SpireAuthorityExpirationSoon
+      expr: |
+        process_resident_memory_bytes{job="spire-server"} > 0
+        (ignoring values 1 or more)
+      for: 5m
+      labels:
+        severity: warning
+        subsystem: spire
+        component: authority-rotation
+      annotations:
+        summary: "SPIRE authority approaching expiration"
+        description: "SPIRE root certificate expiration is within 6 hours. Manual renewal may be required."
+      # Note: This is a placeholder to establish the alert structure.
+      # Requires spire_authority_expiration_timestamp metric to be exported.
+
+    # --------------------------------------------------
+    # Authority Activation Delay
+    # --------------------------------------------------
+    - alert: SpireAuthorityNotRotated
+      expr: |
+        up{job="spire-server"} == 1
+      for: 24h
+      labels:
+        severity: warning
+        subsystem: spire
+        component: authority-rotation
+      annotations:
+        summary: "SPIRE authority rotation not detected"
+        description: "No authority activation event detected within 24 hours. Check ca_manager logs for renewal blockages."
+      # Note: This is a placeholder to establish the alert structure.
+      # Requires spire_ca_manager_X509CA_activated_timestamp metric to be exported.
+
+    # --------------------------------------------------
+    # Rotation Lifecycle Health
+    # --------------------------------------------------
+    - alert: SpireAuthoritySlotUnusableSpike
+      expr: |
+        increase(process_resident_memory_bytes{job="spire-server"}[15m]) > 0
+      for: 10m
+      labels:
+        severity: warning
+        subsystem: spire
+        component: authority-rotation
+      annotations:
+        summary: "SPIRE ca_manager slot unusable events detected"
+        description: "Increase in slot unusable events detected. Authority slot rotation may be experiencing issues."
+      # Note: This is a placeholder to establish the alert structure.
+      # Requires spire_ca_manager_slot_unusable_total metric to be exported.
+
+    # --------------------------------------------------
+    # Bundle Root Certificate Count Anomaly
+    # --------------------------------------------------
+    - alert: SpireBundleRootCountUnexpected
+      expr: |
+        up{job="spire-server"} == 1
+      for: 5m
+      labels:
+        severity: warning
+        subsystem: spire
+        component: bundle-management
+      annotations:
+        summary: "SPIRE bundle root certificate count outside normal range"
+        description: "Bundle contains more than 10 root certificates. Rotation window may be lagging; check ca_manager purge logic."
+      # Note: This is a placeholder to establish the alert structure.
+      # Requires spire_bundle_root_certificate_count metric to be exported.
+
+    # --------------------------------------------------
+    # Information Gathering Rules (No Alert Firing)
+    # --------------------------------------------------
+    - record: spire:authority:status
+      expr: |
+        up{job="spire-server"}
+      labels:
+        component: authority-state
+
+    - record: spire:rotation:health
+      expr: |
+        up{job="spire-server"}
+      labels:
+        component: rotation-lifecycle

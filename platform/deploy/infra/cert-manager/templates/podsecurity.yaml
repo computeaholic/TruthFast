@@ -1,0 +1,9 @@
+# platform/deploy/infra/cert-manager/templates/podsecurity.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  labels:
+    istio-injection: disabled
+    pod-security.kubernetes.io/enforce: restricted
+    threadforge.io/mesh: allowed

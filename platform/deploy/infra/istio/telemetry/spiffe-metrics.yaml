@@ -1,0 +1,19 @@
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: spiffe-metrics
+  namespace: istio-system
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+    overrides:
+    - match:
+        metric: REQUEST_COUNT
+      tagOverrides:
+        source_principal:
+          operation: UPSERT
+          value: "%DOWNSTREAM_PEER_URI_SAN%"
+        destination_principal:
+          operation: UPSERT
+          value: "%UPSTREAM_PEER_URI_SAN%"

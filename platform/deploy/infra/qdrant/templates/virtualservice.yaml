@@ -1,0 +1,17 @@
+# deployment/infra/qdrant/templates/virtualservice.yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: qdrant-vs
+  namespace: qdrant
+spec:
+  hosts:
+    - "{{ .Values.mesh.host }}"
+  gateways:
+    - qdrant-gateway
+  http:
+    - route:
+        - destination:
+            host: qdrant
+            port:
+              number: {{ .Values.service.port }}

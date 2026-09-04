@@ -1,0 +1,15 @@
+apiVersion: policy/v1
+kind: PodSecurityPolicy
+metadata:
+  name: gateway-restricted
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsUser:
+    rule: MustRunAsNonRoot
+  fsGroup:
+    rule: MustRunAs
+    ranges:
+      - min: 1000
+        max: 65535

@@ -1,0 +1,7 @@
+# INTENTIONALLY DISABLED
+# Global STRICT mTLS is not enabled at this phase.
+# Reason:
+# - PPIT not yet installed
+# - External provenance would be lost
+#
+# This file exists to show deliberate deferral.

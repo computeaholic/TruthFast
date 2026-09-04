@@ -1,0 +1,13 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: spire-server-metrics
+  namespace: spire-system
+spec:
+  selector:
+    matchLabels:
+      app: spire-server
+  endpoints:
+  - port: http-metrics
+    interval: 30s
+    path: /metrics

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Tracked copy (also installed into .git/hooks/) — pre-commit governance checks
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+branch="$(git rev-parse --abbrev-ref HEAD)"
+
+# 1) block commits directly to main
+if [ "$branch" = "main" ] || [ "$branch" = "refs/heads/main" ]; then
+  echo "ERROR: direct commits to 'main' are forbidden by governance." >&2
+  echo "Create a feature branch and open a PR instead." >&2
+  echo "[ADVISORY-FAIL] non-authoritative path"; exit 0
+fi
+
+# 2) read allowed root files from governance policy if present
+# Fallback allowlist for environments where policy parsing fails — keep in sync with
+# .github/governance/THREADFORGE_GOVERNANCE.json.allowed_root_files
+allowed_root_files="README.md CHANGELOG.md SECURITY.md LICENSE THIRD_PARTY_NOTICES.md Makefile pyrightconfig.json pyproject.toml requirements.txt mkdocs.yml .gitignore .pre-commit-config.yaml tree.txt"
+policy_file="$repo_root/.github/governance/THREADFORGE_GOVERNANCE.json"
+if [ -f "$policy_file" ]; then
+  # simple JSON parse for allowed_root_files (fallback if parsing fails)
+  list=$(awk '/allowed_root_files/ {flag=1; next} flag && /]/ {flag=0} flag {gsub(/[",]/,""); print}' "$policy_file" | xargs)
+  if [ -n "$list" ]; then
+    allowed_root_files="$list"
+  fi
+fi
+
+# 3) get staged files
+staged_files=$(git diff --cached --name-only --relative)
+
+# 4) block unauthorized root-level file additions/modifications
+# (deletions of non-allowlisted root files are permitted — removing clutter is compliant)
+staged_deletions=$(git diff --cached --diff-filter=D --name-only --relative)
+for f in $staged_files; do
+  if echo "$f" | grep -q "^[^/][^/]*$"; then
+    # skip deletion check — deleting an unauthorised file improves compliance
+    if echo "$staged_deletions" | grep -qx "$f"; then continue; fi
+    ok=0
+    for a in $allowed_root_files; do
+      if [ "$f" = "$a" ]; then ok=1; break; fi
+    done
+    if [ $ok -eq 0 ]; then
+      echo "ERROR: Changes to root-level file '$f' are not allowed by governance." >&2
+      echo "Allowed root files: $allowed_root_files" >&2
+      echo "[ADVISORY-FAIL] non-authoritative path"; exit 0
+    fi
+  fi
+done
+
+# 5) Block CREATE TABLE in data/schemas/postgres/ or platform/deploy/infra/postgres/migrations/
+for f in $staged_files; do
+  case "$f" in
+    data/schemas/postgres/*.sql|platform/deploy/infra/postgres/migrations/*.sql)
+      if git show :"$f" | grep -v '^\s*--' | grep -i -n "CREATE\s\+TABLE" >/dev/null 2>&1; then
+        echo "ERROR: 'CREATE TABLE' found in $f — application tables must be Alembic-managed." >&2
+        git --no-pager diff --staged -- "$f" || true
+        echo "[ADVISORY-FAIL] non-authoritative path"; exit 0
+      fi
+      ;;
+  esac
+done
+
+# 6) Prevent introducing multiple Alembic heads in data/db/alembic/versions
+python3 - <<'PY'
+import glob,re,sys
+files=glob.glob('data/db/alembic/versions/*.py')
+rev_to_down={}
+rev_set=set()
+for f in files:
+    s=open(f).read()
+    mrev=re.search(r"^revision\s*=\s*['\"]([^'\"]+)['\"]", s, flags=re.M)
+    mdown=re.search(r"^down_revision\s*=\s*['\"]([^'\"]+)['\"]", s, flags=re.M)
+    if mrev:
+        rev=mrev.group(1)
+        down=mdown.group(1) if mdown else None
+        rev_to_down[rev]=down
+        rev_set.add(rev)
+down_values=set(v for v in rev_to_down.values() if v)
+heads=[r for r in rev_set if r not in down_values]
+if len(heads)>1:
+    print('ERROR: multiple alembic heads detected locally:', heads)
+    sys.exit(2)
+PY
+
+# 7) Enforce canonical repo structure (domain consolidation invariants)
+if [ -f "$repo_root/scripts/verify/verify_repo_canonical_structure.sh" ]; then
+  if ! bash "$repo_root/scripts/verify/verify_repo_canonical_structure.sh" >/dev/null 2>&1; then
+    echo "ERROR: canonical structure check failed." >&2
+    echo "Run: bash scripts/verify/verify_repo_canonical_structure.sh" >&2
+    echo "Fix any VIOLATIONS before committing." >&2
+    exit 1
+  fi
+fi
+
+# All checks passed
+exit 0

@@ -1,0 +1,81 @@
+name: Repository Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: repository-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-quality:
+    name: repository-quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install development tooling
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/dev.txt
+
+      - name: Ruff
+        run: |
+          set -euo pipefail
+          python -m ruff check \
+            scripts/verify/ci_audit.py \
+            tests/test_ci_*.py \
+            tests/test_no_*.py \
+            tests/test_arm64_only.py \
+            tests/test_kind_node_digest_locked.py \
+            tests/test_no_manifest_list_usage.py \
+            tests/test_governance_enforcement_guards.py \
+            tests/test_observability_proof_phase.py \
+            tests/test_no_tag_runtime_images.py \
+            tests/test_bootstrap_reproducibility_guards.py \
+            tests/test_ci_runner_policy.py
+
+      - name: Mypy
+        run: |
+          set -euo pipefail
+          python -m mypy \
+            scripts/verify/ci_audit.py \
+            tests/test_ci_*.py \
+            tests/test_no_*.py \
+            tests/test_arm64_only.py \
+            tests/test_kind_node_digest_locked.py \
+            tests/test_governance_enforcement_guards.py \
+            tests/test_observability_proof_phase.py \
+            tests/test_bootstrap_reproducibility_guards.py
+
+      - name: Core unit tests
+        run: |
+          set -euo pipefail
+          python -m pytest -q \
+            tests/test_ci_constitution_guard.py \
+            tests/test_ci_enforcement_layer.py \
+            tests/test_ci_no_heavy_steps.py \
+            tests/test_ci_timeout_budgets.py \
+            tests/test_ci_runner_policy.py \
+            tests/test_no_platform_override.py \
+            tests/test_arm64_only.py \
+            tests/test_no_manifest_list_usage.py \
+            tests/test_kind_node_digest_locked.py \
+            tests/test_governance_enforcement_guards.py \
+            tests/test_observability_proof_phase.py \
+            tests/test_no_tag_runtime_images.py \
+            tests/test_bootstrap_reproducibility_guards.py

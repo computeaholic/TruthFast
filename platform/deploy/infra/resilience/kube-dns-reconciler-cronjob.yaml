@@ -1,0 +1,127 @@
+# CronJob to verify cluster DNS (kube-dns) UDP reachability and trigger idempotent reconcile
+# - Runs every minute
+# - Cooldown: patches only once per 5 minutes (configurable below)
+# - If DNS queries (UDP) to kube-dns ClusterIP fail from inside the cluster and cooldown elapsed,
+#   PATCHes an annotation on the kube-dns Service to force kube-proxy sync (safe, idempotent diagnostic action used earlier).
+# RBAC: ServiceAccount needs permission to patch services in kube-system.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-dns-reconciler
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kube-dns-reconciler
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kube-dns-reconciler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-dns-reconciler
+subjects:
+  - kind: ServiceAccount
+    name: kube-dns-reconciler
+    namespace: kube-system
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: kube-dns-reconciler
+  namespace: kube-system
+  labels:
+    app: kube-dns-reconciler
+spec:
+  schedule: "*/1 * * * *"  # every minute
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: kube-dns-reconciler
+          restartPolicy: Never
+          containers:
+            - name: check-dns
+              image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+              imagePullPolicy: IfNotPresent
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  NS=kube-system
+                  SVC=kube-dns
+                  COOLDOWN_SECONDS=300   # 5 minutes cooldown between actual patch actions
+
+                  TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                  CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+                  # Fetch Service JSON
+                  SJSON=$(curl --cacert ${CACERT} -s -H "Authorization: Bearer ${TOKEN}" https://kubernetes.default.svc/api/v1/namespaces/${NS}/services/${SVC} || true)
+
+                  # Extract configured ClusterIP
+                  CLUSTER_IP=$(printf "%s" "${SJSON}" | sed -n "s/.*\"clusterIP\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p")
+                  if [ -z "${CLUSTER_IP}" ]; then
+                    echo "[ERROR] could not determine ${SVC} ClusterIP" >&2
+                    exit 2
+                  fi
+
+                  # Check last reconcile annotation (support epoch or ISO formats for safety)
+                  ANN=$(printf "%s" "${SJSON}" | sed -n "s/.*\"threadforge\/reconcile\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p")
+                  if [ -z "${ANN}" ]; then
+                    ANN=$(printf "%s" "${SJSON}" | sed -n "s/.*\"threadforge\/wake-reconcile\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p")
+                  fi
+
+                  NOW=$(date +%s)
+                  LAST=0
+                  if [ -n "${ANN}" ]; then
+                    # if numeric epoch, use directly; otherwise attempt to parse ISO timestamp
+                    if printf "%s" "${ANN}" | grep -qE '^[0-9]+$'; then
+                      LAST=${ANN}
+                    else
+                      LAST=$(date -d "${ANN}" +%s 2>/dev/null || 0)
+                    fi
+                  fi
+
+                  if [ "${LAST}" -gt 0 ] && [ $((NOW - LAST)) -lt ${COOLDOWN_SECONDS} ]; then
+                    echo "Cooldown active (last patch ${LAST}); skipping patch."
+                    # Emit a skipped event (best-effort)
+                    EVENT='{"metadata":{"generateName":"kube-dns-reconciler-"},"involvedObject":{"kind":"Service","name":"'${SVC}'","namespace":"'${NS}'"},"reason":"ReconcileSkipped","message":"kube-dns UDP probe failed but cooldown active; skipping patch","type":"Normal"}'
+                    curl --cacert ${CACERT} -s -X POST -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' https://kubernetes.default.svc/api/v1/namespaces/${NS}/events -d "${EVENT}" || true
+                    exit 0
+                  fi
+
+                  echo "Checking DNS (UDP) at ${CLUSTER_IP}"
+                  set +e
+                  nslookup istiod.istio-system.svc ${CLUSTER_IP} >/tmp/ns.out 2>&1
+                  rc=$?
+                  set -e
+                  if [ ${rc} -ne 0 ]; then
+                    echo "DNS UDP check failed (nslookup rc=${rc}), patching ${SVC} to trigger kube-proxy sync"
+                    PATCH='{"metadata":{"annotations":{"threadforge/reconcile":"'"$(date +%s)"'"}}}'
+                    curl --cacert ${CACERT} -s -X PATCH -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/merge-patch+json' \
+                      https://kubernetes.default.svc/api/v1/namespaces/${NS}/services/${SVC} -d "${PATCH}" || true
+
+                    EVENT='{"metadata":{"generateName":"kube-dns-reconciler-"},"involvedObject":{"kind":"Service","name":"'${SVC}'","namespace":"'${NS}'"},"reason":"ReconcileTriggered","message":"kube-dns UDP probe failed; patched annotation to force kube-proxy sync","type":"Normal"}'
+                    curl --cacert ${CACERT} -s -X POST -H "Authorization: Bearer ${TOKEN}" -H 'Content-Type: application/json' https://kubernetes.default.svc/api/v1/namespaces/${NS}/events -d "${EVENT}" || true
+                    echo "Patched service and posted event"
+                  else
+                    echo "DNS UDP probe OK"
+                    cat /tmp/ns.out
+                  fi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+          terminationGracePeriodSeconds: 20

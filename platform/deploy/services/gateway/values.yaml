@@ -1,0 +1,20 @@
+image:
+  repository: registry.threadforge.local:30500/threadforge/gateway
+  digest: sha256:393cadd486022816e22e299ed7d3a570de235caac86e38b46ff36e256bc9489f
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  port: 8080
+
+ingress:
+  enabled: false
+  className: nginx
+  host: gateway.threadforge.local
+
+env:
+  API_URL: "http://api.apps.svc.cluster.local:8000"
+
+# Opt-in flag to allow debug/trace logging for this chart
+allowDebugLogs: false

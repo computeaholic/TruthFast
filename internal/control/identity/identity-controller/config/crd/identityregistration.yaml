@@ -1,0 +1,92 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: identityregistrations.identity.threadforge.local
+spec:
+  group: identity.threadforge.local
+  scope: Namespaced
+  names:
+    plural: identityregistrations
+    singular: identityregistration
+    kind: IdentityRegistration
+    shortNames:
+      - idreg
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: >
+            IdentityRegistration represents a single, declarative SPIRE
+            registration entry derived exclusively from the ThreadForge
+            identity compiler. This resource encodes no behavior and no policy.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+
+            spec:
+              type: object
+              required:
+                - spiffeId
+                - parentId
+                - selectors
+              properties:
+                spiffeId:
+                  type: string
+                  pattern: "^spiffe://.+"
+                  description: Fully-qualified SPIFFE ID.
+
+                parentId:
+                  type: string
+                  pattern: "^spiffe://.+"
+                  description: Parent SPIFFE ID.
+
+                selectors:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - value
+                    properties:
+                      type:
+                        type: string
+                      value:
+                        type: string
+
+                ttl:
+                  type: integer
+                  minimum: 1
+                  nullable: true
+                  description: Optional SPIRE TTL in seconds.
+
+                annotations:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  description: Informational metadata only.
+
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                reconciled:
+                  type: boolean
+                spireEntryId:
+                  type: string
+                lastSyncTime:
+                  type: string
+                  format: date-time
+                error:
+                  type: string
+
+      subresources:
+        status: {}

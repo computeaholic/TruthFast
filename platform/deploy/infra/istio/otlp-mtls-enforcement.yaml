@@ -1,0 +1,63 @@
+---
+# OTLP mTLS Enforcement — Path A: Istio PeerAuthentication + AuthorizationPolicy
+# Purpose: Enforce encryption and workload identity for OTLP traffic (collector → tempo)
+# Authority: Phase 5.2 real transport security (non-negotiable)
+
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: otlp-mTLS
+  namespace: observability
+spec:
+  mtls:
+    mode: STRICT # Reject non-mTLS traffic
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: threadforge-collector # Applied to collector
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: tempo-mTLS
+  namespace: observability
+spec:
+  mtls:
+    mode: STRICT # Reject non-mTLS traffic
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tempo
+
+---
+# Authorization: Allow collector → Tempo via mTLS
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-collector-to-tempo-otlp
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tempo
+  rules:
+    - from:
+        - source:
+            principals:
+              - identity.threadforge.local/ns/observability/sa/threadforge-collector # Collector service account
+      to:
+        - operation:
+            ports: ["4318"]
+            methods: ["POST"]
+
+---
+# Deny all other traffic to Tempo OTLP
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all-to-tempo-otlp
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tempo
+  rules: [] # Empty rules = deny all

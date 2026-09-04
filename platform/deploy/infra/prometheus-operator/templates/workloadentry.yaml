@@ -1,0 +1,8 @@
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: prometheus-identity
+  namespace: observability
+spec:
+  serviceAccount: prometheus-operator
+  address: "127.0.0.1"

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-bundle
+  namespace: {{ .Release.Namespace }}
+data:
+  bundle.crt: |
+    # SPIRE bundle will be injected automatically by the server.

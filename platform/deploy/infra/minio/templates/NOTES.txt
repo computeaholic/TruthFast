@@ -1,0 +1,20 @@
+{{- /* Chart NOTES: Explain required credentials for deterministic fail-fast behavior */ -}}
+MinIO requires explicit credentials to install.
+
+To install with values passed on the command line:
+
+  helm upgrade --install minio ./deploy/infra/minio \
+    --set minio.rootUser="MINIOROOT" \
+    --set minio.rootPassword="MINIOROOTPASS"
+
+Or provide them in a values YAML file:
+
+  minio:
+    rootUser: MINIOROOT
+    rootPassword: MINIOROOTPASS
+
+If these values are missing, Helm will fail during template rendering with a clear error message like:
+
+  "minio.rootUser is required (set via --set minio.rootUser=...)"
+
+This enforces deterministic install-time failures when credentials are not provided.

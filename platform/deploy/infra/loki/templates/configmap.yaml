@@ -1,0 +1,48 @@
+# platform/deploy/infra/loki/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yaml: |
+    auth_enabled: false
+
+    server:
+      http_listen_address: "0.0.0.0"
+      http_listen_port: 3100
+      grpc_listen_port: 9096
+      grpc_listen_address: 0.0.0.0
+
+    ingester:
+      wal:
+        dir: /data/wal
+      lifecycler:
+        address: 127.0.0.1
+        ring:
+          kvstore:
+            store: inmemory
+          replication_factor: 1
+      chunk_idle_period: 5m
+      chunk_block_size: 262144
+      chunk_retain_period: 30s
+      max_transfer_retries: 0
+
+    schema_config:
+      configs:
+        - from: 2024-01-01
+          store: boltdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+
+    storage_config:
+      boltdb:
+        directory: /data/index
+      filesystem:
+        directory: /data/chunks
+
+    ruler:
+      alertmanager_url: http://alertmanager.monitoring.svc.cluster.local

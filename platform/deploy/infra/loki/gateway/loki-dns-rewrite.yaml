@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-loki
+  namespace: kube-system
+data:
+  loki.server: |
+    loki.threadforge.local:53 {
+        errors
+        rewrite name exact loki.threadforge.local loki.observability.svc.cluster.local
+        forward . /etc/resolv.conf
+    }

@@ -1,0 +1,8 @@
+apiVersion: networking.istio.io/v1
+kind: WorkloadEntry
+metadata:
+  name: loki-identity
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceAccount: loki-sa
+  address: "127.0.0.1"

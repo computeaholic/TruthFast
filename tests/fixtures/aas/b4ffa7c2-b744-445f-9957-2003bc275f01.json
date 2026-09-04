@@ -1,0 +1,29 @@
+{
+  "aas_id": "b4ffa7c2-b744-445f-9957-2003bc275f01",
+  "derived_from_decision_id": "37dbf5c0-2639-4f69-802c-b472eb9366ae",
+  "generated_at": "2026-02-15T18:25:36.934278",
+  "valid_until": "2026-02-15T19:25:36.934278",
+  "scope": {
+    "cluster": "threadforge",
+    "namespace": "test-ns",
+    "resource_type": "memory"
+  },
+  "allowed_actions": [
+    "vector.search",
+    "vector.read",
+    "storage.read"
+  ],
+  "allowed_identities": [
+    "spiffe://identity.threadforge.local/ns/test-ns/sa/test-workload"
+  ],
+  "budget_constraints": {
+    "max_utilization": 0.6
+  },
+  "denial_constraints": {
+    "max_denial_pressure": 0.4
+  },
+  "provenance_hash": "48e29315c1a9d71aa408f987f348c3fb5da47024c8b7ef56b4eab3176b3b4c61",
+  "signature": "393f547f0aa7fc6a0aeb56d6d71801dbd472b765cc8151d2b086bbe99a7d748315b22eaa88a5ff3c905cb047553fe5dfd205e6eea604c4ee54b613d8cda4a70f",
+  "signing_key_id": "governance-signer-v1",
+  "ccid": "4668276eb096b906440c1ab6d59e5081d9afecff25aeffae55ff9b51591ab66b"
+}

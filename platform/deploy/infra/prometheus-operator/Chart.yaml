@@ -1,0 +1,6 @@
+apiVersion: v2
+name: prometheus-operator
+description: ThreadForge — Hardened Prometheus Operator (Unified Observability Core)
+type: application
+version: 0.2.0
+appVersion: "0.71.0"

@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""scripts/verify-status
+
+Phase 13 CLI: Read-only human-facing verification.
+
+Usage: scripts/verify-status [--replay --manifest M --ledger L --seals D]
+
+- Reads the last VERIFY.log SUMMARY block and reports Passed/Failed/Skipped.
+- Optionally runs replay verifier (read-only) and includes its PASS/FAIL in the final state.
+- Exits non-zero if any invariant failed or replay verification failed.
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+VERIFY_LOG = REPO_ROOT / "platform" / "deploy" / "infra" / "istio" / "artifacts" / "VERIFY.log"
+REPLAY_SCRIPT = REPO_ROOT / "scripts" / "verify" / "replay-verify.sh"
+
+SUMMARY_RE = re.compile(r"Passed:\s*(\d+),\s*Failed:\s*(\d+),\s*Skipped:\s*(\d+)")
+
+
+def read_latest_summary(log_path: Path):
+    if not log_path.exists():
+        print("No VERIFY.log found", file=sys.stderr)
+        return None
+
+    text = log_path.read_text()
+    # Find last SUMMARY block
+    idx = text.rfind("---")
+    # Simpler: find all SUMMARY headers and take last
+    matches = list(SUMMARY_RE.finditer(text))
+    if not matches:
+        print("No SUMMARY found in VERIFY.log", file=sys.stderr)
+        return None
+    m = matches[-1]
+    passed = int(m.group(1))
+    failed = int(m.group(2))
+    skipped = int(m.group(3))
+    return {"passed": passed, "failed": failed, "skipped": skipped}
+
+
+def run_replay(manifest: Path, ledger: Path, seals: Path):
+    cmd = [str(REPLAY_SCRIPT), "--manifest", str(manifest), "--ledger", str(ledger), "--seals", str(seals)]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+    except FileNotFoundError:
+        print("Replay script not found", file=sys.stderr)
+        return False, "missing_script"
+
+    if proc.returncode == 0:
+        return True, proc.stdout.strip()
+    else:
+        # prefer stderr message
+        out = proc.stderr.strip() or proc.stdout.strip() or f"rc={proc.returncode}"
+        return False, out
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser()
+    p.add_argument("--replay", action="store_true", help="Run replay verifier (requires manifest/ledger/seals)")
+    p.add_argument("--manifest")
+    p.add_argument("--ledger")
+    p.add_argument("--seals")
+    args = p.parse_args(argv)
+
+    summary = read_latest_summary(VERIFY_LOG)
+    if summary is None:
+        print("STATE: UNKNOWN - no summary", file=sys.stderr)
+        sys.exit(10)
+
+    print(f"VERIFY SUMMARY - Passed: {summary['passed']}, Failed: {summary['failed']}, Skipped: {summary['skipped']}")
+
+    overall_ok = summary['failed'] == 0
+
+    if args.replay:
+        if not args.manifest or not args.ledger or not args.seals:
+            print("Replay requested but manifest/ledger/seals not supplied", file=sys.stderr)
+            sys.exit(10)
+        ok, msg = run_replay(Path(args.manifest), Path(args.ledger), Path(args.seals))
+        print(f"REPLAY: {'PASS' if ok else 'FAIL'} - {msg}")
+        if not ok:
+            overall_ok = False
+
+    if overall_ok:
+        print("INVARIANTS: OK")
+        sys.exit(0)
+    else:
+        print("INVARIANTS: FAILED", file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == '__main__':
+    main()

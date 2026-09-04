@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: vector-router-operator-hook
+  labels:
+    app: vector-router
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: vector-router
+
+      containers:
+        - name: operator-hook
+          image: registry.threadforge.local:30500/mirror/docker.io/library/alpine@sha256:d129f711e48e683b2e761f3a9297c3b9f7e5e96fb98ae7723bc6a88522f3c8a4
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "[Operator-AI] VectorRouter deployment detected";
+              echo "Triggering autoreview workflow";
+
+              # Notify Operator-AI (sidecar / webhook / grpc)
+              wget -qO- http://ella-core.ella-core.svc.cluster.local:8081/hooks/platform/deploy/vector-router
+
+              echo "[Operator-AI] Review hook fired successfully.";

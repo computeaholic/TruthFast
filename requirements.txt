@@ -1,0 +1,5 @@
+# Top-level requirements file for CI compatibility
+# Delegates to curated requirement sets in requirements/
+# Both runtime and dev deps are required for tests (conftest.py imports runtime modules)
+-r requirements/runtime.txt
+-r requirements/dev.txt

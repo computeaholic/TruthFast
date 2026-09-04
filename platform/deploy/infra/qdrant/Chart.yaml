@@ -1,0 +1,9 @@
+# deployment/infra/qdrant/chart.yaml
+apiVersion: v2
+name: qdrant
+description: ThreadForge — Tri-Modal Qdrant (CPU + GPU + ANE)
+type: application
+version: 0.1.0
+appVersion: "1.10.0"
+
+dependencies: []

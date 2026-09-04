@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workers
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: workers
+  template:
+    metadata:
+      labels:
+        app: workers
+        sidecar.istio.io/inject: "true"
+      annotations:
+        sidecar.opentelemetry.io/inject: "true"
+        otel.threadforge.io/enabled: "true"
+    spec:
+      securityContext:
+        runAsUser: 1004
+        runAsGroup: 1004
+        fsGroup: 1004
+      containers:
+        - name: worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            [
+              "celery",
+              "-A",
+              "mcp.worker",
+              "worker",
+              "-Q",
+              "{{ join .Values.queues \",\" }}",
+              "--loglevel=INFO"
+            ]
+          ports:
+            - name: health
+              containerPort: 5555
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: workers-config
+            - secretRef:
+                name: workers-secret
+          readinessProbe:
+            exec:
+              command: ["celery", "-A", "mcp.worker", "inspect", "ping"]
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            tcpSocket:
+              port: 5555
+            initialDelaySeconds: 15
+            periodSeconds: 20

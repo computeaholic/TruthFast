@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: loki-gateway-cert
+  namespace: istio-system
+  labels:
+    app: loki
+spec:
+  secretName: loki-gateway-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: threadforge-ca
+  dnsNames:
+    - "loki.threadforge.local"
+    - "loki.observability.svc.cluster.local"

@@ -1,0 +1,358 @@
+##############################################
+# THREADFORGE V2 — CANONICAL .GITIGNORE
+# Purpose:
+#  - Zero secret leakage
+#  - Zero silent evidence loss
+#  - Reviewer-safe
+#  - CI ↔ local parity
+##############################################
+
+# --- Explicit keeps (do not auto-clean or ignore) ---
+# Protect named private keys used by on-prem runners from accidental clean
+
+
+# ============================================================
+# ENVIRONMENT / SECRETS / VIRTUAL ENVS
+# ============================================================
+.env
+.env.*
+*.env
+*.env.local
+
+# Python virtual environments (accepted local names)
+# .venv/ and contents are ignored, but .venv/.gitkeep is tracked to preserve the directory
+.venv/
+.venv-sqlfluff/
+.venv-sweep/
+env/
+venv/
+
+# Local per-branch/test virtualenvs sometimes created by CI or tests
+# These were accidentally committed previously (e.g., .venv_test)
+.venv_test/
+.venv_check/
+
+# Generic secret markers (never commit plaintext secrets)
+secrets/
+secret.yaml
+secrets.yaml
+secret.txt
+
+# ============================================================
+# PYTHON BUILD / CACHE
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+*.pyo
+
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+.installed.cfg
+
+/build/
+dist/
+*.egg
+*.whl
+MANIFEST
+artifacts/
+
+# ============================================================
+# LOGS & RUNTIME OUTPUT
+# ============================================================
+logs/
+*.log
+*.log.*
+*.stderr
+*.stdout
+*.tmp
+*.out
+*.err
+
+# Explicit exception: audited artifact logs
+!**/ARTIFACTS.log
+
+# ============================================================
+# TEST / COVERAGE
+# ============================================================
+.tox/
+.nox/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+
+# ============================================================
+# EDITORS / IDE
+# ============================================================
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.DS_Store
+*.swp
+*.swo
+
+# ============================================================
+# DATABASE FILES (LOCAL ONLY)
+# ============================================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================================
+# NODE / FRONTEND
+# ============================================================
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnp.*
+.pnpm-store/
+
+# Lockfiles are REQUIRED — DO NOT IGNORE
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ============================================================
+# KUBERNETES / CLUSTER (TEMP ONLY)
+# ============================================================
+kubeconfig
+*.kube
+*.kubeconfig
+*.yaml~
+
+cluster/bootstrap/*.log
+cluster/bootstrap/tmp/
+cluster/bootstrap/cache/
+
+# ============================================================
+# HELM (PACKAGED OUTPUTS ONLY)
+# ============================================================
+*.tgz
+deploy/**/charts/*.tgz
+charts/*.tgz
+helm/*.tgz
+
+# ============================================================
+# CERTS / KEYS / PKI
+# ============================================================
+certs/
+tls/
+tls-registry/
+pki/
+.signer/
+*.pem
+*.crt
+*.key
+# Ensure our named runner key is never ignored (we explicitly keep it above)
+!sovereignmind-actions-runner.*.pem
+
+registry/
+registry-config.yml
+
+# ============================================================
+# MODEL RUNTIME / LARGE BINARIES
+# ============================================================
+models/*.bin
+models/*.pt
+models/*.ckpt
+models/*.onnx
+models/*.safetensors
+
+models/ollama/.cache/
+models/ollama/models/
+models/loras/
+models/embeddings/
+models/vectordb/data/
+models/vectordb/indexes/
+
+lora_models/
+lora_output/
+
+# ============================================================
+# SIMULATION / CAPSULE OUTPUTS
+# ============================================================
+capsules/
+*.sealed
+.sealed/
+*.snapshot
+snapshots/
+
+# ============================================================
+# ARCHIVE (DELETED — prevent re-introduction)
+# ============================================================
+archive/
+
+# ============================================================
+# ARTIFACTS & EVIDENCE (INTENTIONAL)
+# ============================================================
+# artifacts/ is blanket-ignored (see line above "artifacts/").
+# The following patterns are kept for clarity and nested-exception safety.
+artifacts/**/tmp/
+artifacts/**/cache/
+
+# ------------------------------------------------------------------
+# housekeeping: ignore root-level archival documents
+
+/PHASE_*
+/FORK_DELIVERABLES_SUMMARY.md
+/REGISTRY_FIX_REPORT.txt
+/SECURITY_INCIDENT_20260204_*.md
+/ISTIO_FORK_*.md
+/artifacts_run*/
+/artifacts_run*_normalized/
+
+# Transient generated diagnostics (default non-retained)
+/artifacts/tmp/
+
+# ============================================================
+# GENERATED INSPECTION OUTPUTS
+# ============================================================
+out/inspect/evidence/
+out/review/inspect/evidence/
+
+# Root out/ is NOT blanket-ignored anymore.
+
+# ============================================================
+# ADDITIONAL BUILD / CACHE / ARTIFACTS (Phase H hygiene)
+# ============================================================
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.sqlfluff-report/
+.state/
+phase10-verify-log/
+issue-sync-dryrun/
+spire-ci-artifacts/
+clickhouse-wheel/
+minio-manifests/
+
+# ============================================================
+# LOCAL SECURITY / OBSERVABILITY RUN ARTIFACTS (DO NOT COMMIT)
+# ============================================================
+security/git-hygiene/
+security/baseline/tag_confirmation.txt
+security/observability/*.txt
+
+# ============================================================
+# LEGACY / DEPRECATED
+# ============================================================
+_legacy/**
+
+# ============================================================
+# MISC
+# ============================================================
+*.zip
+*.tar
+*.gz
+*.bak
+*.THREADFORGE
+
+# Accidental invalid root filename seen in historical runs
+/''
+
+# ============================================================
+# LOCAL DEV / TEST ONLY
+# ============================================================
+tests/control_plane/.env
+istio-1.28.1/
+
+scripts/env/value-plane.env
+scripts/env/value-plane.env.local
+
+# ============================================================
+# SPIRE MIGRATION SENSITIVE ARTIFACTS (DO NOT COMMIT)
+# ============================================================
+security/spire-migration/.spire_db_password
+security/spire-migration/authority-restore/original_key_material.txt
+security/spire-migration/authority-reconcile/postgres_ca_journals.json
+
+# ----- end -----
+
+# Runtime artifact ignores added by Phase 1 closeout
+out/drift-report.json
+out/registry-backups/
+platform/cmd/*/out/
+tmp/
+
+# Explicit hygiene ignores
+*.stderr
+*.stdout
+*.tmp
+
+# ============================================================
+# FINAL RE-INCLUDES (must be last) — protect local state from git clean -X
+# ============================================================
+
+# Test artifacts (FORBIDDEN at repo root — tests MUST use pytest tmp_path fixture)
+# AASProvider output goes to artifacts/aas/ ONLY.
+# Any test_aas* dir at repo root or tests/ is a CI failure (verify_repo_structure enforces this).
+test_aas*/
+artifacts/aas/*.json
+artifacts/governance/request_aas/*.json
+
+# Runtime / environment artifacts that should not be committed to repo root
+Running
+scratch/
+
+# ignore compiled controller managers
+internal/control/identity/identity-controller/manager
+
+# Root-level generated runtime/supply-chain artifacts (local noise)
+/artifacts/patches/
+/desired.txt
+/digest_pinning_followup.md
+/ephemeral_images.txt
+/ephemeral_images_raw.txt
+/image_digest_map.json
+/image_inventory_full.json
+/immutability_validation.md
+/init_images.txt
+/init_images_raw.txt
+/kind-config.yaml
+/registry_trust_inventory.md
+/registry_trust_validation.md
+/running.txt
+/runtime_digests.txt
+/runtime_images.txt
+.pytest_tmp/
+
+# ============================================================
+# Canonical structure: runtime-generated output directories
+# (these must NOT be tracked in git)
+# ============================================================
+/audit_output/
+/deploy/infra/istio/artifacts/
+/internal/control/identity/identity-controller/artifacts/
+/labs/agent-containment/artifacts/
+
+# platform/security/ forensic baselines (runtime-captured, not authoritative configs)
+/platform/security/baseline/
+/platform/security/ha/
+/platform/security/kes/
+/platform/security/maturity/
+/platform/security/performance/
+/platform/security/postgres-tls/
+/platform/security/spire-migration/
+
+# Observability runtime evidence (runtime data; not deploy manifests)
+/deploy/infra/observability/evidence/
+/artifacts/observability/
+tree_new.txt
+/runtime/
+tree.txt

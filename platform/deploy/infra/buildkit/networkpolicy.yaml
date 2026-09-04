@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: buildkit-egress-restrict
+  namespace: build-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: buildkit
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: registry
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/8     # cluster internal (example) - adjust to CI runner network as needed
+      ports:
+        - protocol: TCP
+          port: 1234
+    # To allow registry TLS egress, explicitly add the registry CIDR or use a podSelector above.
+    # Do NOT allow 0.0.0.0/0 in production - this would permit unconstrained egress.
+    # Example: restrict to CI runner network ranges or known registry endpoints.
+    # - to:
+    #     - ipBlock:
+    #         cidr: 0.0.0.0/0
+    #   ports:
+    #     - protocol: TCP
+    #       port: 443
+# Notes: tighten ipBlocks to the minimal set for registry endpoints and CI runner IP ranges.

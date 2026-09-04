@@ -1,0 +1,78 @@
+apiVersion: v2
+name: threadforge-umbrella
+description: ThreadForge — Unified Deployment Umbrella Chart
+type: application
+version: 0.2.0
+appVersion: "2025.12"
+
+# All modules managed as dependencies
+dependencies:
+  - name: cert-manager
+    version: "v1.19.1"
+    repository: "oci://registry.threadforge.local:30500/helm-mirror/charts.jetstack.io"
+    condition: certManager.enabled
+
+  - name: istio-base
+    version: "1.22.0"
+    repository: "oci://registry.threadforge.local:30500/helm-mirror/istio-release.storage.googleapis.com/charts"
+    condition: istio.enabled
+
+  - name: istio-ingress
+    version: "1.22.0"
+    repository: "oci://registry.threadforge.local:30500/helm-mirror/istio-release.storage.googleapis.com/charts"
+    condition: istio.enabled
+
+  - name: registry
+    version: "0.1.0"
+    repository: "file://../infra/registry"
+    condition: registry.enabled
+
+  - name: qdrant
+    version: "0.1.0"
+    repository: "file://../infra/qdrant"
+    condition: qdrant.enabled
+
+  - name: postgres
+    version: "0.1.0"
+    repository: "file://../infra/postgres"
+    condition: postgres.enabled
+
+  # - name: redis
+  #   version: "0.1.0"
+  #   repository: "file://../infra/redis"
+  #   condition: redis.enabled
+
+  - name: api
+    version: "0.1.0"
+    repository: "file://../services/api"
+    condition: api.enabled
+
+  - name: workers
+    version: "0.1.0"
+    repository: "file://../services/workers"
+    condition: workers.enabled
+
+  - name: dashboard
+    version: "0.1.0"
+    repository: "file://../services/dashboard"
+    condition: dashboard.enabled
+
+  - name: gateway
+    version: "0.1.0"
+    repository: "file://../services/gateway"
+    condition: gateway.enabled
+
+  - name: weave
+    version: "0.1.0"
+    repository: "file://../services/weave"
+    condition: weave.enabled
+
+  - name: sovereign-operator
+    version: "0.1.0"
+    repository: "file://../controllers/sovereign"
+    condition: sovereignOperator.enabled
+
+  - name: runtime-snapshots
+    version: "0.1.0"
+    repository: "file://../infra/runtime/charts/snapshots"
+    condition: runtimeSnapshots.enabled

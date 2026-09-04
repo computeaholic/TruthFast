@@ -1,0 +1,142 @@
+[project]
+name = "threadforge"
+version = "0.0.0"
+description = "ThreadForge application (not a distributable Python package)"
+requires-python = ">=3.11"
+dependencies = [
+    "GitPython>=3.1.31",
+]
+
+[build-system]
+# Intentionally minimal: this project is NOT packaged
+# Add build requirements so editable installs and local tooling (pip -e) work reliably.
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta:__legacy__"
+
+[tool.ruff]
+line-length = 120
+
+[tool.black]
+line-length = 120
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = [".", "platform", "internal"]
+markers = [
+    "core: required system invariants",
+    "integration: marks tests requiring live cluster or external services (deselected by default)",
+    "dev: optional or experimental tests",
+    "adversarial: marks adversarial / attack simulation tests",
+    "p1: marks high-priority P1 smoke tests",
+    "smoke: marks lightweight smoke tests",
+    "unit: marks pure-unit tests with no external dependencies",
+    "db: marks tests requiring a live database connection",
+    "control_plane: marks control-plane integration tests",
+    "clickhouse: marks tests requiring a ClickHouse instance",
+]
+filterwarnings = [
+    "error",
+    # Third-party version mismatch warnings we cannot control (message-based filters
+    # are used here because importing these modules during config parsing re-triggers
+    # the warnings before the class-based filter is applicable).
+    "ignore:urllib3.*doesn't match a supported version",
+    "ignore:Please use `import python_multipart` instead:PendingDeprecationWarning:starlette",
+    "ignore:Pydantic V1 style.*validators are deprecated:pydantic.warnings.PydanticDeprecatedSince20",
+]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_untyped_defs = false
+# The repo root contains __init__.py, which causes mypy to see packages both as
+# "runtime.foo" (from CWD) and "threadforge.runtime.foo" (from the parent dir).
+# explicit_package_bases instructs mypy to use CWD as the single source root,
+# eliminating the duplicate-module false positive.
+explicit_package_bases = true
+# Add the repo root explicitly so that the root-level `internal/` package is
+# resolvable when mypy analyses files whose implicit source-base is
+# platform/runtime/ (which cannot see root-level packages otherwise).
+mypy_path = "."
+# System site-packages are automatically excluded by using .venv/bin/mypy, which
+# runs under the venv's Python interpreter. No --no-site-packages flag is needed;
+# that flag strips the venv's own installed packages from the search path too.
+# Containerised agent scripts live in hyphenated dirs that are not Python packages.
+# Exclude them so mypy doesn't see multiple top-level modules all named "app".
+# platform/runtime/ is the independently-deployed platform service. It carries its
+# own heavy dependency stack (gRPC, database drivers, ML libraries) and several
+# sub-packages intentionally lack __init__.py (namespace-package layout). It is
+# type-checked in a separate mypy pass inside platform/runtime/. Imports of
+# runtime.* from root files receive ignore_missing_imports treatment below.
+# Proto-generated files use dynamic attributes incompatible with static analysis;
+# exclude them from this pass.
+# platform/deploy/ imports sovereign.* — a notional external namespace not present
+# in this repo or venv; exclude the entire deploy scaffold from root analysis.
+exclude = [
+    "platform/labs/agent-containment/",
+    "platform/runtime/",
+    "platform/runtime/spire/proto_gen/",
+    "platform/runtime/api/proto/",
+    "tools/dev/registration-test/",
+    "platform/deploy/",
+    "tests/e2e/",
+]
+
+# ── per-module overrides ──────────────────────────────────────────────────────
+# platform/runtime/ is excluded from this analysis pass (see above).
+# Imports of runtime.* from root-level files (tests, scripts, api) receive
+# ignore_missing_imports so mypy does not error on cross-boundary calls.
+# The runtime subsystem is validated with its own mypy invocation.
+[[tool.mypy.overrides]]
+module = ["runtime", "runtime.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tests", "tests.*"]
+disallow_untyped_defs = false
+
+# Optional infrastructure / deployment deps not present in the dev venv.
+[[tool.mypy.overrides]]
+module = [
+    "boto3",
+    "botocore.*",
+    "qdrant_client.*",
+    "sentence_transformers.*",
+    "alembic.*",
+    "clickhouse_driver.*",
+    "git",
+]
+ignore_missing_imports = true
+
+# internal.observation_adapter does not exist in this repo; the import is fully
+# guarded with try/except at the call site, so suppress the missing-module error.
+[[tool.mypy.overrides]]
+module = ["internal.observation_adapter", "internal.observation_adapter.*"]
+ignore_missing_imports = true
+
+# internal.observability.* and related modules exist in the repo-root internal/
+# package but are not reachable from the platform/runtime implicit source root.
+# The code is cross-boundary (runtime → internal); suppress the path-resolution
+# error rather than restructuring the multi-source-root layout.
+[[tool.mypy.overrides]]
+module = ["internal.observability", "internal.observability.*"]
+ignore_missing_imports = true
+
+# Auto-generated protobuf / gRPC stubs and dev-only gRPC helpers.
+# These files are machine-generated and contain patterns (dynamic descriptors,
+# bare module-level imports of sibling proto files) that cannot be fixed manually.
+[[tool.mypy.overrides]]
+module = [
+    "api.proto",
+    "api.proto.*",
+    "spire.proto_gen",
+    "spire.proto_gen.*",
+    "workload_pb2",
+    "workload_pb2_grpc",
+    "threadforge_execution_pb2",
+    "threadforge_execution_pb2_grpc",
+    "api.dev_grpc_client",
+    "api.dev_grpc_server",
+    "api.grpc_server",
+]
+ignore_errors = true
+ignore_missing_imports = true

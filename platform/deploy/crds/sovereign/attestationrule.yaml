@@ -1,0 +1,54 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: attestationrules.threadforge.io
+spec:
+  group: threadforge.io
+  scope: Cluster
+  names:
+    plural: attestationrules
+    singular: attestationrule
+    kind: AttestationRule
+    shortNames:
+      - arule
+      - attest
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                identityRef:
+                  type: string
+                requiredSelectors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      value:
+                        type: string
+                forbiddenSelectors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      value:
+                        type: string
+                token:
+                  type: object
+                  properties:
+                    ttlSeconds:
+                      type: integer
+                    audience:
+                      type: array
+                      items:
+                        type: string

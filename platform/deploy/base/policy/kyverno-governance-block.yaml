@@ -1,0 +1,144 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-governance-isolation
+  namespace: kyverno
+  annotations:
+    policies.kyverno.io/title: "ThreadForge Governance Isolation"
+    policies.kyverno.io/category: "ThreadForge Authority"
+    policies.kyverno.io/severity: "critical"
+    policies.kyverno.io/description: >-
+      Blocks all ThreadForge governance resources from being created via GitOps.
+      Governance resources (CapabilityBinding, IdentityBinding, GovernanceDecision, etc.)
+      must be created ONLY through ThreadForge authority APIs, never via Argo CD reconciliation.
+      This is a hard enforcement of GITOPS_AUTHORITY_BOUNDARY.md.
+spec:
+  validationFailureAction: Enforce  # Hard deny (fail-closed)
+
+  rules:
+  # Block all ThreadForge v1 resources (present and future)
+  - name: "block-threadforge-io-v1-resources"
+    match:
+      any:
+      - resources:
+          apiGroups: ["threadforge.io"]
+          kinds: ["*"]
+    validate:
+      message: >-
+        ThreadForge governance resources cannot be managed via GitOps.
+        This enforces the authority boundary: Argo CD can ONLY reconcile infrastructure,
+        not governance. See docs/GITOPS_AUTHORITY_BOUNDARY.md for details.
+
+        If you need to manage governance resources:
+        1. Use ThreadForge authority APIs (e.g., /api/authorize/claim)
+        2. Do NOT add to gitops/ repository
+        3. Governance intent is logged in ThreadForge ledger, not Git
+      pattern:
+        # Match any resource and deny it
+        metadata: {}
+
+    # Exclude: Allow only if marked as read-only (for observability/auditing)
+    exclude:
+      all:
+      - resources:
+          namespaceSelector:
+            matchLabels:
+              threadforge.io/audit-only: "true"
+
+  # Block governance-related secrets (credentials for governance APIs)
+  - name: "block-governance-secrets"
+    match:
+      any:
+      - resources:
+          kinds: ["Secret"]
+          namespaceSelector:
+            matchLabels:
+              threadforge.io/plane: governance
+    validate:
+      message: >-
+        Secrets in governance namespace cannot be GitOps-managed.
+        Governance credentials must use external secret manager.
+        See docs/GITOPS_AUTHORITY_BOUNDARY.md for secret management strategy.
+      pattern:
+        metadata:
+          labels:
+            "threadforge.io/plane": "governance"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-cluster-role-restriction
+  namespace: kyverno
+  annotations:
+    policies.kyverno.io/title: "ThreadForge Cluster-Admin Restriction"
+    policies.kyverno.io/category: "ThreadForge Authority"
+    policies.kyverno.io/severity: "critical"
+    policies.kyverno.io/description: >-
+      Prevents delegation of cluster-admin role via GitOps.
+      Only bootstrap process (separate from Argo CD) can create cluster-admin bindings.
+spec:
+  validationFailureAction: Enforce
+
+  rules:
+  - name: "block-cluster-admin-via-gitops"
+    match:
+      any:
+      - resources:
+          kinds: ["ClusterRole", "ClusterRoleBinding", "Role", "RoleBinding"]
+    validate:
+      message: >-
+        RBAC resources must be managed by explicit bootstrap process, not Argo CD.
+        This prevents unintended privilege escalation via GitOps.
+        See docs/GITOPS_AUTHORITY_BOUNDARY.md for RBAC delegation strategy.
+      pattern:
+        metadata:
+          annotations:
+            # Only allow if explicitly bootstrapped
+            "threadforge.io/bootstrap-authorized": "true"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-prevent-escape-mutations
+  namespace: kyverno
+  annotations:
+    policies.kyverno.io/title: "ThreadForge Escape Vector Prevention"
+    policies.kyverno.io/category: "ThreadForge Authority"
+    policies.kyverno.io/severity: "high"
+    policies.kyverno.io/description: >-
+      Prevents common escape vectors that could bypass GitOps boundaries.
+spec:
+  validationFailureAction: Audit  # Log violations, allow for now
+
+  rules:
+  - name: "prevent-host-path-mounts"
+    match:
+      any:
+      - resources:
+          kinds: ["Pod", "Deployment", "StatefulSet", "DaemonSet"]
+    validate:
+      message: >-
+        hostPath mounts are restricted (escape vector risk).
+        Use PVC or emptyDir instead.
+      pattern:
+        spec:
+          =(volumes):
+          - name: "*"
+            =(hostPath): null
+
+  - name: "prevent-privileged-pods"
+    match:
+      any:
+      - resources:
+          kinds: ["Pod", "Deployment", "StatefulSet", "DaemonSet"]
+    validate:
+      message: >-
+        Privileged containers are restricted.
+        Use capabilities instead for fine-grained permissions.
+      pattern:
+        spec:
+          =(containers):
+          - =(securityContext):
+              =(privileged): "false"

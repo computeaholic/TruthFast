@@ -1,0 +1,36 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: prometheus-allow-outbound
+  namespace: observability
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+  action: ALLOW
+  rules:
+
+    # Blackbox exporter
+    - to:
+        - operation:
+            hosts: ["blackbox-exporter.observability.svc.cluster.local"]
+
+    # OTel collector
+    - to:
+        - operation:
+            hosts: ["otel-gateway.observability.svc.cluster.local"]
+
+    # Loki
+    - to:
+        - operation:
+            hosts: ["loki.observability.svc.cluster.local"]
+
+    # Tempo
+    - to:
+        - operation:
+            hosts: ["tempo.observability.svc.cluster.local"]
+
+    # Any monitored ThreadForge service
+    - to:
+        - operation:
+            hosts: ["*.svc.cluster.local"]

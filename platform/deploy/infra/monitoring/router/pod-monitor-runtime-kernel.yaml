@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: tf-runtime-kernel
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: tf-runtime
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  podMetricsEndpoints:
+    - port: metrics
+      interval: 5s

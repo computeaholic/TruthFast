@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: qdrant
+  namespace: observability
+  labels:
+    threadforge.io/component: qdrant
+spec:
+  selector:
+    matchLabels:
+      app: qdrant
+  namespaceSelector:
+    matchNames:
+      - vectordb
+  endpoints:
+    - port: http
+      interval: 10s
+      path: /metrics

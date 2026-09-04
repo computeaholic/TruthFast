@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: memory-ingest-scripts
+  namespace: threadforge-system
+data:
+  memory_ingest.sh: |-
+$(sed -n '1,200p' /Users/computeaholic/ThreadForge/scripts/telemetry/memory_ingest/memory_ingest.sh | sed 's/^/    /')

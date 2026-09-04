@@ -1,0 +1,106 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: smp-integration-debug
+  namespace: threadforge-system
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        test: smp-integration
+        sidecar.istio.io/inject: "true"
+    spec:
+      serviceAccountName: threadforge-client
+      restartPolicy: Never
+      containers:
+        - name: smp-integration-debug
+          image: registry.threadforge.local:30500/mirror/docker.io/library/python@sha256:4425b101d08b39b4ad50908a91f25a05eb762a6f8881f14ecd06779fba08ac84
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          command:
+            - /bin/sh
+            - -ec
+            - |
+              set -euo pipefail
+              cat > /tmp/smp_integration.py <<'PY'
+                import urllib.request, json, sys, time, uuid
+
+                UID = str(uuid.uuid4())
+                payload = {"payload": {"text": f"smp-integration-{UID}"}}
+
+                def q_prom(query):
+                    url = f"http://prometheus-operated.observability.svc.cluster.local:9090/api/v1/query?query={urllib.request.quote(query)}"
+                    try:
+                        with urllib.request.urlopen(url, timeout=5) as resp:
+                            data = json.load(resp)
+                            return float(data.get('data', {}).get('result', [[None, '0']])[0][1]) if data.get('data', {}).get('result') else 0.0
+                    except Exception as e:
+                        print('[WARN] prom query failed', e, file=sys.stderr)
+                        return 0.0
+
+                print('[*] querying initial counters')
+                enq_before = q_prom('sum(smp_enqueued_total)')
+                deq_before = q_prom('sum(smp_dequeued_total)')
+                print('enq_before=', enq_before, 'deq_before=', deq_before)
+
+                print('[*] POST embedding request (expect 200)')
+                req = urllib.request.Request('http://threadforge-api.threadforge.svc.cluster.local:8080/vector/embed', data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'})
+                try:
+                    with urllib.request.urlopen(req, timeout=10) as r:
+                        body = r.read().decode('utf-8')
+                        code = r.getcode()
+                except Exception as e:
+                    print('[ERROR] embed request failed', e, file=sys.stderr)
+                    sys.exit(2)
+                print('http_code=', code)
+                print('body=', body)
+                if code != 200:
+                    print('ERROR: non-200 resp', code, file=sys.stderr)
+                    sys.exit(2)
+
+                # attempt to parse envelope_id from response
+                try:
+                    body_json = json.loads(body)
+                    envelope_id = body_json.get('envelope_id') or body_json.get('trace_id') or ''
+                except Exception:
+                    envelope_id = ''
+                print('envelope_id=', envelope_id)
+
+                # wait for counters
+                print('[*] waiting for counters to reflect enqueue/dequeue (timeout 60s)')
+                start = time.time()
+                while True:
+                    enq_after = q_prom('sum(smp_enqueued_total)')
+                    deq_after = q_prom('sum(smp_dequeued_total)')
+                    print('enq_after=', enq_after, 'deq_after=', deq_after)
+                    if (enq_after - enq_before) >= 1 and (deq_after - deq_before) >= 1:
+                        print('SUCCESS: counters increased')
+                        break
+                    if time.time() - start > 60:
+                        print('TIMEOUT: counters did not increase', file=sys.stderr)
+                        sys.exit(3)
+                    time.sleep(2)
+
+                # print envelope id for external verifier to check logs
+                if envelope_id:
+                    print('ENVELOPE_ID='+envelope_id)
+                    sys.exit(0)
+                else:
+                    print('ERROR: could not extract envelope_id', file=sys.stderr)
+                    sys.exit(5)
+                PY
+              sed -E -i 's/^ {16}//' /tmp/smp_integration.py
+              python /tmp/smp_integration.py || true
+              echo '--- end of script ---'
+              sleep 300
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534

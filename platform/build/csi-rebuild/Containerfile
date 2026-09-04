@@ -1,0 +1,5 @@
+FROM alpine:3.18
+RUN apk add --no-cache ca-certificates
+COPY csi-node-shim /usr/local/bin/csi-node-shim
+RUN chmod +x /usr/local/bin/csi-node-shim
+ENTRYPOINT ["/usr/local/bin/csi-node-shim"]

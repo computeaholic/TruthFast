@@ -1,0 +1,13 @@
+apiVersion: identity.threadforge.local/v1
+kind: IdentityRegistration
+metadata:
+  name: threadforge-default
+  namespace: threadforge
+spec:
+  spiffeId: spiffe://identity.threadforge.local/ns/threadforge/sa/default
+  parentId: spiffe://identity.threadforge.local/spire/agent/k8s_psat/threadforge/fa9e2c90-accd-4c9f-9e65-0e8b53b64af6
+  selectors:
+    - type: k8s
+      value: ns:threadforge
+    - type: k8s
+      value: sa:default

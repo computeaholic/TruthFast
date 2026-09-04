@@ -1,0 +1,24 @@
+{{- if .Values.bundleService.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: spire-bundle-gateway
+  namespace: spire-system
+spec:
+  selector:
+{{- with .Values.bundleService.gatewaySelector }}
+{{ toYaml . | indent 4 }}
+{{- else }}
+    # default to the common ingress gateway label
+    istio: ingressgateway
+{{- end }}
+  servers:
+  - port:
+      number: {{ .Values.bundleService.port | default 8443 }}
+      name: tls-spire-bundle
+      protocol: HTTPS
+    tls:
+      mode: ISTIO_MUTUAL
+    hosts:
+    - "{{ .Values.bundleService.gatewayHost | default "spire-bundle-gateway.spire-system.svc" }}"
+{{- end }}

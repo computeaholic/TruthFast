@@ -1,0 +1,21 @@
+# ==============================================================================
+# ThreadForge - cert-manager Helm Chart
+# ------------------------------------------------------------------------------
+# Purpose:
+#   Provides a minimal, hardened, deterministic installation of cert-manager
+#   suitable for private PKI, internal cluster signing, and registry TLS.
+#
+# Notes:
+#   - CRDs are NOT installed from this chart (ThreadForge substrate handles them)
+#   - No deprecated fields
+#   - No magic defaults
+#
+# ==============================================================================
+
+apiVersion: v2
+name: cert-manager
+description: ThreadForge PKI operator (cert-manager minimal hardened profile)
+type: application
+version: 1.0.0
+appVersion: "v1.14.2"
+

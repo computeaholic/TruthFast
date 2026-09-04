@@ -1,0 +1,70 @@
+# Audit Policy v2
+# Production-scoped forensic audit policy for k3s
+# Versioned. Do not modify in place. Create v3 for structural changes.
+
+apiVersion: audit.k8s.io/v1
+kind: Policy
+
+# Order matters: first match wins
+rules:
+
+  # ---------------------------------------------------------------------------
+  # 1. High-Signal Mutations — ConfigMaps & Secrets
+  # ---------------------------------------------------------------------------
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: ""
+        resources: ["configmaps", "secrets"]
+
+  # ---------------------------------------------------------------------------
+  # 2. RBAC Mutations — Full Body Capture
+  # ---------------------------------------------------------------------------
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "rbac.authorization.k8s.io"
+        resources:
+          - roles
+          - rolebindings
+          - clusterroles
+          - clusterrolebindings
+
+  # ---------------------------------------------------------------------------
+  # 3. Workload Mutations — Deployments / StatefulSets / DaemonSets
+  # ---------------------------------------------------------------------------
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: "apps"
+        resources:
+          - deployments
+          - statefulsets
+          - daemonsets
+          - replicasets
+
+  # ---------------------------------------------------------------------------
+  # 4. Namespace Mutations
+  # ---------------------------------------------------------------------------
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete"]
+    resources:
+      - group: ""
+        resources: ["namespaces"]
+
+  # ---------------------------------------------------------------------------
+  # 5. Istio Control Plane — Metadata Only (High churn controllers)
+  # ---------------------------------------------------------------------------
+  - level: Metadata
+    namespaces: ["istio-system"]
+
+  # ---------------------------------------------------------------------------
+  # 6. Noise Reduction — Drop Watch Spam
+  # ---------------------------------------------------------------------------
+  - level: None
+    verbs: ["watch"]
+
+  # ---------------------------------------------------------------------------
+  # 7. Default — Metadata Only
+  # ---------------------------------------------------------------------------
+  - level: Metadata

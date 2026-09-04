@@ -1,0 +1,37 @@
+apiVersion: threadforge.io/v1
+kind: ActuationApproval
+
+metadata:
+  approval_id: approval-2025-03-08-0001
+  plan_id: plan-1741425123456
+  environment: alpha
+  approved_at: 2025-03-08T14:22:11Z
+  approved_by:
+    name: "Jane Operator"
+    role: "SRE_ON_CALL"
+    identity: "spiffe://threadforge/ops/jane"
+  method:
+    type: "grafana"
+    reference: "grafana://dashboard/reflex-control?panel=approve"
+  identity:
+    spiffe_id: "<spiffe-id>"
+    tier: "<tier>"
+    namespace: "<namespace>"
+    service_account: "<service-account>"
+
+spec:
+  plan_digest: "sha256:REPLACE_WITH_REAL_DIGEST"
+  decision: APPROVE
+  scope:
+    commands_allowed:
+      - cmd-1
+      - cmd-2
+  constraints:
+    expires_at: 2025-03-08T15:00:00Z
+    max_retries: 1
+    require_mtls: true
+    require_identity_match: true
+
+status:
+  immutable: true
+  verified: false

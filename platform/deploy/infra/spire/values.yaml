@@ -1,0 +1,156 @@
+bundleService:
+  allowedNamespaces:
+  - observability
+  - runtime
+  - civ
+  - value-plane
+  containerPort: 80
+  enabled: false
+  envoyFilter:
+    enabled: false
+    name: ingress-align-alpn-spire-bundle
+  gatewayHost: spire-bundle-gateway.spire-system.svc
+  gatewaySelector: {}
+  port: 8443
+  replicas: 1
+  tlsContainerPort: 8443
+ca:
+  mode: persistent
+clusterName: threadforge
+federationPartners:
+- bundleURL: https://spire-server.cluster-bravo.svc:8443/bundle
+  name: cluster-bravo
+  trustDomain: cluster-bravo.threadforge.local
+- bundleURL: https://spire-server.cluster-charlie.svc:8443/bundle
+  name: cluster-charlie
+  trustDomain: cluster-charlie.threadforge.local
+resources:
+  agent:
+    priorityClassName: threadforge-critical
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  server:
+    priorityClassName: threadforge-critical
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+spiffe:
+  csi:
+    csiSocketPath: /spiffe-csi/csi.sock
+    driverSocket: /spiffe-csi/driver.sock
+    enabled: false
+    image:
+      pullPolicy: Always
+      repository: registry.threadforge.local:30500/spire-csi-driver
+      digest: sha256:b60682a1496b7ffb9fd1a58b5f1ca3e497068d22b042f80b3f7c19ec8824ac84
+    nodeRegProxyImage:
+      pullPolicy: Always
+      repository: registry.threadforge.local:30500/csi-node-reg-shim
+      digest: sha256:f6a4576d84f1630a38a1aa54235a7bd70d441fa4f2e3d03bd5b8c0ff07b582c2
+    nodeRegistrarImage:
+      repository: registry.threadforge.local:30500/mirror/registry.k8s.io/sig-storage/csi-node-driver-registrar
+      digest: sha256:33ebe428e5995e2e58188344919800fb78f0ce82ef6e78642eafa7107d80b915
+    nodeShimImage:
+      pullPolicy: Always
+      repository: registry.threadforge.local:30500/csi-node-shim
+      digest: sha256:9675a1822cce7c13d56b36c36cfbd685769cd48d401340991060e1a7345b5c57
+    shimSocket: /csi/csi.sock
+    workloadApiSocketDir: /run/spire/sockets
+spiffeTest:
+  enabled: false
+  image:
+    pullPolicy: IfNotPresent
+    repository: registry.threadforge.local:30500/mirror/ghcr.io/spiffe/spiffe-helper
+    tag: "0.9.4"
+    digest: sha256:53904baad9cf402fbe81ae6bfa658bac857b289514e6bd521ad74aa54a0d6e8f
+  socketDir: /run/spire/sockets
+spireAgent:
+  enabled: true
+  k3sEnabled: false
+  image:
+    pullPolicy: IfNotPresent
+    repository: registry.threadforge.local:30500/spiffe/spire-agent
+    tag: "1.8.5"
+    digest: sha256:0d3cebdf4e033edaa67ef1b4197696f853bb76f8970e25010237c7e3a7c98531
+  # Agent startup is bundle-verified against the published SPIRE trust bundle.
+  # Keep the trust bundle mounted and rendered into the agent config so the
+  # server handshake succeeds without relying on insecure bootstrap mode.
+  insecure_bootstrap: false
+  trustBundleConfigMap: spire-bundle
+  workloadApi:
+    socketPath: /run/spire/sockets/socket
+spireServer:
+  admin_socket_path: /run/spire/private/spire-server.sock
+  federation:
+    enabled: false
+  image:
+    pullPolicy: IfNotPresent
+    repository: registry.threadforge.local:30500/spiffe/spire-server
+    tag: "1.8.5"
+    digest: sha256:817a87c37a6b77ff74c95908160ee0555daac8d8269e2fd7ad2b6e41b86164d8
+  peerAuthentication:
+    enabled: false
+  metrics:
+    enabled: true
+    prometheus:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: '9091'
+        prometheus.io/scrape: 'true'
+  replicaCount: 1
+  service:
+    ports:
+    - name: grpc
+      port: 8081
+    - name: tcp-bundle
+      port: 8443
+      targetPort: 8443
+    - name: http-metrics
+      port: 9091
+      targetPort: 9091
+    type: ClusterIP
+  sql:
+    connectionKey: connection_string
+    enabled: false
+    secretName: spire-sql-conn
+  upstreamCa:
+    enabled: false
+    secretName: spire-upstream-ca
+storage:
+  serverData:
+    enabled: true
+    size: 5Gi
+    storageClassName: standard
+tierMap:
+  api: tier2
+  grafana: tier5
+  ingress-nginx: tier1
+  istio-system: tier1
+  legacy: tier7
+  loki: tier5
+  minio: tier4
+  monitoring: tier5
+  postgres: tier4
+  promtail: tier5
+  qdrant: tier4
+  router: tier2
+  runtime: tier2
+  sovereign-operator: tier0
+  spire-system: tier0
+  tempo: tier5
+  threadforge-apps: tier6
+  threadforge-system: tier2
+  vectordb: tier4
+  workers: tier3
+trustDomain: identity.threadforge.local
+trustDomainMap:
+  cluster-alpha: cluster-alpha.threadforge.local
+  cluster-bravo: cluster-bravo.threadforge.local
+  cluster-charlie: cluster-charlie.threadforge.local

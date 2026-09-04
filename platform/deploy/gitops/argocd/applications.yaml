@@ -1,0 +1,149 @@
+# Argo CD Applications (Phase B/C)
+#
+# These are declarative specifications of what infrastructure
+# Argo CD should reconcile to Git-declared state.
+#
+# CRITICAL: Manual sync only until verified.
+# NO auto-sync, NO self-heal, until:
+#   1. Drift detection test passes
+#   2. Boundary test passes (governance isolation verified)
+#   3. Failure test passes (fail-closed behavior confirmed)
+
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: threadforge-infra
+  namespace: argocd
+  labels:
+    app: threadforge-infra
+spec:
+  # STRICT: AppProject defines what this Argo CD project can manage
+  # Out-of-scope resources (governance) are rejected at apply time
+
+  description: "ThreadForge Infrastructure (non-runtime) GitOps"
+
+  # No cluster-admin access (least privilege)
+  sourceRepos:
+  - 'https://github.com/threadforge/threadforge'  # Git repo only
+
+  # Scoped to non-governance namespaces
+  destinations:
+  - namespace: 'observability'
+    name: 'in-cluster'
+  - namespace: 'istio-system'
+    name: 'in-cluster'
+  - namespace: 'threadforge-infra'
+    name: 'in-cluster'
+
+  # Cluster resources RESTRICTED (no cluster-admin)
+  clusterResourceBlacklist:
+  - group: '*'
+    kind: 'ClusterRole'
+  - group: '*'
+    kind: 'ClusterRoleBinding'
+  - group: 'rbac.authorization.k8s.io'
+    kind: '*'
+  - group: '*'
+    kind: 'Namespace'  # No namespace creation via Argo CD
+
+  # Governance resources EXPLICITLY FORBIDDEN
+  resourceBlacklist:
+  - group: 'threadforge.io'
+    kind: '*'  # All ThreadForge CRDs are blocked
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-observability
+  namespace: argocd
+  labels:
+    app: threadforge-observability
+spec:
+  # INFRASTRUCTURE ONLY: Prometheus, Grafana, Loki
+  # NOT governance logic, NOT identity, NOT execution
+
+  project: 'threadforge-infra'
+
+  source:
+    repoURL: 'https://github.com/threadforge/threadforge'
+    targetRevision: 'main'
+    path: 'gitops/infra/observability'
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'observability'
+
+  syncPolicy:
+    # MANDATORY: Manual sync only (no auto-sync until verified)
+    # Developer must explicitly approve each sync via Argo CD UI or CLI
+    syncOptions:
+    - CreateNamespace=false  # Namespace must exist, created separately
+
+    # NO auto-prune (keep resources even if removed from Git)
+    # Reason: Conservative, operator-controlled deletion
+    prune: false
+
+    # NO self-heal (no auto-correction of drift during sync window)
+    # Reason: All corrections must be explicit and audited
+    selfHeal: false
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-networking
+  namespace: argocd
+  labels:
+    app: threadforge-networking
+spec:
+  # INFRASTRUCTURE ONLY: Istio, NetworkPolicy, etc.
+  # NOT governance APIs, NOT identity enforcement
+
+  project: 'threadforge-infra'
+
+  source:
+    repoURL: 'https://github.com/threadforge/threadforge'
+    targetRevision: 'main'
+    path: 'gitops/infra/networking'
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'istio-system'
+
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=false
+
+    prune: false
+    selfHeal: false
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: threadforge-infrastructure
+  namespace: argocd
+  labels:
+    app: threadforge-infrastructure
+spec:
+  # PARENT APP: Aggregates all infrastructure
+  # Ensures cohesive, auditable state across infra layer
+
+  project: 'threadforge-infra'
+
+  source:
+    repoURL: 'https://github.com/threadforge/threadforge'
+    targetRevision: 'main'
+    path: 'gitops/apps'
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'threadforge-infra'
+
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=false
+
+    prune: false
+    selfHeal: false

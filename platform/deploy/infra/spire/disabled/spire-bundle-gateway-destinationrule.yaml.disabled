@@ -1,0 +1,15 @@
+{{- if .Values.bundleService.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: spire-bundle-gateway-dr
+  namespace: spire-system
+spec:
+  host: {{ .Values.bundleService.gatewayHost | quote }}
+  trafficPolicy:
+    portLevelSettings:
+    - port:
+        number: {{ .Values.bundleService.port | default 8443 }}
+      tls:
+        mode: ISTIO_MUTUAL
+{{- end }}

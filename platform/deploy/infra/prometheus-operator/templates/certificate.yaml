@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-tls
+  namespace: istio-system
+spec:
+  secretName: prometheus-tls-secret
+  issuerRef:
+    kind: ClusterIssuer
+    name: threadforge-ca
+  dnsNames:
+    - "kube-prometheus-stack-prometheus.observability.svc.cluster.local"
+    - "prometheus-operated.observability.svc.cluster.local"
+    - "prometheus.threadforge.local"

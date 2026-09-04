@@ -1,0 +1,18 @@
+# NetworkPolicy: deny all egress for kernel-adjacent shim pods
+# Rationale: This policy ensures the kernel-adjacent shim cannot perform network egress.
+# If any egress is required for kubelet/CSI mechanics, it must be explicitly justified inline here.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-egress-shim
+  namespace: spire-system
+  labels:
+    threadforge.io/layer: kernel-adjacent
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: identity-infra
+  policyTypes:
+    - Egress
+  # No egress rules: this denies all egress from matched pods
+  egress: []

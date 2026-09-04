@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: threadforge-grpc
+  namespace: threadforge-system
+spec:
+  hosts:
+  - grpc.threadforge.local
+  gateways:
+  - threadforge-grpc-gateway
+  http:
+  - match:
+    - port: 443
+    grpc:
+    route:
+    - destination:
+        host: threadforge-runtime.threadforge-system.svc.cluster.local
+        port:
+          number: 50051

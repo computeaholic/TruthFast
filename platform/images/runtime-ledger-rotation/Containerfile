@@ -1,0 +1,4 @@
+FROM registry.threadforge.local:30500/mirror/docker.io/library/python:3.11-slim
+WORKDIR /app
+COPY rotate.py /app/rotate.py
+CMD ["python", "/app/rotate.py"]

@@ -1,0 +1,4 @@
+{
+  "metadata": { "name": "threadforge-collector-collector-7b75b7fcd-fbqp5", "namespace": "observability" },
+  "status": { "conditions": [ { "type": "Ready", "status": "True", "lastTransitionTime": "2026-01-07T04:06:02Z" } ] }
+}

@@ -1,0 +1,29 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-disallow-ephemeral-containers
+  annotations:
+    policies.kyverno.io/title: ThreadForge Disallow Ephemeral Containers
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Ephemeral containers (kubectl debug) bypass normal admission controls and
+      can be used to gain shell access to running pods, violating zero-trust
+      runtime isolation. This policy blocks all ephemeral container creation.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: disallow-ephemeral-containers
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod/ephemeralcontainers
+      validate:
+        message: >-
+          Ephemeral containers are not allowed in ThreadForge. Use dedicated
+          debug namespaces with proper identity and audit controls instead.
+        deny: {}

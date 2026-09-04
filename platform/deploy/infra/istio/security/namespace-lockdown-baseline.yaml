@@ -1,0 +1,47 @@
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: spire-system-strict
+  namespace: spire-system
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: default-deny
+  namespace: spire-system
+spec: {}
+---
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: threadforge-system-strict
+  namespace: threadforge-system
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: default-deny
+  namespace: threadforge-system
+spec: {}
+---
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: threadforge-strict
+  namespace: threadforge
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: default-deny
+  namespace: threadforge
+spec: {}

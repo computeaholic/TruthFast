@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vector-router-policy
+  namespace: vector-router
+spec:
+  podSelector:
+    matchLabels:
+      app: vector-router
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              threadforge.io/mesh: "allowed"
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ella-core
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: qdrant
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: db

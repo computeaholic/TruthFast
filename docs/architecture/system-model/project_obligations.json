@@ -1,0 +1,762 @@
+{
+  "SCHEMA_VERSION": "1.0",
+  "AS_OF": "2026-08-28",
+  "AUTHORITY": "project_control_reconciliation",
+  "RUNTIME_QUALIFIED_SHA": "0ddae102badf2a93fe4fdb3934ad9a36db4c8c84",
+  "START_HEAD": "807d37228b0c288cf0ee31390abd2165d9989ae8",
+  "CURRENT_REPOSITORY_SHA_AT_REVIEW_START": "9ce19c9dfbf7583d7cb29a0c8cef388ab194ee1a",
+  "PREVIOUS_RUNTIME_QUALIFIED_SHA": "34082cfb4e3b0173f09dc7aeabfa7abb5ad201aa",
+  "NOOP_HISTORY": {
+    "COMMITS": [
+      "3d01f8269f5843044284fdeab95fa0ce91afab17",
+      "807d37228b0c288cf0ee31390abd2165d9989ae8"
+    ],
+    "TREE_BASE": "a929da2967bfc8416d764e0295c6689949d60a39",
+    "TREE_DELTA": 0,
+    "DISPOSITION": "retained_project_history_noise"
+  },
+  "PROJECT_STATE": {
+    "RUNTIME_QUALIFIED": true,
+    "OPEN_PULL_REQUESTS_AT_AUDIT_START": 0,
+    "OPEN_ISSUES_AT_AUDIT_START": 10,
+    "OPEN_PULL_REQUESTS_AFTER_ADJUDICATION": 0,
+    "OPEN_ISSUES_AFTER_ADJUDICATION": 2,
+    "OPEN_POST_V1_GITHUB_ISSUES": [
+      550,
+      554
+    ],
+    "OPEN_REAL_V1_OBLIGATIONS": 0,
+    "UNKNOWN_OBLIGATIONS": 0,
+    "BRANCH_PROTECTION": "NOT_INSPECTABLE_HTTP_403_PRIVATE_TIER",
+    "RULESETS": "NOT_INSPECTABLE_HTTP_403_PRIVATE_TIER",
+    "MILESTONES": 0,
+    "GITHUB_RELEASES": 0,
+    "PROJECT_BOARDS": "NOT_INSPECTABLE_HTTP_404",
+    "DISCUSSIONS": "1 welcome discussion",
+    "REPOSITORY_DESCRIPTION": "TruthFast V1 executable assurance reference architecture"
+  },
+  "CI_CONSTITUTION": {
+    "CURRENT_CHECKS": [
+      "governance",
+      "publication",
+      "repository-quality"
+    ],
+    "EXECUTION_AUTHORITY": "repository_truth_only",
+    "RUNTIME_QUALIFICATION_AUTHORITY": false,
+    "REMOTE_CHECK_CONTRACT": "NON_BLOCKING",
+    "RUNNER_BEFORE": "self-hosted_linux_threadforge",
+    "RUNNER_AFTER": "ubuntu-24.04",
+    "SELF_HOSTED_RUNNER_REGISTRATIONS_AFTER": 0,
+    "SELF_HOSTED_FINDING": "gha-runner was in docker and sudo groups on the runtime host",
+    "KUBECONFIG_OR_SIGNING_KEYS_DIRECTLY_READABLE_BY_RUNNER": false,
+    "CREDENTIAL_EXPOSURE_VERDICT": "unnecessary_host_authority_removed",
+    "ALLOWLIST": "platform/config/ci_execution_allowlist.json"
+  },
+  "QUALIFICATION_EVIDENCE": {
+    "SOURCE_SHA": "0ddae102badf2a93fe4fdb3934ad9a36db4c8c84",
+    "RESULTS": {
+      "EXACT_SHA_QUALIFICATION": "PASS"
+    },
+    "EVIDENCE_AUTHORITY": "docs/releases/PUBLIC_RELEASE_PROVENANCE.md plus the private engineering evidence set",
+    "RUN_IDENTITIES": "Operation-specific run records remain in the private engineering repository and are not copied into this clean source export"
+  },
+  "HISTORICAL_QUALIFICATION_EVIDENCE": {
+    "SOURCE_SHA": "b7e8612b94089dd574d7064d709427add22dbd51",
+    "GOLDEN_BOOT_RUN_ID": "20260827T235010Z-337081",
+    "DEMO_ALL_RUN_IDS": [
+      "supported-demo-all-20260828T022737Z",
+      "supported-demo-all-20260828T023321Z"
+    ],
+    "SPIRE_OUTAGE_RUN_ID": "20260828T023731Z-spire-outage",
+    "FINAL_PROOF_RUN_ID": "20260828T040045Z-1992684",
+    "AUDIT_RUN_ID": "20260828T032601Z",
+    "RESULTS": {
+      "GOLDEN_BOOT": "PASS",
+      "DEMO_ALL_RUN_1": "PASS",
+      "DEMO_ALL_RUN_2": "PASS",
+      "SPIRE_OUTAGE": "PASS",
+      "PROOF_TAMPER": "PASS",
+      "REGISTRY_AUDIT": "PASS",
+      "AUDIT": "PASS",
+      "VERIFY_MAIN": "PASS",
+      "PROOF_GUARANTEES": "28/28 PASS",
+      "PROMETHEUS": "24/24 intended targets UP"
+    },
+    "EVIDENCE_AUTHORITY": "docs/releases/CERTIFICATION_BASELINE.md plus source-bound artifacts/proof/latest and operation-specific evidence roots"
+  },
+  "OBLIGATIONS": [
+    {
+      "OBLIGATION_ID": "GH-545",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "545",
+      "TITLE": "Inventory audit and proof artifacts against Contract and Evidence v1",
+      "OWNER": "Architecture and proof evidence owners",
+      "CLASS": "V1_RECONCILIATION",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "docs/architecture/system-model and scripts/contracts/proof_phase_contracts.json",
+      "CURRENT_IMPLEMENTATION": "system inventory, state ownership, claim-evidence routing, proof contracts, signed proof manifests",
+      "EVIDENCE": [
+        "docs/architecture/system-model/system_inventory.json",
+        "docs/architecture/system-model/state_ownership.json",
+        "docs/architecture/system-model/claim_evidence.json",
+        "scripts/contracts/proof_phase_contracts.json"
+      ],
+      "V1_RELEVANCE": "satisfied by the final V1 atlas and proof model",
+      "POST_V1_RELEVANCE": "portable evidence graph may reuse the inventory",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close with current implementation evidence",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "GH-546",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "546",
+      "TITLE": "Map identity, capability, and delegation mechanisms to the constitutional model",
+      "OWNER": "Runtime identity and authority owners",
+      "CLASS": "V1_RECONCILIATION",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "runtime identity modules and system authority mapping",
+      "CURRENT_IMPLEMENTATION": "attested IdentityContext, policy-derived capabilities, bounded delegation, fail-closed UNCLAIMED authority",
+      "EVIDENCE": [
+        "docs/architecture/system-model/authority_mapping.json",
+        "platform/runtime/identity/context.py",
+        "platform/runtime/capabilities.py",
+        "platform/runtime/delegation.py",
+        "tests/runtime"
+      ],
+      "V1_RELEVANCE": "implemented and exact-SHA qualified",
+      "POST_V1_RELEVANCE": "identity-to-authority mediation remains an extraction opportunity",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close with current implementation evidence",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "GH-547",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "547",
+      "TITLE": "Implement the versioned canonical Contract schema",
+      "OWNER": "Architecture",
+      "CLASS": "SUPERSEDED_MIGRATION_DESIGN",
+      "STATUS": "SUPERSEDED_BY_CURRENT_ARCHITECTURE",
+      "CURRENT_AUTHORITY": "Operation Contract in proof architecture and proof phase contracts",
+      "CURRENT_IMPLEMENTATION": "constitutional Operation Contract plus executable phase contract registry",
+      "EVIDENCE": [
+        "docs/architecture/06-Proof-Architecture.md",
+        "scripts/contracts/proof_phase_contracts.json",
+        "docs/architecture/15-Migration-Strategy.md"
+      ],
+      "V1_RELEVANCE": "a second runtime Contract object is not required by V1 claims",
+      "POST_V1_RELEVANCE": "new schema requires a future accepted ADR and must not duplicate current authority",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close as not planned under current architecture",
+      "DISPOSITION": "SUPERSEDED_BY_CURRENT_ARCHITECTURE"
+    },
+    {
+      "OBLIGATION_ID": "GH-548",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "548",
+      "TITLE": "Supersede PR 536 and split PR 537 by producer ownership",
+      "OWNER": "CI governance",
+      "CLASS": "STALE_PR_HYGIENE",
+      "STATUS": "STALE_HYGIENE_CLOSE",
+      "CURRENT_AUTHORITY": "repository-only CI constitution",
+      "CURRENT_IMPLEMENTATION": "PRs 536 and 537 are closed; their runtime-in-CI topology is prohibited",
+      "EVIDENCE": [
+        "https://github.com/computeaholic/ThreadForge/pull/536",
+        "https://github.com/computeaholic/ThreadForge/pull/537",
+        "platform/config/ci_execution_allowlist.json"
+      ],
+      "V1_RELEVANCE": "historical CI migration only",
+      "POST_V1_RELEVANCE": "none",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close as not planned",
+      "DISPOSITION": "STALE_HYGIENE_CLOSE"
+    },
+    {
+      "OBLIGATION_ID": "GH-549",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "549",
+      "TITLE": "Migrate verifiers incrementally as Contract implementations",
+      "OWNER": "Proof architecture",
+      "CLASS": "SUPERSEDED_MIGRATION_DESIGN",
+      "STATUS": "SUPERSEDED_BY_CURRENT_ARCHITECTURE",
+      "CURRENT_AUTHORITY": "producer-owned verifiers and proof phase contracts",
+      "CURRENT_IMPLEMENTATION": "verifiers retain producer ownership while phase contracts declare guarantees and dependencies",
+      "EVIDENCE": [
+        "scripts/contracts/proof_phase_contracts.json",
+        "docs/CANONICAL/PROOF_CONTRACT.md"
+      ],
+      "V1_RELEVANCE": "migration would duplicate the qualified verifier contract",
+      "POST_V1_RELEVANCE": "portable assurance work may define adapters under a new ADR",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close as not planned",
+      "DISPOSITION": "SUPERSEDED_BY_CURRENT_ARCHITECTURE"
+    },
+    {
+      "OBLIGATION_ID": "GH-550",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "550",
+      "TITLE": "Implement the independent replay boundary",
+      "OWNER": "Post-V1 assurance research",
+      "CLASS": "POST_V1_ARCHITECTURE",
+      "STATUS": "POST_V1_INTENTIONAL",
+      "CURRENT_AUTHORITY": "docs/architecture/POST_V1_ARCHITECTURAL_ASSETS.md",
+      "CURRENT_IMPLEMENTATION": "cryptographic verification, semantic determinism, ledger replay, and CIV provenance replay remain distinct bounded mechanisms",
+      "EVIDENCE": [
+        "docs/architecture/POST_V1_ARCHITECTURAL_ASSETS.md",
+        "docs/architecture/SYSTEM_ATLAS.md",
+        "platform/runtime/ledger/replay.py"
+      ],
+      "V1_RELEVANCE": "V1 does not claim independent semantic replay",
+      "POST_V1_RELEVANCE": "candidate capability for a portable evidence graph and assurance engine",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain open with post-v1 classification",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "GH-551",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "551",
+      "TITLE": "Define Governance Receipt as an Evidence subtype",
+      "OWNER": "Architecture",
+      "CLASS": "SUPERSEDED_VOCABULARY",
+      "STATUS": "SUPERSEDED_BY_CURRENT_ARCHITECTURE",
+      "CURRENT_AUTHORITY": "signed proof evidence, audit ledger entries, and claim-evidence routing",
+      "CURRENT_IMPLEMENTATION": "decision, identity, policy, outcome, and evidence are bound by existing owner-specific records without a Receipt authority",
+      "EVIDENCE": [
+        "docs/architecture/system-model/claim_evidence.json",
+        "platform/runtime/ledger/schemas.py",
+        "docs/CANONICAL/PROOF_CONTRACT.md"
+      ],
+      "V1_RELEVANCE": "no current V1 claim requires a Governance Receipt object",
+      "POST_V1_RELEVANCE": "may be reconsidered only as part of a future evidence graph ADR",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close as not planned",
+      "DISPOSITION": "SUPERSEDED_BY_CURRENT_ARCHITECTURE"
+    },
+    {
+      "OBLIGATION_ID": "GH-552",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "552",
+      "TITLE": "Correct PR 543 to retain only the collector fix and regression test",
+      "OWNER": "Trust lifecycle collector",
+      "CLASS": "STALE_PR_HYGIENE",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "current collector and ordering regression",
+      "CURRENT_IMPLEMENTATION": "PREPARED-before-ACTIVE selection and its regression are present on main; PR 543 is closed",
+      "EVIDENCE": [
+        "scripts/trust/collect_spire_lifecycle_state.py",
+        "tests/test_collectors_ordering.py",
+        "https://github.com/computeaholic/ThreadForge/pull/543"
+      ],
+      "V1_RELEVANCE": "implemented by later equivalent and runtime-qualified",
+      "POST_V1_RELEVANCE": "none",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close as completed",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "GH-553",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "553",
+      "TITLE": "Reconcile existing evidence structures into canonical Evidence v1",
+      "OWNER": "Evidence architecture",
+      "CLASS": "SUPERSEDED_MIGRATION_DESIGN",
+      "STATUS": "SUPERSEDED_BY_CURRENT_ARCHITECTURE",
+      "CURRENT_AUTHORITY": "Evidence Contracts plus owner-specific evidence schemas and signed proof manifests",
+      "CURRENT_IMPLEMENTATION": "classification, attribution, digests, source SHA, run IDs, signatures, truth state, and claim routing are explicit without one replacement persistence object",
+      "EVIDENCE": [
+        "docs/architecture/schemas/evidence-contract.schema.json",
+        "docs/architecture/system-model/claim_evidence.json",
+        "platform/runtime/ledger/evidence_validation.py",
+        "docs/CANONICAL/PROOF_CONTRACT.md"
+      ],
+      "V1_RELEVANCE": "current evidence is qualified without a second canonical Evidence object",
+      "POST_V1_RELEVANCE": "portable evidence graph may consolidate projections without rewriting V1",
+      "BLOCKER": false,
+      "NEXT_ACTION": "close as not planned",
+      "DISPOSITION": "SUPERSEDED_BY_CURRENT_ARCHITECTURE"
+    },
+    {
+      "OBLIGATION_ID": "GH-554",
+      "SOURCE": "GitHub issue",
+      "SOURCE_ID": "554",
+      "TITLE": "Migrate certification authority to independent replay and receipts",
+      "OWNER": "Post-V1 assurance research",
+      "CLASS": "POST_V1_ARCHITECTURE",
+      "STATUS": "POST_V1_INTENTIONAL",
+      "CURRENT_AUTHORITY": "qualified native proof, audit, verify-main, and exact-SHA graduation",
+      "CURRENT_IMPLEMENTATION": "current certification remains source-bound and evidence-driven without claiming receipt or independent replay coverage",
+      "EVIDENCE": [
+        "docs/releases/CERTIFICATION_BASELINE.md",
+        "docs/architecture/SYSTEM_ATLAS.md",
+        "docs/architecture/POST_V1_ARCHITECTURAL_ASSETS.md"
+      ],
+      "V1_RELEVANCE": "not required by bounded V1 claims",
+      "POST_V1_RELEVANCE": "possible assurance-engine migration after independent replay is separately earned",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain open with post-v1 classification",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "ADR-0001",
+      "SOURCE": "ADR",
+      "SOURCE_ID": "0001",
+      "TITLE": "ThreadForge Constitutional Architecture",
+      "OWNER": "Architecture",
+      "CLASS": "ACTIVE_ADR",
+      "STATUS": "IMPLEMENTED",
+      "CURRENT_AUTHORITY": "docs/architecture and current system atlas",
+      "CURRENT_IMPLEMENTATION": "constitutional objects are separated from the native reference implementation",
+      "EVIDENCE": [
+        "ADR/0001-threadforge-constitution.md",
+        "docs/architecture/SYSTEM_ATLAS.md"
+      ],
+      "V1_RELEVANCE": "active and implemented",
+      "POST_V1_RELEVANCE": "governs future constitutional changes",
+      "BLOCKER": false,
+      "NEXT_ACTION": "maintain",
+      "DISPOSITION": "LIVE_AND_CORRECT"
+    },
+    {
+      "OBLIGATION_ID": "ADR-0002",
+      "SOURCE": "ADR",
+      "SOURCE_ID": "0002",
+      "TITLE": "Evidence Contract Versioning and Migration",
+      "OWNER": "Architecture",
+      "CLASS": "UNRATIFIED_ADR_PROPOSAL",
+      "STATUS": "PROPOSED_NOT_ACTIVE_AUTHORITY",
+      "CURRENT_AUTHORITY": "docs/architecture/05-Evidence-Contracts.md",
+      "CURRENT_IMPLEMENTATION": "Evidence Contract semantic versioning is documented; no breaking migration is active",
+      "EVIDENCE": [
+        "ADR/0002-ec-versioning-and-migration.md",
+        "docs/architecture/05-Evidence-Contracts.md"
+      ],
+      "V1_RELEVANCE": "not an unimplemented accepted V1 obligation",
+      "POST_V1_RELEVANCE": "ratify only when a breaking Evidence Contract migration exists",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain as proposed historical input",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "ADR-0003",
+      "SOURCE": "ADR",
+      "SOURCE_ID": "0003",
+      "TITLE": "Proof Registry Interface and Immutability Guarantees",
+      "OWNER": "Post-V1 assurance architecture",
+      "CLASS": "UNRATIFIED_ADR_PROPOSAL",
+      "STATUS": "PROPOSED_NOT_ACTIVE_AUTHORITY",
+      "CURRENT_AUTHORITY": "local frozen proof artifacts and integrity verifiers",
+      "CURRENT_IMPLEMENTATION": "V1 has local source-bound signed proof evidence, not a portable Proof Registry service",
+      "EVIDENCE": [
+        "ADR/0003-proof-registry-interface.md",
+        "docs/architecture/POST_V1_ARCHITECTURAL_ASSETS.md"
+      ],
+      "V1_RELEVANCE": "not claimed by V1",
+      "POST_V1_RELEVANCE": "portable evidence graph candidate",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain as post-v1 proposal",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "ADR-0004",
+      "SOURCE": "ADR",
+      "SOURCE_ID": "0004",
+      "TITLE": "Certification Policy Schema",
+      "OWNER": "Post-V1 assurance architecture",
+      "CLASS": "UNRATIFIED_ADR_PROPOSAL",
+      "STATUS": "PROPOSED_NOT_ACTIVE_AUTHORITY",
+      "CURRENT_AUTHORITY": "native proof and exact-SHA qualification contracts",
+      "CURRENT_IMPLEMENTATION": "no independent certifier service is part of V1",
+      "EVIDENCE": [
+        "ADR/0004-certification-policy-schema.md",
+        "docs/architecture/SYSTEM_ATLAS.md"
+      ],
+      "V1_RELEVANCE": "not claimed by V1",
+      "POST_V1_RELEVANCE": "possible portable assurance-engine policy",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain as post-v1 proposal",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "ADR-0005",
+      "SOURCE": "ADR",
+      "SOURCE_ID": "0005",
+      "TITLE": "Profile Validation and CLI Integration",
+      "OWNER": "Post-V1 portability architecture",
+      "CLASS": "UNRATIFIED_ADR_PROPOSAL",
+      "STATUS": "PROPOSED_NOT_ACTIVE_AUTHORITY",
+      "CURRENT_AUTHORITY": "native Kind support contract",
+      "CURRENT_IMPLEMENTATION": "V1 qualification is native Kind only; profile CLI is not supported",
+      "EVIDENCE": [
+        "ADR/0005-profile-validation-and-cli.md",
+        "platform/config/support_contract.json",
+        "docs/architecture/15-Migration-Strategy.md"
+      ],
+      "V1_RELEVANCE": "not claimed by V1",
+      "POST_V1_RELEVANCE": "portable Golden Boot and provider/profile research",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain as post-v1 proposal",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "TODO-GOVERNANCE-AAS",
+      "SOURCE": "source TODO",
+      "SOURCE_ID": "platform/runtime/governance",
+      "TITLE": "Complete namespace/workload AAS intersection and cascade",
+      "OWNER": "Secondary runtime governance",
+      "CLASS": "POST_V1_SECONDARY_RUNTIME",
+      "STATUS": "POST_V1_INTENTIONAL",
+      "CURRENT_AUTHORITY": "secondary OperatorCore governance only",
+      "CURRENT_IMPLEMENTATION": "bounded local/default-deny behavior; no native V1 dependency",
+      "EVIDENCE": [
+        "platform/runtime/governance/namespace_governance.py",
+        "platform/runtime/governance/workload_governance.py",
+        "docs/architecture/SYSTEM_ATLAS.md"
+      ],
+      "V1_RELEVANCE": "outside native V1 qualification",
+      "POST_V1_RELEVANCE": "secondary runtime completion",
+      "BLOCKER": false,
+      "NEXT_ACTION": "separate post-v1 program if secondary runtime is promoted",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "TODO-VECTOR-IDENTITY",
+      "SOURCE": "source NOT_IMPLEMENTED marker",
+      "SOURCE_ID": "scripts/make/value-plane.mk",
+      "TITLE": "Qdrant vector identity coverage check",
+      "OWNER": "Secondary value plane",
+      "CLASS": "POST_V1_SECONDARY_RUNTIME",
+      "STATUS": "POST_V1_INTENTIONAL",
+      "CURRENT_AUTHORITY": "secondary vector/value-plane surface",
+      "CURRENT_IMPLEMENTATION": "explicitly reports NOT_IMPLEMENTED rather than synthesizing PASS",
+      "EVIDENCE": [
+        "scripts/make/value-plane.mk",
+        "docs/architecture/SYSTEM_ATLAS.md"
+      ],
+      "V1_RELEVANCE": "outside native V1 support contract",
+      "POST_V1_RELEVANCE": "required only if vector identity becomes supported",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain explicit non-implementation state",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "PROJECT-CI-PORTABILITY-001",
+      "SOURCE": "GitHub-hosted governance run",
+      "SOURCE_ID": "verify_repository_topology.sh",
+      "TITLE": "Remove the topology verifier's undeclared ripgrep dependency",
+      "OWNER": "Repository topology governance",
+      "CLASS": "CI_PORTABILITY",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "scripts/verify/verify_repository_topology.sh",
+      "CURRENT_IMPLEMENTATION": "uses ripgrep when available and a repository-safe grep fallback otherwise",
+      "EVIDENCE": [
+        "scripts/verify/verify_repository_topology.sh",
+        "GitHub PR 613 governance check"
+      ],
+      "V1_RELEVANCE": "repository governance only; runtime qualification is unchanged",
+      "POST_V1_RELEVANCE": "none",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain portable repository topology checks",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "PROJECT-CI-PORTABILITY-003",
+      "SOURCE": "linked-worktree repository validation",
+      "SOURCE_ID": "verify_repository_topology.sh",
+      "TITLE": "Exclude Git worktree metadata from governed root source artifacts",
+      "OWNER": "Repository topology governance",
+      "CLASS": "CI_PORTABILITY",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "scripts/verify/verify_repository_topology.sh",
+      "CURRENT_IMPLEMENTATION": "root source checks ignore only the .git worktree pointer while retaining all source allowlist checks",
+      "EVIDENCE": [
+        "scripts/verify/verify_repository_topology.sh",
+        "linked-worktree direct topology verification"
+      ],
+      "V1_RELEVANCE": "repository governance only; runtime qualification is unchanged",
+      "POST_V1_RELEVANCE": "none",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain equivalent topology semantics in normal and linked worktrees",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "PROJECT-CI-PORTABILITY-002",
+      "SOURCE": "GitHub-hosted repository-quality run",
+      "SOURCE_ID": "pytest bootstrap imports",
+      "TITLE": "Declare the dependencies imported during pytest bootstrap",
+      "OWNER": "Repository quality tooling",
+      "CLASS": "CI_PORTABILITY",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "requirements/dev.txt and pyproject.toml",
+      "CURRENT_IMPLEMENTATION": "the bounded development tool set installs the canonical Pydantic version and the cryptography fixture dependency required during pytest startup",
+      "EVIDENCE": [
+        "requirements/dev.txt",
+        "pyproject.toml",
+        "tests/conftest.py",
+        "GitHub PR 613 repository-quality check"
+      ],
+      "V1_RELEVANCE": "repository quality only; runtime qualification is unchanged",
+      "POST_V1_RELEVANCE": "none",
+      "BLOCKER": false,
+      "NEXT_ACTION": "keep pytest bootstrap dependencies explicit",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "PROJECT-CI-CONTRACT-001",
+      "SOURCE": "research doctrine reconciliation",
+      "SOURCE_ID": "CI workflow extension audit",
+      "TITLE": "Ensure every GitHub workflow extension is covered by the repository-only CI constitution",
+      "OWNER": "Repository CI governance",
+      "CLASS": "CI_CONSTITUTION",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "scripts/verify/ci_audit.py and platform/config/ci_execution_allowlist.json",
+      "CURRENT_IMPLEMENTATION": "workflow discovery covers both .yml and .yaml files; uncontracted files fail the exact workflow-surface check",
+      "EVIDENCE": [
+        "scripts/verify/ci_audit.py",
+        "tests/test_ci_constitution_guard.py",
+        "tests/test_ci_enforcement_layer.py"
+      ],
+      "V1_RELEVANCE": "repository governance only; runtime qualification is unchanged",
+      "POST_V1_RELEVANCE": "none",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain extension-complete workflow allowlisting",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "PROJECT-PREPUSH-001",
+      "SOURCE": "repository pre-push validation",
+      "SOURCE_ID": "make supply-chain-verify",
+      "TITLE": "Align advisory endpoint scan output with its non-authoritative exit semantics",
+      "OWNER": "Repository supply-chain diagnostics",
+      "CLASS": "PROJECT_CONTROL_TRUTHFULNESS",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "scripts/make/supplychain.mk",
+      "CURRENT_IMPLEMENTATION": "endpoint findings are retained as advisory diagnostics without failure markers or synthesized failure",
+      "EVIDENCE": [
+        "scripts/make/supplychain.mk",
+        "tests/test_supply_chain_verify_diagnostic.py"
+      ],
+      "V1_RELEVANCE": "does not change runtime or supply-chain enforcement semantics",
+      "POST_V1_RELEVANCE": "none",
+      "BLOCKER": false,
+      "NEXT_ACTION": "maintain truthful advisory output",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "RELEASE-EVIDENCE-001",
+      "SOURCE": "qualification evidence reconciliation",
+      "SOURCE_ID": "b7e8612b94089dd574d7064d709427add22dbd51",
+      "TITLE": "Bind final V1 runtime qualification to the exact executable source SHA",
+      "OWNER": "Release evidence authority",
+      "CLASS": "RUNTIME_QUALIFICATION_EVIDENCE",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "docs/releases/CERTIFICATION_BASELINE.md and source-bound proof artifacts",
+      "CURRENT_IMPLEMENTATION": "Golden Boot, two demo aggregates, outage assurance, tamper, audits, and verify-main retain distinct operation identities tied to the qualified SHA",
+      "EVIDENCE": [
+        "docs/releases/CERTIFICATION_BASELINE.md",
+        "artifacts/proof/latest/commit.sha",
+        "artifacts/proof/latest/status.json",
+        "artifacts/audit/20260828T032601Z/meta/run_manifest.json"
+      ],
+      "V1_RELEVANCE": "current runtime qualification is source-bound and complete",
+      "POST_V1_RELEVANCE": "future evidence graph may consume these projections without becoming V1 authority",
+      "BLOCKER": false,
+      "NEXT_ACTION": "retain operation-specific evidence identities",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "RESEARCH-DOCTRINE-001",
+      "SOURCE": "failed-assumption doctrine reconciliation",
+      "SOURCE_ID": "A-AI-20260828",
+      "TITLE": "Preserve and classify the A-AI research doctrine without creating V1 authority",
+      "OWNER": "Architecture research records",
+      "CLASS": "DOCUMENTATION_RECONCILIATION",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "docs/architecture/ENGINEERING_DOCTRINE.md and descriptive research_doctrine_matrix.json",
+      "CURRENT_IMPLEMENTATION": "complete dated source record, 35-law machine mapping, and concise current engineering doctrine",
+      "EVIDENCE": [
+        "reports/research/threadforge-failed-assumption-doctrine-20260828/README.md",
+        "docs/architecture/system-model/research_doctrine_matrix.json",
+        "tests/test_research_doctrine_matrix.py"
+      ],
+      "V1_RELEVANCE": "records current proven strengths and bounded claim limits without adding runtime support obligations",
+      "POST_V1_RELEVANCE": "K and AE retain independent semantic replay as explicit post-V1 research",
+      "BLOCKER": false,
+      "NEXT_ACTION": "review only when upstream failed assumptions or current implementation materially change",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "DOCS-EDITORIAL-001",
+      "SOURCE": "final technical editorial pass",
+      "SOURCE_ID": "2026-08-28",
+      "TITLE": "Reconcile current reviewer narrative with the qualified V1 machine",
+      "OWNER": "Documentation architecture",
+      "CLASS": "DOCUMENTATION_RECONCILIATION",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "whitepaper, system atlas, proof architecture, certification architecture, and certification baseline",
+      "CURRENT_IMPLEMENTATION": "current documents distinguish native and secondary surfaces, semantic determinism, non-healing proof, exact-SHA evidence sets, and bounded trust revocation claims",
+      "EVIDENCE": [
+        "docs/Agent-Containment.md",
+        "docs/architecture/SYSTEM_ATLAS.md",
+        "docs/architecture/06-Proof-Architecture.md",
+        "docs/architecture/07-Certification-Architecture.md"
+      ],
+      "V1_RELEVANCE": "prevents documentation from exceeding or understating current qualified evidence",
+      "POST_V1_RELEVANCE": "future architecture must retain the same claim discipline",
+      "BLOCKER": false,
+      "NEXT_ACTION": "maintain canonical ownership and avoid duplicated current-state prose",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "RELEASE-LICENSE-001",
+      "SOURCE": "cold review CR-013",
+      "SOURCE_ID": "CR-013",
+      "TITLE": "Select and publish an explicit repository license",
+      "OWNER": "Repository owner",
+      "CLASS": "REPOSITORY_PROVENANCE",
+      "STATUS": "COMPLETE_AND_PROVEN",
+      "CURRENT_AUTHORITY": "LICENSE and THIRD_PARTY_NOTICES.md",
+      "CURRENT_IMPLEMENTATION": "project-owned material is PolyForm Shield 1.0.0; all seven tracked binaries have known origin and compatible embedded-license attribution",
+      "EVIDENCE": [
+        "LICENSE",
+        "THIRD_PARTY_NOTICES.md",
+        "THIRD_PARTY_NOTICES.md",
+        "THIRD_PARTY_LICENSES/Apache-2.0.txt",
+        "docs/releases/PUBLIC_RELEASE_PROVENANCE.md"
+      ],
+      "V1_RELEVANCE": "does not invalidate runtime qualification but affects redistribution posture",
+      "POST_V1_RELEVANCE": "future redistributed binaries must preserve compatible third-party notices",
+      "BLOCKER": false,
+      "NEXT_ACTION": "maintain attribution when redistributed third-party material changes",
+      "DISPOSITION": "COMPLETE_AND_PROVEN"
+    },
+    {
+      "OBLIGATION_ID": "RELEASE-BINARY-001",
+      "SOURCE": "cold review CR-014",
+      "SOURCE_ID": "CR-014",
+      "TITLE": "Reduce or rehome architecture-specific tracked binaries",
+      "OWNER": "Post-V1 repository maintenance",
+      "CLASS": "POST_V1_REPOSITORY_SIZE",
+      "STATUS": "POST_V1_INTENTIONAL",
+      "CURRENT_AUTHORITY": "canonical build and deployment consumers",
+      "CURRENT_IMPLEMENTATION": "seven tracked native binaries, 110997616 bytes, retained because current build/compatibility consumers were not removed",
+      "EVIDENCE": [
+        "docs/releases/CERTIFICATION_BASELINE.md",
+        "THIRD_PARTY_NOTICES.md",
+        "platform/cmd",
+        "platform/build"
+      ],
+      "V1_RELEVANCE": "not a runtime correctness defect in the qualified tree",
+      "POST_V1_RELEVANCE": "bounded clone-size and artifact ownership program",
+      "BLOCKER": false,
+      "NEXT_ACTION": "trace consumers before any removal or relocation",
+      "DISPOSITION": "POST_V1_INTENTIONAL"
+    },
+    {
+      "OBLIGATION_ID": "RELEASE-DEPENDENCY-001",
+      "SOURCE": "cold review CR-015",
+      "SOURCE_ID": "CR-015",
+      "TITLE": "Bound external dependency and hermeticity limitations",
+      "OWNER": "Release and platform maintainers",
+      "CLASS": "DOCUMENTED_LIMITATION",
+      "STATUS": "DOCUMENTED_LIMITATION",
+      "CURRENT_AUTHORITY": "native support contract and documented host prerequisites",
+      "CURRENT_IMPLEMENTATION": "local registry mirrors runtime images after reconstruction; development tooling, upstream OCI/chart sources, and Sigstore Rekor remain external prerequisites",
+      "EVIDENCE": [
+        "docs/releases/CERTIFICATION_BASELINE.md",
+        "docs/START_HERE.md",
+        "scripts/verify/verify_signatures.sh",
+        "requirements/dev.txt"
+      ],
+      "V1_RELEVANCE": "qualification is bounded to the declared native host/network contract",
+      "POST_V1_RELEVANCE": "portable and fully hermetic execution would require separate work",
+      "BLOCKER": false,
+      "NEXT_ACTION": "preserve bounded wording; do not claim universal hermeticity",
+      "DISPOSITION": "DOCUMENTED_LIMITATION"
+    },
+    {
+      "OBLIGATION_ID": "RELEASE-TAG-001",
+      "SOURCE": "cold review CR-016",
+      "SOURCE_ID": "CR-016",
+      "TITLE": "Preserve historical reference tag without treating it as current qualification",
+      "OWNER": "Release evidence authority",
+      "CLASS": "HISTORICAL_RELEASE_HYGIENE",
+      "STATUS": "HISTORICAL_NO_ACTION",
+      "CURRENT_AUTHORITY": "Git tag history and current certification baseline",
+      "CURRENT_IMPLEMENTATION": "v1.0.0-reference-runtime points to d0660f375467b77a482c01b20285d5954133db35 and is explicitly historical",
+      "EVIDENCE": [
+        "v1.0.0-reference-runtime",
+        "docs/releases/CERTIFICATION_BASELINE.md"
+      ],
+      "V1_RELEVANCE": "no current qualification authority",
+      "POST_V1_RELEVANCE": "historical traceability only",
+      "BLOCKER": false,
+      "NEXT_ACTION": "do not move or delete the historical tag",
+      "DISPOSITION": "HISTORICAL_NO_ACTION"
+    }
+  ],
+  "BRANCH_AUDIT": {
+    "START_REMOTE_BRANCHES_EXCLUDING_MAIN": 43,
+    "MERGED_ANCESTOR_BRANCHES": [
+      "chore/ci-constitutional-rebuild-20260810",
+      "codex/adjudicate-whitepaper-evidence-gaps",
+      "codex/bootstrap-preflight-observability",
+      "codex/containment-second-rollout",
+      "codex/demo-canonical-alignment",
+      "codex/demo-cleanliness-convergence",
+      "codex/demo-trust-closeout",
+      "codex/devforge-audit-adjudication",
+      "codex/docs-closeout-current-reference-system",
+      "codex/final-evidence-binding",
+      "codex/golden-boot-pre-ingress-root-capture-20260822",
+      "codex/golden-boot-spire-cold-start-20260822",
+      "codex/release-hardening-20260822",
+      "codex/repair-spire-cold-start-sockets",
+      "codex/runtime-authority-civ-closeout",
+      "codex/spire-agent-restart-contract",
+      "codex/supported-demo-convergence",
+      "codex/supported-demo-convergence-final",
+      "codex/supported-demo-spire-health",
+      "codex/tempo-memory-contract-20260812-final",
+      "codex/v1-evidence-closeout",
+      "codex/verify-main-remote-contract",
+      "docs/final-system-truth-alignment-20260810",
+      "fix/ci-topology-certs-data-fallback",
+      "fix/ci-topology-environment-variable",
+      "fix/civ-reviewer-surface-gaps-20260814",
+      "fix/proof-namespace-validator-purity-publish-20260813",
+      "fix/runtime-convergence-20260810",
+      "fix/runtime-evidence-package-20260814",
+      "fix/trust-reconciler-restart",
+      "release/rc-20260721"
+    ],
+    "SUPERSEDED_UNMERGED_BRANCHES": [
+      "agent/fix-main-integrity-release",
+      "agent/observability-demo-gate",
+      "chore/authoritative-closure-convergence-20260513",
+      "copilot/ci-parity-enforcement",
+      "fix/ci-authoritative-green-convergence",
+      "fix/ci-stub-release-closure-20260806",
+      "fix/collector-ordering-bug-20260619",
+      "fix/kyverno-helm-repo-determinism-repair",
+      "fix/main-ci-parity",
+      "fix/validation-architecture-20260806",
+      "release/release-closure-20260806",
+      "supply-chain/kyverno-proof-fix"
+    ],
+    "SUPERSESSION_EVIDENCE": "closed PR disposition, current repository-only CI architecture, later equivalent repairs, and exact-SHA V1 qualification",
+    "SAFE_TO_DELETE": 43,
+    "BRANCHES_DELETED": 43,
+    "REMOTE_BRANCHES_RETAINED_EXCLUDING_MAIN": 0
+  },
+  "TAG_AND_RELEASE_AUDIT": {
+    "TAGS": 23,
+    "GITHUB_RELEASES": 0,
+    "V1_TAG_EXISTS": true,
+    "V1_RELEASE_EXISTS": false,
+    "CURRENT_RUNTIME_QUALIFIED_TAG_EXISTS": false,
+    "MISLEADING_CURRENT_TAG": "v1.0.0-reference-runtime predates the final qualified SHA and is historical only",
+    "DISPOSITION": "inventory_only_no_release_published"
+  }
+}

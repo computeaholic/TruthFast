@@ -1,0 +1,25 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: minio-gateway-allow
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "80"
+            methods:
+              - GET
+              - HEAD
+            hosts:
+              - "minio.threadforge.local"
+              - "console.threadforge.local"
+            paths:
+              - "/"
+              - "/minio/health/live"
+              - "/minio/health/ready"

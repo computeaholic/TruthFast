@@ -1,0 +1,15 @@
+approval:
+  approved: true
+  approved_at: 1765903227.1789482
+  approved_by: computeaholic
+  identity_provider: local
+  plan_id: integration-test
+approved: true
+commands:
+- - echo
+  - Integration test successful
+intent:
+  description: Integration test plan
+metadata:
+  created_at: '2024-01-01T00:00:00Z'
+  id: integration-test

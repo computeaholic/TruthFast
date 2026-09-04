@@ -1,0 +1,75 @@
+# ===========================================================
+# THREADFORGE ForgeSec Containment Harness (v2)
+# Dockerfile.forgesec
+# Purpose: deterministic containment + identity boundary assertions
+# ===========================================================
+FROM registry.threadforge.local:30500/mirror/docker.io/library/debian@sha256:0d49f9bc3af362aa0921b14b2f5c612a902ab6f7c2cac8d7026ade96fd0b9f6c
+
+ARG DEBIAN_SNAPSHOT=20260428T000000Z
+ARG SOURCE_DATE_EPOCH=1777334400
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PYTHONUNBUFFERED=1 \
+    SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
+
+# Minimal, auditable toolset for containment verification
+# - no exploit frameworks, no brute forcing, no fuzzers
+RUN printf 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/%s bookworm main\n' "$DEBIAN_SNAPSHOT" > /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/%s bookworm-security main\n' "$DEBIAN_SNAPSHOT" >> /etc/apt/sources.list \
+    && printf 'deb [check-valid-until=no] http://snapshot.debian.org/archive/debian/%s bookworm-updates main\n' "$DEBIAN_SNAPSHOT" >> /etc/apt/sources.list \
+    && apt-get -o Acquire::Check-Valid-Until=false update \
+    && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    jq \
+    dnsutils \
+    netcat-openbsd \
+    openssl \
+    iputils-ping \
+    traceroute \
+    nmap \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root runtime
+RUN useradd -ms /bin/bash secuser
+USER secuser
+WORKDIR /home/secuser
+
+RUN mkdir -p /home/secuser/reports
+ENV FORGESEC_REPORT_DIR=/home/secuser/reports
+
+# Default ports (override at runtime via env if needed)
+ENV FORGESEC_API_HOST=threadforge-notifier.threadforge-system.svc.cluster.local \
+    FORGESEC_API_PORT=8080 \
+    FORGESEC_PG_HOST=postgres.threadforge-system.svc.cluster.local \
+    FORGESEC_PG_PORT=5432 \
+    FORGESEC_CLICKHOUSE_HOST=clickhouse.threadforge-system.svc.cluster.local \
+    FORGESEC_CLICKHOUSE_PORT=9000 \
+    FORGESEC_MINIO_HOST=minio.minio.svc.cluster.local \
+    FORGESEC_MINIO_PORT=9000 \
+    FORGESEC_REGISTRY_HOST=registry.threadforge.local \
+    FORGESEC_REGISTRY_PORT=30500 \
+    FORGESEC_GRAFANA_HOST=grafana.observability.svc.cluster.local \
+    FORGESEC_GRAFANA_PORT=3000 \
+    FORGESEC_TEMPO_HOST=tempo.observability.svc.cluster.local \
+    FORGESEC_TEMPO_PORT=3100
+
+# Behavior knobs
+ENV FORGESEC_TIMEOUT_SEC=3 \
+    FORGESEC_NMAP_FAST=1 \
+    FORGESEC_REQUIRE_TLS=1 \
+    FORGESEC_CHECK_CERT=1 \
+    FORGESEC_PG_EXPECT_FAIL=1 \
+    FORGESEC_EXPECT_NO_HTTP=1 \
+    FORGESEC_REQUIRE_REGISTRY_TLS=1
+
+COPY --chown=secuser:secuser forgesec.sh /home/secuser/forgesec.sh
+RUN chmod +x /home/secuser/forgesec.sh
+
+VOLUME ["/home/secuser/reports"]
+
+ENTRYPOINT ["/home/secuser/forgesec.sh"]
+CMD ["suite", "identity"]

@@ -1,0 +1,5 @@
+# ARCHIVAL — manual otel-agent DaemonSet removed
+# This DaemonSet has been intentionally archived and replaced by an operator-managed
+# OpenTelemetryCollector CR (`otel-agent`, mode: daemonset) defined in
+# `platform/deploy/infra/otel/policy.yaml`.
+# Do NOT re-enable a DaemonSet; use the OpenTelemetry operator CR instead.

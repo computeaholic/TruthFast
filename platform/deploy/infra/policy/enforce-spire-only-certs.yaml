@@ -1,0 +1,487 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-enforce-spire-only-certs
+  annotations:
+    policies.kyverno.io/title: ThreadForge Enforce SPIRE-Only Certificate Issuance
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: Deny any pod that uses non-SPIRE certificates. All workloads must be issued certificates from SPIRE via spire-csr.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  rules:
+    - name: deny-non-spire-certs
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              selector:
+                matchLabels:
+                  istio-injection: enabled
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - spire-system
+                - istio-system
+                - kyverno
+                - cert-manager
+      validate:
+        message: |
+          Pod must use SPIRE-issued certificates via SDS.
+          Forbidden: non-SPIRE issuers, legacy CA secrets, or missing SPIFFE identity.
+          Workload must have an injected Istio sidecar and a service account identity.
+        pattern:
+          spec:
+            serviceAccountName: "?*"
+            containers:
+              - name: istio-proxy
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-legacy-ca-secrets
+  annotations:
+    policies.kyverno.io/title: ThreadForge Deny Legacy CA Secrets
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: critical
+    policies.kyverno.io/subject: Secret
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: deny-istio-ca-secret
+      match:
+        any:
+          - resources:
+              kinds:
+                - Secret
+              names:
+                - "istio-ca-secret"
+              namespaces:
+                - istio-system
+      validate:
+        message: "istio-ca-secret is a legacy fallback artifact and must not be used. All certificates must come from SPIRE."
+        pattern:
+          metadata:
+            name: "^(?!istio-ca-secret).*"
+
+    - name: deny-threadforge-root-references
+      match:
+        any:
+          - resources:
+              kinds:
+                - Secret
+                - ConfigMap
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: "threadforge-root"
+      validate:
+        message: "threadforge-root certificates and keys are forbidden. Only SPIRE-issued certificates are allowed."
+        pattern: {}  # Implicit deny via validation failure
+
+    - name: deny-cert-manager-ca-in-injection
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - cert-manager
+      validate:
+        message: "Pods must not reference cert-manager-issued certificates. Use SPIRE via spire-csr only."
+        # Use deny conditions instead of validate.pattern negative-lookahead regex.
+        # Go RE2 (used by Kyverno) does not support (?!...) lookaheads; the pattern
+        # form would fail to compile and produce false positives for all pods.
+        deny:
+          conditions:
+            any:
+            - key: "{{ request.object.spec.volumes[] | [?secret.secretName] | [*].secret.secretName | [?contains(@, 'cert-manager')] | length(@) }}"
+              operator: GreaterThan
+              value: "0"
+            - key: "{{ request.object.spec.volumes[] | [?secret.secretName] | [*].secret.secretName | [?contains(@, 'threadforge-root')] | length(@) }}"
+              operator: GreaterThan
+              value: "0"
+            - key: "{{ request.object.spec.volumes[] | [?secret.secretName] | [*].secret.secretName | [?@ == 'istio-ca-secret'] | length(@) }}"
+              operator: GreaterThan
+              value: "0"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-spiffe-identity
+  annotations:
+    policies.kyverno.io/title: ThreadForge Require SPIFFE Identity on Identity-Bound Workloads
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: critical
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  applyRules: All
+  rules:
+    - name: require-mesh-namespace-label-pods
+      match:
+        resources:
+          kinds:
+            - Pod
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      context:
+        - name: namespace_injection_label
+          apiCall:
+            urlPath: "/api/v1/namespaces/{{ request.namespace }}"
+            jmesPath: 'metadata.labels."istio-injection" || ""'
+      validate:
+        message: "SPIFFE identity required: namespace must set istio-injection=enabled"
+        deny:
+          conditions:
+            any:
+              - key: '{{ namespace_injection_label }}'
+                operator: NotEquals
+                value: "enabled"
+    - name: require-mesh-namespace-label-controllers
+      match:
+        resources:
+          kinds:
+            - Deployment
+            - StatefulSet
+            - DaemonSet
+            - Job
+            - CronJob
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      context:
+        - name: namespace_injection_label
+          apiCall:
+            urlPath: "/api/v1/namespaces/{{ request.namespace }}"
+            jmesPath: 'metadata.labels."istio-injection" || ""'
+      validate:
+        message: "SPIFFE identity required: namespace must set istio-injection=enabled"
+        deny:
+          conditions:
+            any:
+              - key: '{{ namespace_injection_label }}'
+                operator: NotEquals
+                value: "enabled"
+    - name: require-spiffe-compatible-service-account-pods
+      match:
+        resources:
+          kinds:
+            - Pod
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      validate:
+        message: "SPIFFE identity required: serviceAccountName must be present, non-default, and DNS-1123 compatible"
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.spec.serviceAccountName || "" }}'
+                operator: Equals
+                value: ""
+              - key: '{{ request.object.spec.serviceAccountName || "default" }}'
+                operator: Equals
+                value: "default"
+              - key: "{{ regex_match('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$', request.object.spec.serviceAccountName || '') }}"
+                operator: Equals
+                value: false
+    - name: require-spiffe-compatible-service-account-controllers
+      match:
+        resources:
+          kinds:
+            - Deployment
+            - StatefulSet
+            - DaemonSet
+            - Job
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      validate:
+        message: "SPIFFE identity required: serviceAccountName must be present, non-default, and DNS-1123 compatible"
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.spec.template.spec.serviceAccountName || "" }}'
+                operator: Equals
+                value: ""
+              - key: '{{ request.object.spec.template.spec.serviceAccountName || "default" }}'
+                operator: Equals
+                value: "default"
+              - key: "{{ regex_match('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$', request.object.spec.template.spec.serviceAccountName || '') }}"
+                operator: Equals
+                value: false
+    - name: require-spiffe-compatible-service-account-cronjobs
+      match:
+        resources:
+          kinds:
+            - CronJob
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      validate:
+        message: "SPIFFE identity required: serviceAccountName must be present, non-default, and DNS-1123 compatible"
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.spec.jobTemplate.spec.template.spec.serviceAccountName || "" }}'
+                operator: Equals
+                value: ""
+              - key: '{{ request.object.spec.jobTemplate.spec.template.spec.serviceAccountName || "default" }}'
+                operator: Equals
+                value: "default"
+              - key: "{{ regex_match('^[a-z0-9]([-a-z0-9]*[a-z0-9])?$', request.object.spec.jobTemplate.spec.template.spec.serviceAccountName || '') }}"
+                operator: Equals
+                value: false
+    - name: deny-sidecar-opt-out-pods
+      match:
+        resources:
+          kinds:
+            - Pod
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      validate:
+        message: "SPIFFE identity required: sidecar opt-out is forbidden (sidecar.istio.io/inject=false)"
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.metadata.annotations."sidecar.istio.io/inject" || "" }}'
+                operator: Equals
+                value: "false"
+    - name: deny-sidecar-opt-out-controllers
+      match:
+        resources:
+          kinds:
+            - Deployment
+            - StatefulSet
+            - DaemonSet
+            - Job
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      validate:
+        message: "SPIFFE identity required: sidecar opt-out is forbidden (sidecar.istio.io/inject=false)"
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.spec.template.metadata.annotations."sidecar.istio.io/inject" || "" }}'
+                operator: Equals
+                value: "false"
+    - name: deny-sidecar-opt-out-cronjobs
+      match:
+        resources:
+          kinds:
+            - CronJob
+      exclude:
+        resources:
+          namespaces:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - istio-system
+            - spire
+            - spire-system
+            - kyverno
+            - cert-manager
+      validate:
+        message: "SPIFFE identity required: sidecar opt-out is forbidden (sidecar.istio.io/inject=false)"
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.spec.jobTemplate.spec.template.metadata.annotations."sidecar.istio.io/inject" || "" }}'
+                operator: Equals
+                value: "false"
+
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-deny-legacy-ca-env-vars
+  annotations:
+    policies.kyverno.io/title: ThreadForge Deny Legacy CA Environment Variables
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: high
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail
+  applyRules: All
+  rules:
+    - name: deny-citadel-env
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+                - DaemonSet
+                - Job
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - istio-system
+                - spire
+                - spire-system
+                - cert-manager
+      validate:
+        message: "Citadel/IstioCA environment variables are forbidden in application containers. Use SPIRE only."
+        foreach:
+          - list: "request.object.spec.template.spec.containers[?name!='istio-proxy'].env[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.name || '' }}"
+                    operator: In
+                    value:
+                      - CITADEL_ADDR
+                      - CITADEL_AGENT_ADDRESS
+                      - CITADEL_ENABLE_ANALYSIS
+                      - ISTIO_CA_ADDR
+                      - ISTIO_CA_ADDRESS
+                      - ISTIO_META_CA_ADDR
+                      - PILOT_CERT_PROVIDER
+                      - CA_ADDR
+                      - SPIFFE_ENDPOINT_SOCKET
+                      - GRPC_XDS_BOOTSTRAP
+    - name: deny-citadel-env-cronjobs
+      match:
+        any:
+          - resources:
+              kinds:
+                - CronJob
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - istio-system
+                - spire
+                - spire-system
+                - cert-manager
+      validate:
+        message: "Citadel/IstioCA environment variables are forbidden in application containers. Use SPIRE only."
+        foreach:
+          - list: "request.object.spec.jobTemplate.spec.template.spec.containers[?name!='istio-proxy'].env[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.name || '' }}"
+                    operator: In
+                    value:
+                      - CITADEL_ADDR
+                      - CITADEL_AGENT_ADDRESS
+                      - CITADEL_ENABLE_ANALYSIS
+                      - ISTIO_CA_ADDR
+                      - ISTIO_CA_ADDRESS
+                      - ISTIO_META_CA_ADDR
+                      - PILOT_CERT_PROVIDER
+                      - CA_ADDR
+                      - SPIFFE_ENDPOINT_SOCKET
+                      - GRPC_XDS_BOOTSTRAP
+    - name: deny-citadel-env-pods
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - istio-system
+                - cert-manager
+      validate:
+        message: "Citadel/IstioCA environment variables are forbidden in application containers. Use SPIRE only."
+        foreach:
+          - list: "request.object.spec.containers[?name!='istio-proxy'].env[]"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.name || '' }}"
+                    operator: In
+                    value:
+                      - CITADEL_ADDR
+                      - CITADEL_AGENT_ADDRESS
+                      - CITADEL_ENABLE_ANALYSIS
+                      - ISTIO_CA_ADDR
+                      - ISTIO_CA_ADDRESS
+                      - ISTIO_META_CA_ADDR
+                      - PILOT_CERT_PROVIDER
+                      - CA_ADDR
+                      - SPIFFE_ENDPOINT_SOCKET
+                      - GRPC_XDS_BOOTSTRAP

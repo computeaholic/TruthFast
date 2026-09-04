@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: router-dr
+  namespace: threadforge
+spec:
+  host: threadforge-router.threadforge.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: router-vs
+  namespace: threadforge
+spec:
+  hosts:
+    - "router.threadforge.svc.cluster.local"
+  gateways:
+    - threadforge-public
+  http:
+    - route:
+        - destination:
+            host: threadforge-router.threadforge.svc.cluster.local
+            port:
+              number: 8085

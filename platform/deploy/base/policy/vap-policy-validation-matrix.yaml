@@ -1,0 +1,75 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: enforce-policy-validation-matrix
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["pods"]
+  validations:
+    - expression: |
+        !(has(object.metadata.annotations) && 'threadforge.io/expected-image-digest' in object.metadata.annotations) ||
+        (has(object.spec.containers) && object.spec.containers.all(c,
+          c.image.matches('^registry\\.threadforge\\.local:30500/.+@sha256:[a-f0-9]{64}$') &&
+          c.image.endsWith('@sha256:' + object.metadata.annotations['threadforge.io/expected-image-digest'])
+        ))
+      message: "Image digest mismatch: containers must match threadforge.io/expected-image-digest when provided."
+    - expression: |
+        has(object.spec.containers) && object.spec.containers.exists(c, c.name == 'istio-proxy')
+      message: "Sidecar required: pod must include container named istio-proxy."
+    - expression: |
+        !(has(object.metadata.annotations) &&
+          'threadforge.io/mutated' in object.metadata.annotations &&
+          object.metadata.annotations['threadforge.io/mutated'] == 'true')
+      message: "Mutated pod denied: annotation threadforge.io/mutated=true is forbidden."
+    - expression: |
+        (has(object.spec.containers) ? object.spec.containers.all(c,
+          !has(c.securityContext) || !has(c.securityContext.privileged) || c.securityContext.privileged == false
+        ) : true) &&
+        (has(object.spec.initContainers) ? object.spec.initContainers.all(c,
+          !has(c.securityContext) || !has(c.securityContext.privileged) || c.securityContext.privileged == false
+        ) : true) &&
+        (has(object.spec.ephemeralContainers) ? object.spec.ephemeralContainers.all(c,
+          !has(c.securityContext) || !has(c.securityContext.privileged) || c.securityContext.privileged == false
+        ) : true)
+      message: "Privileged containers are forbidden."
+    - expression: |
+        !has(object.spec.hostNetwork) || object.spec.hostNetwork == false
+      message: "hostNetwork is forbidden."
+    - expression: |
+        !has(object.spec.volumes) || !object.spec.volumes.exists(v, has(v.hostPath))
+      message: "hostPath volumes are forbidden."
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: enforce-policy-validation-matrix-binding
+spec:
+  policyName: enforce-policy-validation-matrix
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        threadforge.io/policy-matrix: "true"
+    objectSelector:
+      matchLabels:
+        threadforge.io/policy-matrix: "true"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: enforce-internal-registry-matrix-binding
+spec:
+  policyName: enforce-internal-registry
+  validationActions: [Deny]
+  matchResources:
+    namespaceSelector:
+      matchLabels:
+        threadforge.io/policy-matrix: "true"
+    objectSelector:
+      matchLabels:
+        threadforge.io/policy-matrix: "true"

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: capability-matrix
+  namespace: threadforge
+  labels:
+    app: threadforge
+    component: governance
+data:
+  matrix.yaml: |
+    # Capability matrix: maps capabilities to requirements
+    # Used by gateway_enforcer.py and capability enforcement layer
+    capabilities:
+      vector.embed:
+        - VECTOR_EMBED
+      vector.read:
+        - VECTOR_READ
+      vector.write:
+        - VECTOR_WRITE
+      storage.read:
+        - READ
+      storage.write:
+        - WRITE
+      storage.admin:
+        - ADMIN
+      kernel.execute:
+        - KERNEL_EXECUTE
+      identity.demand:
+        - IDENTITY_DEMAND
+      observe.envoy.certs:
+        - OBSERVE_CERTS
+      storage.router:
+        - ROUTE_STORAGE
+      governance.override:
+        - OVERRIDE

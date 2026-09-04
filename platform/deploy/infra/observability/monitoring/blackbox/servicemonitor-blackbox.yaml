@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: blackbox-minio
+  namespace: monitoring
+  labels:
+    app: blackbox-minio
+spec:
+  selector:
+    matchLabels:
+      app: blackbox-minio
+  namespaceSelector:
+    matchNames:
+      - observability
+  endpoints:
+    - port: http-metrics
+      interval: 15s
+      path: /probe
+      params:
+        module: [minio_mtls]
+        # Probe via local envoy sidecar in each blackbox pod which performs SPIFFE mTLS
+        target: ["http://127.0.0.1:8443/minio/health/ready"]
+      # preserve source service labels for debugging
+      relabelings:
+        - action: replace
+          sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: __param_namespace
+        - action: replace
+          sourceLabels: [__meta_kubernetes_service_name]
+          targetLabel: __param_service
+      metricRelabelings:
+        - sourceLabels: [probe_success]
+          action: keep

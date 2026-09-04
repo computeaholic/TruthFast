@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: promtail-gateway-cert
+  namespace: istio-system
+spec:
+  secretName: promtail-gateway-tls
+  issuerRef:
+    kind: ClusterIssuer
+    name: threadforge-ca
+  dnsNames:
+    - "promtail.threadforge.local"
+    - "promtail.monitoring.svc.cluster.local"

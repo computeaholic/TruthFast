@@ -1,0 +1,76 @@
+# Tempo egress via Istio Egress Gateway
+# Routes TLS traffic to stats.grafana.org through the cluster's Istio egress gateway
+
+# 1) ServiceEntry for external host
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: external-grafana-stats
+  namespace: tempo
+spec:
+  hosts:
+  - "stats.grafana.org"
+  ports:
+  - number: 443
+    name: https
+    protocol: TLS
+  resolution: DNS
+  location: MESH_EXTERNAL
+
+---
+# 2) VirtualService in tempo namespace that routes traffic for the external host to the istio egress gateway
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: route-stats-via-egress
+  namespace: tempo
+spec:
+  hosts:
+  - "stats.grafana.org"
+  gateways:
+  - mesh
+  - istio-system/egressgateway-grafana
+  tls:
+  - match:
+    - port: 443
+      sniHosts:
+      - "stats.grafana.org"
+    route:
+    - destination:
+        host: "stats.grafana.org"
+        port:
+          number: 443
+
+---
+# 3) Gateway on the istio-system egress gateway (passthrough TLS)
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: egressgateway-grafana
+  namespace: istio-system
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+  - port:
+      number: 443
+      name: tls
+      protocol: TLS
+    tls:
+      mode: ISTIO_MUTUAL
+    hosts:
+    - "stats.grafana.org"
+
+---
+# 4) DestinationRule for the egress gateway itself (ensure normal behavior)
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dr-stats-grafana-org
+  namespace: istio-system
+spec:
+  host: stats.grafana.org
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      sni: stats.grafana.org

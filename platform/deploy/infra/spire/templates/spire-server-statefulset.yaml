@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: spire-server
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: "spire-server"
+  replicas: {{ .Values.spireServer.replicaCount }}
+  selector:
+    matchLabels:
+      app: spire-server
+  template:
+    metadata:
+      labels:
+        app: spire-server
+        sidecar.istio.io/inject: "false"
+      annotations:
+{{- if .Values.spireServer.metrics.enabled }}
+{{- range $k,$v := .Values.spireServer.metrics.prometheus.annotations }}
+        {{ $k }}: "{{ $v }}"
+{{- end }}
+{{- end }}
+    spec:
+      automountServiceAccountToken: true
+      priorityClassName: {{ .Values.resources.server.priorityClassName | quote }}
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+      initContainers:
+        - name: init-spire-server-dirs
+          image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "[SPIRE SERVER] Preparing data directories"
+              mkdir -p /run/spire/data
+              mkdir -p /run/spire/data/ca
+              mkdir -p /opt/spire/conf/server
+              chown -R 1000:1000 /run/spire
+              chmod -R 750 /run/spire
+              # Copy ConfigMap server.conf to writable volume
+              cp /opt/spire/conf/base/server.conf /opt/spire/conf/server/server.conf
+              chmod 644 /opt/spire/conf/server/server.conf
+          volumeMounts:
+            - name: server-data
+              mountPath: /run/spire/data
+            - name: spire-admin-socket
+              mountPath: /run/spire/private
+            - name: server-config-base
+              mountPath: /opt/spire/conf/base
+              readOnly: true
+            - name: server-config
+              mountPath: /opt/spire/conf/server
+      serviceAccountName: spire-server
+      containers:
+        - name: spire-server
+          image: {{ .Values.spireServer.image.repository }}:{{ .Values.spireServer.image.tag }}{{- if .Values.spireServer.image.digest }}@{{ .Values.spireServer.image.digest }}{{- end }}
+          imagePullPolicy: {{ .Values.spireServer.image.pullPolicy | default "IfNotPresent" }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          args:
+            - run
+            - -config
+            - /opt/spire/conf/server/server.conf
+          ports:
+            - name: health
+              containerPort: 8080
+              protocol: TCP
+            - name: grpc
+              containerPort: 8081
+              protocol: TCP
+            - name: metrics
+              containerPort: 9091
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /live
+              port: 8080
+          resources:
+            requests:
+              cpu: {{ .Values.resources.server.requests.cpu }}
+              memory: {{ .Values.resources.server.requests.memory }}
+            limits:
+              cpu: {{ .Values.resources.server.limits.cpu }}
+              memory: {{ .Values.resources.server.limits.memory }}
+          volumeMounts:
+            - name: server-config
+              mountPath: /opt/spire/conf/server
+            - name: server-data
+              mountPath: /run/spire/data
+            - name: spire-admin-socket
+              mountPath: /run/spire/private
+{{- if .Values.spireServer.upstreamCa.enabled }}
+            - name: upstream-ca
+              mountPath: /run/spire/upstream
+              readOnly: true
+{{- end }}
+      volumes:
+        - name: server-config-base
+          configMap:
+            name: spire-server-config
+            items:
+              - key: server.conf
+                path: server.conf
+        - name: server-config
+          emptyDir: {}
+        - name: server-data
+          persistentVolumeClaim:
+            claimName: spire-server-data
+        - name: spire-admin-socket
+          hostPath:
+            path: /run/spire/private
+            type: DirectoryOrCreate
+{{- if .Values.spireServer.upstreamCa.enabled }}
+        - name: upstream-ca
+          secret:
+            secretName: {{ .Values.spireServer.upstreamCa.secretName }}
+{{- end }}

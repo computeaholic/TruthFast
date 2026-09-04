@@ -1,0 +1,10 @@
+[Unit]
+Description=K3s Wake Recovery: quick DNS probe + kube-proxy reconcile
+After=suspend.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/k3s-wake-recover.sh
+
+[Install]
+WantedBy=suspend.target

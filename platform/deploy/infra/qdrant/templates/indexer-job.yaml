@@ -1,0 +1,83 @@
+# platform/deploy/infra/qdrant/templates/indexer-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: qdrant-indexer-{{ .Values.indexer.source }}
+  namespace: qdrant
+  labels:
+    app: qdrant-indexer
+spec:
+  template:
+    metadata:
+      labels:
+        app: qdrant-indexer
+        sidecar.istio.io/inject: "true"
+      annotations:
+        # Same identity class as readers
+        threadforge.io/identity-class: "reader"
+    spec:
+      restartPolicy: Never
+
+      # Same security context as Qdrant
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+
+      containers:
+        - name: indexer
+          image: "{{ .Values.indexer.image.repository }}:{{ .Values.indexer.image.tag }}"
+          imagePullPolicy: {{ .Values.indexer.image.pullPolicy }}
+
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+
+          command: ["python", "-m", "runtime.vector.indexer.main"]
+
+          env:
+            # Database connections (read-only)
+            - name: PG_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: threadforge-db-reader
+                  key: dsn
+            - name: CH_HOST
+              value: "clickhouse.threadforge-system.svc.cluster.local"
+            - name: CH_PORT
+              value: "9000"
+
+            # Qdrant connection
+            - name: QDRANT_HOST
+              value: "qdrant.qdrant.svc.cluster.local"
+            - name: QDRANT_PORT
+              value: "6334"
+
+            # Vector configuration
+            - name: VECTOR_COLLECTION
+              value: "{{ .Values.indexer.collection }}"
+            - name: VECTOR_MODEL
+              value: "{{ .Values.indexer.model }}"
+
+            # Ingestion parameters
+            - name: SOURCE
+              value: "{{ .Values.indexer.source }}"
+            - name: BATCH_SIZE
+              value: "{{ .Values.indexer.batchSize }}"
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+
+      # No service account needed - uses ambient credentials

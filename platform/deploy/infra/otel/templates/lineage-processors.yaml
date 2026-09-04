@@ -1,0 +1,7 @@
+# ARCHIVAL — tf-lineage-injectors removed from active templates
+# Lineage enrichment is implemented inside the otel-gateway OpenTelemetryCollector CR
+# using standard processors (attributes/resource/transform). Keep archival copy under
+# platform/deploy/infra/otel/disabled/lineage-processors.yaml.disabled for reference.
+
+# Do NOT re-enable this ConfigMap; add equivalent attributes/resource processors
+# into the otel-gateway CR (see platform/deploy/infra/otel/policy.yaml).

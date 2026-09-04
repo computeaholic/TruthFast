@@ -1,0 +1,80 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: threadforge
+  namespace: observability
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+
+  serviceAccountName: prometheus-operator
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+
+  podMetadata:
+    labels:
+      sidecar.istio.io/inject: "false"
+
+  retention: 5d
+  retentionSize: {{ .Values.prometheus.prometheusSpec.retentionSize }}
+  scrapeInterval: 15s
+  evaluationInterval: 15s
+
+  # Metric names are restricted to ASCII for maximum compatibility
+  # with downstream tooling, federation, and audit systems.
+  {{- if .Values.prometheus.supportsMetricNameValidation }}
+  {{- with .Values.prometheus.prometheusSpec }}
+  {{- if .metricNameValidationScheme }}
+  metricNameValidationScheme: {{ .metricNameValidationScheme }}
+  {{- end }}
+  {{- if .metricNameEscapingScheme }}
+  metricNameEscapingScheme: {{ .metricNameEscapingScheme }}
+  {{- end }}
+  {{- end }}
+  {{- else }}
+  # Cluster CRD does not support server-side metric name validation fields.
+  # Enforcement is applied at scrape time via metricRelabelings to drop non-ASCII metrics.
+  {{- end }}
+
+  externalLabels:
+    cluster: threadforge-alpha
+
+  serviceMonitorSelector:
+    matchExpressions:
+      - key: threadforge.monitor/enabled
+        operator: In
+        values: ["true"]
+
+  podMonitorSelector:
+    matchExpressions:
+      - key: threadforge.monitor/enabled
+        operator: In
+        values: ["true"]
+
+  probeSelector:
+    matchExpressions:
+      - key: threadforge.monitor/enabled
+        operator: In
+        values: ["true"]
+
+  ruleSelector:
+    matchExpressions:
+      - key: threadforge.rules/enabled
+        operator: In
+        values: ["true"]
+
+  additionalScrapeConfigs:
+    name: additional-scrape-configs
+    key: prometheus-additional.yaml
+
+  storage:
+    volumeClaimTemplate:
+      spec:
+        storageClassName: local-path
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 8Gi

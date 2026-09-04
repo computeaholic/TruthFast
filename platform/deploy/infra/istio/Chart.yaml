@@ -1,0 +1,6 @@
+# platform/deploy/infra/istio/Chart.yaml
+apiVersion: v2
+name: threadforge-istio
+description: ThreadForge Istio security policies (AuthorizationPolicy, PeerAuthentication, etc.)
+type: application
+version: 0.1.0

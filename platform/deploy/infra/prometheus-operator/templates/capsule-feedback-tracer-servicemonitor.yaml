@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: capsule-feedback
+  namespace: observability
+  labels:
+    threadforge.io/component: capsule-feedback
+spec:
+  selector:
+    matchLabels:
+      app: capsule-feedback
+  namespaceSelector:
+    matchNames:
+      - threadforge
+  endpoints:
+    - port: http
+      interval: 10s
+      path: /metrics

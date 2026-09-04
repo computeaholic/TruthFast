@@ -1,0 +1,60 @@
+{{- /* Job to run spiffe-test deterministically. This must exit (Succeeded or Failed) and not CrashLoop. */ -}}
+{{- if .Values.spiffeTest.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spiffe-test
+  namespace: {{ .Release.Namespace | default "spire-system" }}
+  labels:
+    app: spiffe-test
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: spiffe-test
+    spec:
+      restartPolicy: Never
+      serviceAccountName: spiffe-test
+      containers:
+        - name: spiffe-test
+          image: {{ .Values.spiffeTest.image.repository }}:{{ .Values.spiffeTest.image.tag }}
+          imagePullPolicy: {{ .Values.spiffeTest.image.pullPolicy | default "IfNotPresent" }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Deterministic prerequisite checks: if SPIRE socket is missing fail with clear message
+              SOCKET="{{ .Values.spireAgent.workloadApi.socketPath }}"
+              if [ ! -S "$SOCKET" ]; then
+                echo "ERROR: SPIRE socket missing at $SOCKET" >&2
+                echo "Hint: ensure the SPIRE agent socket is mounted (hostPath {{ .Values.spiffeTest.socketDir }})" >&2
+                exit 2
+              fi
+
+              # Run the helper (if present) and propagate its exit code
+              if [ -x /opt/spire/bin/spiffe-helper ]; then
+                exec /opt/spire/bin/spiffe-helper -config /opt/spire/conf/helper.conf
+              else
+                echo "ERROR: spiffe-helper binary not present in image" >&2
+                exit 3
+              fi
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: {{ .Values.spiffeTest.socketDir }}
+              readOnly: true
+            - name: helper-config
+              mountPath: /opt/spire/conf
+              readOnly: true
+      volumes:
+        - name: spire-agent-socket
+          hostPath:
+            path: {{ .Values.spiffeTest.socketDir }}
+            type: DirectoryOrCreate
+        - name: helper-config
+          configMap:
+            name: spiffe-helper-config
+{{- end }}

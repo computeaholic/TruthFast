@@ -1,0 +1,24 @@
+{{- if .Values.bundleService.enabled }}
+# Internal ClusterIP that routes to the Istio ingressgateway pods so clients can address
+# the gateway using a stable internal DNS name (spire-bundle-gateway.spire-system.svc).
+apiVersion: v1
+kind: Service
+metadata:
+  name: spire-bundle-gateway
+  namespace: spire-system
+  labels:
+    app: spire-bundle-gateway
+spec:
+  selector:
+{{- with .Values.bundleService.gatewaySelector }}
+{{ toYaml . | indent 4 }}
+{{- else }}
+    app: istio-ingressgateway
+{{- end }}
+  ports:
+  - name: https
+    port: {{ .Values.bundleService.port | default 8443 }}
+    targetPort: {{ .Values.bundleService.port | default 8443 }}
+    protocol: TCP
+  type: ClusterIP
+{{- end }}

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-bitnami-dashboards
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  minio-overview.json: |
+    {{ .Files.Get "dashboards/minio-overview.json" | nindent 4 }}
+
+  minio-performance.json: |
+    {{ .Files.Get "dashboards/minio-performance.json" | nindent 4 }}
+
+  minio-requests.json: |
+    {{ .Files.Get "dashboards/minio-requests.json" | nindent 4 }}
+
+  minio-buckets.json: |
+    {{ .Files.Get "dashboards/minio-buckets.json" | nindent 4 }}

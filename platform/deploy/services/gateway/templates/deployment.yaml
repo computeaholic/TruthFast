@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+        sidecar.istio.io/inject: "true"
+      annotations:
+        sidecar.opentelemetry.io/inject: "true"
+        otel.threadforge.io/enabled: "true"
+    spec:
+      securityContext:
+        runAsUser: 1005
+        runAsGroup: 1005
+        fsGroup: 1005
+      containers:
+        - name: gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8080
+              name: http
+            - containerPort: 4317
+              name: otlp-grpc
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: gateway-config
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10

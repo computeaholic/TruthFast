@@ -1,0 +1,6 @@
+apiVersion: v2
+name: promtail
+description: ThreadForge — Promtail Identity-Gated Log Ingestion
+type: application
+version: 0.1.0
+appVersion: "2.9.2"

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: threadforge-minio-dashboards
+  namespace: observability
+  labels:
+    grafana_dashboard: "1"
+data:
+  tf-minio-artifact-lineage.json: |
+    {{ .Files.Get "dashboards/tf-minio-artifact-lineage.json" | nindent 4 }}
+
+  tf-minio-bucket-health.json: |
+    {{ .Files.Get "dashboards/tf-minio-bucket-health.json" | nindent 4 }}
+
+  tf-minio-llm-flow.json: |
+    {{ .Files.Get "dashboards/tf-minio-llm-flow.json" | nindent 4 }}
+
+  tf-minio-drift-detector.json: |
+    {{ .Files.Get "dashboards/tf-minio-drift-detector.json" | nindent 4 }}

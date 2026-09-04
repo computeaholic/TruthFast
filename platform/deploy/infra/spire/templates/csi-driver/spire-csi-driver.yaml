@@ -1,0 +1,255 @@
+{{- /* DIAGNOSTIC: force rendering of CSI DaemonSet. REVERT after test */ -}}
+# ======================= CSI REGISTRATION INVARIANT =======================
+# The host registration socket:
+#   /var/lib/kubelet/plugins_registry/csi.spiffe.io-reg.sock
+# MUST be owned exclusively by the container:
+#   csi-node-reg-proxy (image-based)
+#
+# - node-driver-registrar MUST bind only pod-internal sockets
+# - No ConfigMap, go run, or mounted source may provide this service
+# - Violating this invariant will break kubelet CSI registration
+# ========================================================================
+
+{{- if .Values.spiffe.csi.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: spire-spiffe-csi-driver
+  namespace: {{ .Release.Namespace | default "spire-system" }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spire-spiffe-csi-driver
+  namespace: {{ .Release.Namespace | default "spire-system" }}
+spec:
+  selector:
+    matchLabels:
+      app: spire-spiffe-csi-driver
+  template:
+    metadata:
+      labels:
+        app: spire-spiffe-csi-driver
+        sidecar.istio.io/inject: "false"
+      annotations:
+        proxy.istio.io/config: |
+          {"holdApplicationUntilProxyStarts": false}
+    spec:
+      serviceAccountName: spire-spiffe-csi-driver
+      # Ensure the CSI plugin directory exists and is world-writable before the driver starts.
+      # This prevents "listen unix /spiffe-csi/driver.sock: bind: no such file or directory" errors
+      # (mirrors SPIRE agent socket fix; canonical CSI solution: create + chmod in an init container).
+      initContainers:
+        - name: init-spiffe-csi
+          image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+          command:
+            - "sh"
+            - "-c"
+            - "mkdir -p /spiffe-csi && chmod 0777 /spiffe-csi"
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: spiffe-csi
+              mountPath: /spiffe-csi
+
+        - name: cleanup-driver-socket
+          image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+          command:
+            - "sh"
+            - "-c"
+            - "rm -f /spiffe-csi/driver.sock || true"
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: spiffe-csi
+              mountPath: /spiffe-csi
+
+        - name: wait-for-spire-socket
+          image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+          command:
+            - "sh"
+            - "-c"
+            - |-
+              i=0
+              while [ ! -S {{ .Values.spiffe.csi.workloadApiSocketDir }}/socket ] && [ $i -lt 60 ]; do
+                i=$((i+1))
+                sleep 1
+              done
+              if [ ! -S {{ .Values.spiffe.csi.workloadApiSocketDir }}/socket ]; then
+                echo "[FAIL] MISSING_PREREQ: timed out waiting for spire socket"
+                exit 1
+              fi
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: spire-agent-socket
+              mountPath: {{ .Values.spiffe.csi.workloadApiSocketDir }}
+      containers:
+
+      # ---------------- SPIFFE CSI DRIVER ----------------
+      - name: spire-spiffe-csi-driver
+        image: "{{ .Values.spiffe.csi.image.repository }}@{{ .Values.spiffe.csi.image.digest }}"
+        imagePullPolicy: {{ .Values.spiffe.csi.image.pullPolicy }}
+        securityContext:
+          privileged: true
+        env:
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: GOTRACEBACK
+            value: "all"
+          - name: LOG_LEVEL
+            value: "trace"
+        args:
+          - --csi-socket-path={{ .Values.spiffe.csi.driverSocket }}
+          - --workload-api-socket-dir={{ .Values.spiffe.csi.workloadApiSocketDir }}
+        ports:
+          - containerPort: 9808
+            name: healthz
+        volumeMounts:
+          - name: spire-agent-socket
+            mountPath: {{ .Values.spiffe.csi.workloadApiSocketDir }}
+            readOnly: true
+          - name: spiffe-csi
+            mountPath: /spiffe-csi
+          - name: kubelet-pods
+            mountPath: /var/lib/kubelet/pods
+            mountPropagation: Bidirectional
+
+      # ---------------- NODE SHIM (PLUGIN SOCKET) ----------------
+      - name: csi-node-shim
+        image: "{{ .Values.spiffe.csi.nodeShimImage.repository }}@{{ .Values.spiffe.csi.nodeShimImage.digest }}"
+        imagePullPolicy: {{ .Values.spiffe.csi.nodeShimImage.pullPolicy }}
+        securityContext:
+          runAsUser: 0
+        env:
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: CSI_BACKEND_SOCKET
+            value: "{{ .Values.spiffe.csi.driverSocket }}"
+        volumeMounts:
+          - name: spiffe-csi
+            mountPath: /spiffe-csi
+          - name: csi-plugin-dir
+            mountPath: /csi
+
+      # ---------------- REGISTRATION PROXY (HOST REG SOCKET OWNER) ----------------
+      - name: csi-node-reg-proxy
+        image: "{{ .Values.spiffe.csi.nodeRegProxyImage.repository }}@{{ .Values.spiffe.csi.nodeRegProxyImage.digest }}"
+        imagePullPolicy: {{ .Values.spiffe.csi.nodeRegProxyImage.pullPolicy }}
+        securityContext:
+          runAsUser: 0
+        env:
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        command:
+          - sh
+          - -c
+          - |
+            i=0; while [ ! -S /registration/csi.spiffe.io-reg.sock ] && [ $i -lt 60 ]; do sleep 1; i=$((i+1)); done; exec csi-node-reg-proxy --listen-socket=/var/lib/kubelet/plugins_registry/csi.spiffe.io-reg.sock --backend-socket=/registration/csi.spiffe.io-reg.sock
+        volumeMounts:
+          - name: registration-dir
+            mountPath: /var/lib/kubelet/plugins_registry
+          - name: registration-internal
+            mountPath: /registration
+            readOnly: false
+          - name: spiffe-csi
+            mountPath: /spiffe-csi
+            readOnly: true
+
+      # ---------------- PROBE CHECKER (SIDE-CAR) ----------------
+      - name: csi-probe-checker
+        image: registry.threadforge.local:30500/mirror/docker.io/library/busybox@sha256:bfdec45b06a48dbc7d261ace48cec2d74849ecfc5129662c979f656cb31df469
+        imagePullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - sleep infinity
+        volumeMounts:
+          - name: spiffe-csi
+            mountPath: /spiffe-csi
+          - name: registration-internal
+            mountPath: /registration
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - test -S /spiffe-csi/driver.sock && test -S /registration/csi.spiffe.io-reg.sock
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - test -S /spiffe-csi/driver.sock && test -S /registration/csi.spiffe.io-reg.sock
+          initialDelaySeconds: 2
+          periodSeconds: 3
+
+
+      # ---------------- NODE DRIVER REGISTRAR ----------------
+      - name: csi-node-driver-registrar
+        image: "{{ .Values.spiffe.csi.nodeRegistrarImage.repository }}@{{ .Values.spiffe.csi.nodeRegistrarImage.digest }}"
+        imagePullPolicy: IfNotPresent
+        args:
+          - --csi-address=/csi/csi.sock
+          - --kubelet-registration-path=/var/lib/kubelet/plugins/csi.spiffe.io/csi.sock
+        ports:
+          - containerPort: 9809
+            name: reg-health
+        volumeMounts:
+          - name: csi-plugin-dir
+            mountPath: /csi
+            readOnly: true
+          - name: spiffe-csi
+            mountPath: /spiffe-csi
+            readOnly: true
+          - name: registration-internal
+            mountPath: /registration
+            readOnly: false
+
+
+
+      volumes:
+        - name: spire-agent-socket
+          hostPath:
+            path: /run/spire/sockets
+            type: DirectoryOrCreate
+        - name: spiffe-csi
+          hostPath:
+            path: /spiffe-csi
+            type: DirectoryOrCreate
+        - name: kubelet-pods
+          hostPath:
+            path: /var/lib/kubelet/pods
+            type: Directory
+        - name: csi-plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi.spiffe.io
+            type: DirectoryOrCreate
+        - name: registration-internal
+          emptyDir: {}
+        - name: registration-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins_registry
+            type: Directory
+
+---
+apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: csi.spiffe.io
+spec:
+  attachRequired: false
+  podInfoOnMount: true
+  volumeLifecycleModes:
+    - Persistent
+    - Ephemeral
+{{- end }}

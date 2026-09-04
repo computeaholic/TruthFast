@@ -1,0 +1,11 @@
+# deployment/infra/qdrant/templates/operator-routing.yaml
+apiVersion: threadforge.io/v1
+kind: OperatorRoutingPolicy
+metadata:
+  name: qdrant-routing
+spec:
+  preferredOrder:
+    {{- range .Values.operatorAI.routing.preferredOrder }}
+    - {{ . }}
+    {{- end }}
+  autoSwitch: {{ .Values.operatorAI.routing.mode }}

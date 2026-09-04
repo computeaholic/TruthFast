@@ -1,0 +1,12 @@
+apiVersion: v2
+name: spire
+description: SPIRE Identity Plane v2.0 for ThreadForge
+type: application
+version: 0.1.0
+appVersion: "1.14.0"
+
+keywords:
+  - identity
+  - spiffe
+  - spire
+  - threadforge

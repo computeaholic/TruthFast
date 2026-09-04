@@ -1,0 +1,32 @@
+# ThreadForge kind cluster configuration
+# Used by: scripts/ci/reset_ci_cluster.sh
+# Node image: registry.threadforge.local:30500/kindest-node@sha256:48321fb2717f92527d9aba9a9b32055dff622f9c356ea3de2f1ffb75344f87bf
+#   - TLS trust for registry.threadforge.local:30500 baked in
+#   - arm64 image digest pinned and cosign signed in the internal registry
+#
+# Registry (local-registry container) is connected to the kind Docker network
+# with the DNS alias "registry.threadforge.local" after cluster creation.
+apiVersion: kind.x-k8s.io/v1alpha4
+kind: Cluster
+name: threadforge
+nodes:
+  - role: control-plane
+    image: registry.threadforge.local:30500/kindest-node@sha256:48321fb2717f92527d9aba9a9b32055dff622f9c356ea3de2f1ffb75344f87bf
+    # Expose NodePort range for Istio ingress gateway (80→31620, 443→32229)
+    # and the proof healthz probe.
+    extraPortMappings:
+      - containerPort: 31245
+        hostPort: 31245
+        protocol: TCP
+      - containerPort: 31620
+        hostPort: 31620
+        protocol: TCP
+      - containerPort: 32229
+        hostPort: 32229
+        protocol: TCP
+      - containerPort: 31449
+        hostPort: 31449
+        protocol: TCP
+      - containerPort: 32592
+        hostPort: 32592
+        protocol: TCP

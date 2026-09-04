@@ -1,0 +1,40 @@
+{{- if .Values.bundleService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spire-bundle-server
+  namespace: spire-system
+  labels:
+    app: spire-bundle
+spec:
+  replicas: {{ .Values.bundleService.replicas | default 1 }}
+  selector:
+    matchLabels:
+      app: spire-bundle
+  template:
+    metadata:
+      labels:
+        app: spire-bundle
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      containers:
+      - name: web
+        image: {{ .Values.bundleService.image | quote }}
+        ports:
+        - containerPort: {{ .Values.bundleService.containerPort | default 80 }}
+          name: http
+        - containerPort: {{ .Values.bundleService.tlsContainerPort | default 8443 }}
+          name: https
+        volumeMounts:
+        - name: bundle
+          mountPath: /usr/share/nginx/html/bundle.crt
+          subPath: bundle.crt
+      volumes:
+      - name: bundle
+        configMap:
+          name: spire-bundle
+          items:
+          - key: bundle.crt
+            path: bundle.crt
+{{- end }}

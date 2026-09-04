@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: capsule-alerts
+  namespace: observability
+spec:
+  groups:
+    - name: capsule-alerts
+      rules:
+
+        - alert: CapsuleStall
+          expr: tf_capsule_duration_ms > 8000
+          for: 30s
+          labels:
+            severity: warning
+          annotations:
+            summary: "Capsule running longer than expected"
+
+        - alert: HighDriftCapsule
+          expr: tf_capsule_drift_score > 0.7
+          for: 15s
+          labels:
+            severity: critical
+          annotations:
+            summary: "Capsule drift score exceeded safe threshold"
+
+        - alert: ReflexVetoLoop
+          expr: increase(tf_reflex_veto_total[1m]) > 5
+          labels:
+            severity: critical
+          annotations:
+            summary: "Multiple reflex veto events — possible unsafe loop detected"

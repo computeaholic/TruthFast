@@ -1,0 +1,55 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: threadforge-phase2-validation-alerts
+  namespace: monitoring
+  labels:
+    threadforge.rules/enabled: "true"
+    threadforge.validation/enabled: "true"
+spec:
+  groups:
+    - name: phase2-validation
+      rules:
+        - alert: Phase2ValidationSMPDispatch
+          expr: sum(increase(smp_dispatch_total[1m])) > 0
+          for: 10s
+          labels:
+            severity: warning
+            validation_scope: phase2
+            validation_mode: smp
+          annotations:
+            summary: "Phase 2 validation: SMP dispatch observed"
+            description: "SMP dispatch decisions were observed during validation traffic."
+
+        - alert: Phase2ValidationLedgerDown
+          expr: kube_statefulset_status_replicas_ready{exported_namespace="threadforge-system",statefulset="postgres"} == 0
+          for: 10s
+          labels:
+            severity: critical
+            validation_scope: phase2
+            validation_mode: ledger
+          annotations:
+            summary: "Phase 2 validation: Postgres down"
+            description: "Postgres statefulset has zero ready replicas."
+
+        - alert: Phase2ValidationIdentityPlaneDown
+          expr: kube_statefulset_status_replicas_ready{exported_namespace="spire-system",statefulset="spire-server"} == 0
+          for: 10s
+          labels:
+            severity: critical
+            validation_scope: phase2
+            validation_mode: identity
+          annotations:
+            summary: "Phase 2 validation: SPIRE server down"
+            description: "SPIRE server has zero ready replicas."
+
+        - alert: Phase2ValidationScrapeDown
+          expr: (min(up{job="threadforge-api"}) == 0) or (absent(up{job="threadforge-api"}) == 1)
+          for: 10s
+          labels:
+            severity: critical
+            validation_scope: phase2
+            validation_mode: scrape
+          annotations:
+            summary: "Phase 2 validation: threadforge-api scrape down"
+            description: "Prometheus scrape for threadforge-api is down."

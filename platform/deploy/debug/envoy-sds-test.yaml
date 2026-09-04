@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: envoy-sds-test
+  namespace: default
+spec:
+  serviceAccountName: envoy
+  securityContext:
+    runAsUser: 1337
+    runAsGroup: 1337
+    fsGroup: 0
+  containers:
+    - name: envoy
+      image: registry.threadforge.local:30500/mirror/docker.io/envoyproxy/envoy@sha256:deb1d3a3cfc53d9306465426b4cc2b9443bea4b6100f2a0caf224ce3be23c0ad
+      args:
+        - "-c"
+        - "/etc/envoy/envoy.yaml"
+        - "--log-level"
+        - "info"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 500m
+          memory: 256Mi
+      volumeMounts:
+        - name: envoy-config
+          mountPath: /etc/envoy
+        - name: spire-socket
+          mountPath: /run/spire/socket
+          readOnly: true
+      # Readiness validates process health only.
+      # Identity readiness is enforced at the TLS/SPIFFE layer.
+      readinessProbe:
+        exec:
+          command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep envoy | grep -v grep"
+        initialDelaySeconds: 5
+        periodSeconds: 3
+  volumes:
+    - name: envoy-config
+      configMap:
+        name: envoy-bootstrap
+    - name: spire-socket
+      hostPath:
+        path: /run/spire/socket
+        type: Directory

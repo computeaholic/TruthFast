@@ -1,0 +1,16 @@
+controller:
+  image:
+    repository: registry.threadforge.local:30500/metallb/controller
+    digest: sha256:faa8f0d53b3811705910f823f895f797a68729a0fe1f38e36e4a25efeab303bd
+
+speaker:
+  image:
+    repository: registry.threadforge.local:30500/metallb/speaker
+    digest: sha256:b73cc85aaf693bb283cec2b9b14acf788fcf78acd23ae999013b512d37d8a946
+  frr:
+    image:
+      repository: registry.threadforge.local:30500/frrouting/frr
+      digest: sha256:6959404cfe5878c641d5619b7348f5b0efb7968ac6e00f1aa42cbf269aa2ddc6
+
+crds:
+  enabled: true

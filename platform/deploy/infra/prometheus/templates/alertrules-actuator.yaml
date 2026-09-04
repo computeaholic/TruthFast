@@ -1,0 +1,38 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: actuator-safety-rules
+spec:
+  groups:
+  - name: threadforge-actuator
+    rules:
+    - alert: ActuatorExecutionEnabledTooLong
+      expr: actuator_execution_enabled_seconds > 300
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Actuator execution enabled too long"
+        description: >
+          Actuator plane has been enabled longer than expected.
+          Manual review required.
+
+    - alert: ActuatorExecutedWithoutApproval
+      expr: actuator_executed_plans_total > actuator_approved_plans_total
+      for: 10s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Execution without approval detected"
+        description: >
+          A plan was executed without approval.
+          This should be impossible.
+
+    - alert: ThreadForgeExecutionEnabled
+      expr: actuator_execution_enabled == 1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "ThreadForge Actuator execution enabled too long"
+        description: "Execution mode has been enabled for more than 5 minutes"

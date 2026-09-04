@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: envoy-bootstrap
+  namespace: default
+data:
+  envoy.yaml: |
+    node:
+      id: "threadforge-envoy"
+      cluster: "threadforge"
+
+    static_resources:
+      listeners:
+        - name: listener_mtls
+          address:
+            socket_address:
+              address: 0.0.0.0
+              port_value: 8443
+          filter_chains:
+            - transport_socket:
+                name: envoy.transport_sockets.tls
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+                  common_tls_context:
+                    tls_certificate_sds_secret_configs:
+                      - name: spiffe_cert
+                        sds_config:
+                          api_config_source:
+                            api_type: GRPC
+                            grpc_services:
+                              - envoy_grpc:
+                                  cluster_name: spire_agent
+                            transport_api_version: V3
+                    validation_context_sds_secret_config:
+                      name: spiffe_validation
+                      sds_config:
+                        api_config_source:
+                          api_type: GRPC
+                          grpc_services:
+                            - envoy_grpc:
+                                cluster_name: spire_agent
+                        transport_api_version: V3
+
+      clusters:
+        - name: spire_agent
+          type: STATIC
+          connect_timeout: 5s
+          http2_protocol_options: {}
+          load_assignment:
+            cluster_name: spire_agent
+            endpoints:
+              - lb_endpoints:
+                  - endpoint:
+                      address:
+                        pipe:
+                          path: /run/spire/socket/agent.sock
+
+    layered_runtime:
+      layers:
+        - name: static_layer
+          static_layer:
+            envoy:
+              tls:
+                log_level: trace

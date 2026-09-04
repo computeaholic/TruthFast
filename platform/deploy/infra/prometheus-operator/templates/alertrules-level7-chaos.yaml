@@ -1,0 +1,69 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: threadforge-level7-chaos-alerts
+  namespace: observability
+  labels:
+    threadforge.rules/enabled: "true"
+spec:
+  groups:
+    - name: threadforge-level7-chaos.smp
+      rules:
+        # SMP Failure: primary API scrape is missing (SMP pipeline unavailable)
+        - alert: SMPDispatcherStall
+          expr: absent_over_time(up{job="threadforge-api"}[20s]) == 1
+          for: 10s
+          labels:
+            severity: critical
+            subsystem: smp
+          annotations:
+            summary: "SMP pipeline unavailable"
+            description: "Prometheus no longer sees any 'up' series for the primary threadforge-api job within 20s."
+
+        # SMP Failure: backlog pressure (optional alternate signal)
+        - alert: SMPQueuePressureHigh
+          expr: sum(smp_queue_depth) > 25
+          for: 30s
+          labels:
+            severity: warning
+            subsystem: smp
+          annotations:
+            summary: "SMP queue pressure high"
+            description: "SMP queue depth exceeded 25 envelopes."
+
+    - name: threadforge-level7-chaos.ledger
+      rules:
+        - alert: OperatorLedgerDBFailures
+          expr: kube_statefulset_status_replicas_ready{exported_namespace="threadforge-system",statefulset="postgres"} == 0
+          for: 10s
+          labels:
+            severity: critical
+            subsystem: ledger
+          annotations:
+            summary: "Operator ledger DB failures"
+            description: "Postgres StatefulSet has 0 ready replicas (ledger DB unavailable)."
+
+    - name: threadforge-level7-chaos.identity
+      rules:
+        - alert: IdentityCoverageLost
+          expr: identity_coverage_ratio < 1
+          for: 30s
+          labels:
+            severity: critical
+            subsystem: identity
+          annotations:
+            summary: "Identity coverage lost"
+            description: "Runtime identity coverage ratio dropped below 1."
+
+    - name: threadforge-level7-chaos.scrape
+      rules:
+        # Scrape Failure: ServiceMonitor missing/removed (no target => absent)
+        - alert: ThreadforgeApiScrapeMissing
+          expr: absent_over_time(up{job="threadforge-scrape-probe"}[20s]) == 1
+          for: 10s
+          labels:
+            severity: critical
+            subsystem: scrape
+          annotations:
+            summary: "ThreadForge API scrape target missing"
+            description: "Prometheus no longer sees any 'up' series for threadforge-api within 20s."

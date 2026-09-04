@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: threadforge-operator
+  labels:
+    app: threadforge-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: threadforge-operator
+  template:
+    metadata:
+      labels:
+        app: threadforge-operator
+    spec:
+      serviceAccountName: threadforge-operator
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: operator
+          image: registry.threadforge.local:30500/threadforge-operator@sha256:315ddcc7449efdcc4f78c2de5423f285c37e71327394b77ee98ce84a8c4c5806
+          command: ["python3", "-m", "runtime.start"]
+          env:
+            - name: THREADFORGE_LEDGER_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: operator-secrets
+                  key: ledger_dsn
+{{- if .Values.observations.enabled }}
+            - name: OBSERVATION_DIR
+              value: "{{ .Values.observations.path }}"
+{{- end }}
+          volumeMounts:
+            - name: spire-socket
+              mountPath: /run/spire/agent.sock
+              subPath: agent.sock
+{{- if .Values.observations.enabled }}
+            - name: observations
+              mountPath: "{{ .Values.observations.path }}"
+{{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: spire-socket
+          hostPath:
+            path: /run/spire/agent.sock
+            type: Socket
+{{- if .Values.observations.enabled }}
+        - name: observations
+          emptyDir: {}
+{{- end }}

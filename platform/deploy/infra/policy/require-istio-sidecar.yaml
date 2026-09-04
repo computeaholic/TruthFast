@@ -1,0 +1,80 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: threadforge-require-istio-sidecar
+  annotations:
+    policies.kyverno.io/title: ThreadForge Require Istio Sidecar
+    policies.kyverno.io/category: Zero Trust
+    policies.kyverno.io/severity: critical
+    pod-policies.kyverno.io/autogen-controllers: none
+spec:
+  validationFailureAction: Enforce
+  background: true
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: deny-pod-sidecar-opt-out
+      match:
+        any:
+          - resources:
+              operations:
+                - CREATE
+                - UPDATE
+              kinds:
+                - Pod
+              namespaces:
+                - threadforge-test
+                - threadforge-system
+      validate:
+        message: Protected namespaces cannot disable Istio sidecar injection.
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.metadata.annotations."sidecar.istio.io/inject" || "true" }}'
+                operator: Equals
+                value: "false"
+
+    - name: require-pod-istio-sidecar
+      match:
+        any:
+          - resources:
+              operations:
+                - CREATE
+                - UPDATE
+              kinds:
+                - Pod
+              namespaces:
+                - threadforge-test
+                - threadforge-system
+      validate:
+        message: Protected namespaces require container named istio-proxy.
+        deny:
+          conditions:
+            all:
+              - key: "{{ request.object.spec.containers[?name=='istio-proxy'] | length(@) }}"
+                operator: Equals
+                value: 0
+
+    - name: deny-controller-sidecar-opt-out
+      match:
+        any:
+          - resources:
+              operations:
+                - CREATE
+                - UPDATE
+              kinds:
+                - Deployment
+                - StatefulSet
+                - Job
+              namespaces:
+                - threadforge-test
+                - threadforge-system
+      validate:
+        message: Protected namespaces cannot disable Istio sidecar injection on workload templates.
+        deny:
+          conditions:
+            any:
+              - key: '{{ request.object.spec.template.metadata.annotations."sidecar.istio.io/inject" || "true" }}'
+                operator: Equals
+                value: "false"
+
+

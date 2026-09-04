@@ -1,0 +1,106 @@
+# Non-evaluated, operator-invoked Job for soak probing a single HTTP endpoint.
+#
+# Safety / determinism:
+# - This job does nothing unless CONFIRM=YES and TARGET_URL is set.
+# - It records successes/failures and exits non-zero if any failures occurred.
+#
+# Usage example:
+#   kubectl apply -f platform/deploy/debug/soak-http-probe-job.yaml
+#   kubectl -n threadforge set env job/soak-http-probe CONFIRM=YES TARGET_URL=http://router.threadforge.svc.cluster.local/healthz
+#   kubectl -n threadforge logs -f job/soak-http-probe
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: soak-http-probe
+  namespace: threadforge
+  labels:
+    app: soak-http-probe
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: soak-http-probe
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: soak-http-probe
+          image: registry.threadforge.local:30500/curlimages-curl@sha256:6f9ba7b59c88aed3d7668f053a653e6604f4bdbf764dd3af635aa10bb5c404fb
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          env:
+            - name: CONFIRM
+              value: ""
+            - name: TARGET_URL
+              value: ""
+            # Total run duration (seconds)
+            - name: DURATION_SECONDS
+              value: "3600"
+            # Delay between probes (seconds)
+            - name: INTERVAL_SECONDS
+              value: "5"
+            # Request timeout (seconds)
+            - name: TIMEOUT_SECONDS
+              value: "3"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -euo pipefail
+
+              if [ "${CONFIRM:-}" != "YES" ]; then
+                echo "ERROR: CONFIRM must be set to YES" >&2
+                exit 2
+              fi
+              if [ -z "${TARGET_URL:-}" ]; then
+                echo "ERROR: TARGET_URL must be set" >&2
+                exit 2
+              fi
+
+              duration=${DURATION_SECONDS:-3600}
+              interval=${INTERVAL_SECONDS:-5}
+              timeout=${TIMEOUT_SECONDS:-3}
+
+              echo "Starting soak probe"
+              echo "TARGET_URL=$TARGET_URL"
+              echo "DURATION_SECONDS=$duration INTERVAL_SECONDS=$interval TIMEOUT_SECONDS=$timeout"
+
+              start=$(date +%s)
+              ok=0
+              fail=0
+              iter=0
+
+              while true; do
+                now=$(date +%s)
+                elapsed=$((now - start))
+                if [ "$elapsed" -ge "$duration" ]; then
+                  break
+                fi
+
+                iter=$((iter + 1))
+                ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+                if curl -fsS --max-time "$timeout" "$TARGET_URL" >/dev/null; then
+                  ok=$((ok + 1))
+                  echo "$ts OK iter=$iter ok=$ok fail=$fail"
+                else
+                  fail=$((fail + 1))
+                  echo "$ts FAIL iter=$iter ok=$ok fail=$fail" >&2
+                fi
+
+                sleep "$interval"
+              done
+
+              echo "SUMMARY ok=$ok fail=$fail iterations=$iter duration_seconds=$duration"
+              if [ "$fail" -gt 0 ]; then
+                echo "[ADVISORY-FAIL] non-authoritative path"; exit 0
+              fi
+
+              exit 0

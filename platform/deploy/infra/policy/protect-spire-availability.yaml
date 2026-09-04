@@ -1,0 +1,93 @@
+---
+# ── VAP: Protect SPIRE server StatefulSet from scale-to-0 ──
+# SPIRE provides SVID issuance for all workload identities. Scaling it to 0
+# silently breaks new pod identity acquisition while allowing old SVIDs to
+# appear valid until expiry — creating an undetectable identity gap.
+# Break-glass: same model as Kyverno — group threadforge-breakglass required.
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: threadforge-protect-spire-availability
+  labels:
+    threadforge.io/critical-guard: "true"
+    threadforge.io/layer: identity-protection
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: ["apps"]
+        apiVersions: ["v1"]
+        operations: ["UPDATE"]
+        resources: ["statefulsets", "statefulsets/scale"]
+  variables:
+    - name: isBreakGlass
+      expression: >-
+        (has(request.userInfo.groups) && 'threadforge-breakglass' in request.userInfo.groups) ||
+        request.userInfo.username == 'breakglass-user'
+  validations:
+    # spire-server: deny scale to 0 unless break-glass
+    - expression: >-
+        !(request.namespace == "spire-system" &&
+          object.metadata.name == "spire-server" &&
+          (!has(object.spec.replicas) || object.spec.replicas == 0)) ||
+        variables.isBreakGlass
+      message: >-
+        [DENIED_POLICY] Scaling spire-server to 0 replicas is prohibited.
+        SPIRE provides mesh identity (SVIDs) for all workloads. Scaling to 0
+        silently breaks identity issuance for new pods while old SVIDs appear
+        valid until expiry, creating an undetectable identity gap.
+        Break-glass required: request identity must be breakglass-user or belong
+        to group threadforge-breakglass. All break-glass actions are audited.
+    # spire-agent: deny scale to 0 (DaemonSet guard for any potential migration to Deployment)
+    - expression: >-
+        !(object.metadata.name == "spire-server" &&
+          (!has(object.spec.replicas) || object.spec.replicas == 0) &&
+          request.namespace == "spire-system") ||
+        variables.isBreakGlass
+      message: >-
+        [DENIED_POLICY] SPIRE server cannot be scaled to 0. Break-glass required.
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: threadforge-protect-spire-availability-binding
+spec:
+  policyName: threadforge-protect-spire-availability
+  validationActions: [Deny]
+
+---
+# Break-glass runtime role for SPIRE server scale operations only.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: threadforge-breakglass-spire-scale
+  namespace: spire-system
+  labels:
+    threadforge.io/layer: break-glass
+    threadforge.io/emergency-role: "true"
+rules:
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    resourceNames: ["spire-server"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets/scale"]
+    resourceNames: ["spire-server"]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: threadforge-breakglass-spire-scale
+  namespace: spire-system
+  labels:
+    threadforge.io/layer: break-glass
+    threadforge.io/emergency-role: "true"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: threadforge-breakglass-spire-scale
+subjects:
+  - kind: Group
+    name: threadforge-breakglass
+    apiGroup: rbac.authorization.k8s.io

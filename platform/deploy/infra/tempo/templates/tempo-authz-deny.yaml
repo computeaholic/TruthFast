@@ -1,0 +1,3 @@
+# Default deny is already enforced by the presence of ALLOW policies on the workload.
+# Rendering an explicit DENY-all policy here overrides those ALLOW rules and blocks
+# legitimate mesh clients, including bootstrap validation traffic.
