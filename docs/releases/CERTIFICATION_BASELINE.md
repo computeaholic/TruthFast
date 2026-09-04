@@ -133,10 +133,11 @@ Atlas defects closed: `3/3`. Release defects remaining: `0`.
 - `v1.0.0-reference-runtime` points to historical commit
   `d0660f375467b77a482c01b20285d5954133db35`; it is retained and not moved.
   No current runtime-qualified tag or GitHub release exists.
-- Project-owned material is licensed under Apache License 2.0. The seven
+- The historical engineering baseline used Apache License 2.0 for project-owned
+  material. The current TruthFast public export uses PolyForm Shield 1.0.0;
   redistributed tracked binaries and their Apache-2.0, BSD, and MIT dependency
-  attribution are recorded in `THIRD_PARTY_NOTICES.md`. Licensing is repository
-  provenance and does not alter or extend runtime qualification.
+  attribution remain recorded in `THIRD_PARTY_NOTICES.md`. Licensing is
+  repository provenance and does not alter or extend runtime qualification.
 - Seven tracked native binaries total 110,997,616 bytes. They are retained
   because build and deployment consumers were not removed in this closeout;
   binary reduction is a bounded post-V1 repository-size program.

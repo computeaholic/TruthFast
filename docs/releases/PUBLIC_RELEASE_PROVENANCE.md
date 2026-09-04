@@ -1,7 +1,13 @@
 # TruthFast V1 Public Release Provenance
 
-This clean-history repository is a public-release candidate extracted from the
-private [ThreadForge engineering repository](https://github.com/computeaholic/ThreadForge).
+This clean-history repository is a TruthFast public-release candidate extracted
+from the private [ThreadForge engineering repository](https://github.com/computeaholic/ThreadForge).
+
+`PUBLIC_PROJECT_NAME=TruthFast`
+`PUBLIC_REPOSITORY=computeaholic/TruthFast`
+`SOURCE_ENGINEERING_REPOSITORY=computeaholic/ThreadForge`
+`QUALIFIED_ENGINEERING_SOURCE_SHA=0ddae102badf2a93fe4fdb3934ad9a36db4c8c84`
+
 It contains the source tree at:
 
 `0ddae102badf2a93fe4fdb3934ad9a36db4c8c84`

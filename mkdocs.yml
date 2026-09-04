@@ -85,6 +85,7 @@ nav:
       - Certification Baseline: releases/CERTIFICATION_BASELINE.md
   - Release:
       - Public Release Provenance: releases/PUBLIC_RELEASE_PROVENANCE.md
+      - Public Identity Reconciliation: releases/PUBLIC_IDENTITY_RECONCILIATION.md
       - Certification Baseline (historical): releases/CERTIFICATION_BASELINE.md
 
 plugins:
