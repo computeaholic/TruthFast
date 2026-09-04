@@ -23,6 +23,8 @@ For the conceptual thesis, start with [docs/Agent-Containment.md](docs/Agent-Con
 
 Current qualification provenance is recorded in
 [docs/releases/PUBLIC_RELEASE_PROVENANCE.md](docs/releases/PUBLIC_RELEASE_PROVENANCE.md).
+The external project and private engineering lineage are explicitly separated
+in [PUBLIC_IDENTITY_RECONCILIATION.md](docs/releases/PUBLIC_IDENTITY_RECONCILIATION.md).
 The qualified executable source revision for this release is
 `0ddae102badf2a93fe4fdb3934ad9a36db4c8c84`. Detailed operation records in
 [CERTIFICATION_BASELINE.md](docs/releases/CERTIFICATION_BASELINE.md) are

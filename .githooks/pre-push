@@ -81,8 +81,39 @@ elif command -v python3 >/dev/null 2>&1; then
 fi
 
 if [ -n "$TEST_PYTHON" ]; then
-  echo "[pre-push] running unit tests (no integration) with $TEST_PYTHON"
-  "$TEST_PYTHON" -m pytest -q -m "not integration" || { echo "Unit tests failed — push blocked" >&2; exit 1; }
+  # Keep this gate repository-only. The former broad selector included tests
+  # whose optional Redis mirror could contact an ambient localhost service.
+  PRE_PUSH_UNIT_TESTS=(
+    tests/test_ci_constitution_guard.py
+    tests/test_ci_enforcement_layer.py
+    tests/test_ci_no_heavy_steps.py
+    tests/test_ci_timeout_budgets.py
+    tests/test_ci_runner_policy.py
+    tests/test_no_platform_override.py
+    tests/test_arm64_only.py
+    tests/test_no_manifest_list_usage.py
+    tests/test_kind_node_digest_locked.py
+    tests/test_governance_enforcement_guards.py
+    tests/test_observability_proof_phase.py
+    tests/test_no_tag_runtime_images.py
+    tests/test_bootstrap_reproducibility_guards.py
+  )
+  TEST_TIMEOUT_SECONDS="${THREADFORGE_PRE_PUSH_TEST_TIMEOUT_SECONDS:-120}"
+  if ! [[ "$TEST_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: THREADFORGE_PRE_PUSH_TEST_TIMEOUT_SECONDS must be a positive integer" >&2
+    exit 1
+  fi
+  if ! command -v timeout >/dev/null 2>&1; then
+    echo "ERROR: timeout is required for the bounded pre-push test gate" >&2
+    exit 1
+  fi
+  echo "[pre-push] running bounded repository-only tests with $TEST_PYTHON"
+  if ! timeout --foreground --signal=TERM --kill-after=5s "${TEST_TIMEOUT_SECONDS}s" \
+    env PYTHONPATH="platform${PYTHONPATH:+:$PYTHONPATH}" \
+    "$TEST_PYTHON" -m pytest -q "${PRE_PUSH_UNIT_TESTS[@]}"; then
+    echo "Unit tests failed — push blocked" >&2
+    exit 1
+  fi
 else
   echo "[pre-push] no python available — skipping unit test gate" >&2
 fi

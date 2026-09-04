@@ -215,7 +215,7 @@ acceptable to their consumers.
 
 Autonomy does not collapse decision and execution authority. Autonomous agents
 are one application domain, not the constitutional unit. The repository's
-[Civ intelligence surfaces](https://github.com/computeaholic/TruthFast/blob/main/platform/runtime/civ/README.md) produce
+[Civ intelligence surfaces](https://github.com/computeaholic/TruthFast/blob/159cf47d66498769bad5ec9fa6d93a6892be4db5/platform/runtime/civ/README.md) produce
 deterministic, non-binding advisory artifacts and are mechanically prohibited
 from enforcement. An external authority decides whether an operation may
 proceed. A recommendation is input to governance, not permission to execute.
@@ -432,7 +432,7 @@ produce evidence; it is not proof that those realizations already exist.
 A reviewer can follow the active authority chain without reading historical
 convergence material:
 
-1. Read the [README](https://github.com/computeaholic/TruthFast/blob/main/README.md) and [Start Here](START_HERE.md) for execution
+1. Read the [README](https://github.com/computeaholic/TruthFast/blob/159cf47d66498769bad5ec9fa6d93a6892be4db5/README.md) and [Start Here](START_HERE.md) for execution
    scope.
 2. Read this paper for the architectural thesis.
 3. Read the [assurance reference architecture](architecture/00-ThreadForge-Assurance-Reference-Architecture.md),
