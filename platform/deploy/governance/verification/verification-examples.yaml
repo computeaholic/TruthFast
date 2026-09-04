@@ -15,7 +15,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/threadforge/threadforge
+    repoURL: https://github.com/computeaholic/TruthFast
     path: deploy
   destination:
     server: https://kubernetes.default.svc
@@ -33,7 +33,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/threadforge/threadforge
+    repoURL: https://github.com/computeaholic/TruthFast
     path: deploy
   destination:
     server: https://kubernetes.default.svc
@@ -251,7 +251,7 @@ metadata:
   namespace: argocd
 spec:
   source:
-    repoURL: https://github.com/threadforge/threadforge
+    repoURL: https://github.com/computeaholic/TruthFast
     path: deploy
   destination:
     server: https://kubernetes.default.svc
@@ -292,4 +292,3 @@ spec:
 # Destination: github.com:443
 # NetworkPolicy: argocd-git-only
 # Result: Connection established
-

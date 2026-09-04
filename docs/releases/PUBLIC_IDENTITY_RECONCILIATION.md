@@ -18,6 +18,11 @@ runtime-owned identifiers or paths, or retain historical architecture and
 evidence truth. Current public project names, repository URLs, release links,
 and reviewer-facing descriptions use TruthFast.
 
+The non-native GitOps and verification examples also use the TruthFast
+repository as their source URL. Runtime namespaces, trust domains, environment
+variables, and other contract identifiers retain `threadforge` because they
+are executable names rather than public branding.
+
 This document records the boundary; it does not rename executable package,
 namespace, trust-domain, service, or compatibility identifiers whose names are
 part of the supported runtime contract.
