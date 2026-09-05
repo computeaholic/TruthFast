@@ -12,6 +12,20 @@ is `0ddae102badf2a93fe4fdb3934ad9a36db4c8c84`, from the private ThreadForge
 engineering lineage. These identities are intentionally distinct; this paper
 does not claim independent validation or production certification.
 
+## Publication metadata
+
+- **Publication version:** 1.0.1 pre-publication candidate
+- **Public project:** TruthFast
+- **Private engineering provenance:** `computeaholic/ThreadForge`
+- **Qualified engineering source:** `0ddae102badf2a93fe4fdb3934ad9a36db4c8c84`
+- **Public reference release:** `v1.0.0`
+- **Current Zenodo v1.0 DOI:** [10.5281/zenodo.22240796](https://doi.org/10.5281/zenodo.22240796)
+- **Zenodo v1.0.1 DOI:** pending; no DOI is asserted here
+- **Paper license:** CC BY 4.0
+- **Reference implementation license:** PolyForm Shield 1.0.0; third-party
+  components retain their respective licenses and notices
+- **Patent status:** Patent pending
+
 ## Abstract
 
 Institutions increasingly permit software to initiate consequential work. The
