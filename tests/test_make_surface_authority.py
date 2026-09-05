@@ -74,7 +74,7 @@ def test_public_make_surface_has_explicit_hierarchy_and_no_mesh_unlock() -> None
     assert "docs/index.md" in readme
     assert "docs/architecture/repository-manifest.yaml" in readme
     assert "docs/Agent-Containment.md" in index
-    assert "ThreadForge documentation hierarchy" in index
+    assert "TruthFast documentation hierarchy" in index
     assert "docs/architecture/" in index
     assert "docs/CANONICAL/" in index
 
