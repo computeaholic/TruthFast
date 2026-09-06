@@ -14,17 +14,22 @@ does not claim independent validation or production certification.
 
 ## Publication metadata
 
-- **Publication version:** 1.0.1 pre-publication candidate
+- **Author:** Jeffrey Smith
+- **ORCID:** [0009-0002-8967-0184](https://orcid.org/0009-0002-8967-0184)
+- **Publication version:** 1.0.1
+- **Publication date:** September 6, 2026
 - **Public project:** TruthFast
+- **Public repository:** [computeaholic/TruthFast](https://github.com/computeaholic/TruthFast)
 - **Private engineering provenance:** `computeaholic/ThreadForge`
 - **Qualified engineering source:** `0ddae102badf2a93fe4fdb3934ad9a36db4c8c84`
 - **Public reference release:** `v1.0.0`
-- **Current Zenodo v1.0 DOI:** [10.5281/zenodo.22240796](https://doi.org/10.5281/zenodo.22240796)
-- **Zenodo v1.0.1 DOI:** pending; no DOI is asserted here
+- **Version DOI:** [10.5281/zenodo.22548396](https://doi.org/10.5281/zenodo.22548396)
+- **Prior version DOI:** [10.5281/zenodo.22240796](https://doi.org/10.5281/zenodo.22240796)
+- **Concept DOI:** [10.5281/zenodo.22240795](https://doi.org/10.5281/zenodo.22240795)
 - **Paper license:** CC BY 4.0
-- **Reference implementation license:** PolyForm Shield 1.0.0; third-party
+- **Reference implementation license:** PolyForm Perimeter License 1.0.1; third-party
   components retain their respective licenses and notices
-- **Patent status:** Patent pending
+- **Patent status:** Patent pending; see [PATENTS.md](https://github.com/computeaholic/TruthFast/blob/v1.0.0/PATENTS.md)
 
 ## Abstract
 

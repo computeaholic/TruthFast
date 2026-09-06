@@ -1,7 +1,7 @@
 # Third-Party Notices
 
-TruthFast project-owned material is licensed under PolyForm Shield 1.0.0. This
-file records third-party material redistributed in the seven tracked compiled
+TruthFast project-owned software material is licensed under the PolyForm
+Perimeter License 1.0.1. This file records third-party material redistributed in the seven tracked compiled
 binaries. Dependencies fetched during normal use are not redistributed merely
 because repository configuration references them.
 

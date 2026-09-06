@@ -26,7 +26,9 @@ records or generated runtime evidence. The detailed historical baseline is
 retained for context in [CERTIFICATION_BASELINE.md](CERTIFICATION_BASELINE.md)
 and remains bound to the SHA recorded inside that document.
 
-The project DOI is [10.5281/zenodo.22240796](https://doi.org/10.5281/zenodo.22240796).
+The prior paper version DOI is [10.5281/zenodo.22240796](https://doi.org/10.5281/zenodo.22240796).
+The current paper version 1.0.1 DOI is [10.5281/zenodo.22548396](https://doi.org/10.5281/zenodo.22548396),
+with concept DOI [10.5281/zenodo.22240795](https://doi.org/10.5281/zenodo.22240795).
 Qualification was an internal engineering process, not an independent audit,
 third-party certification, or production-readiness assessment.
 
@@ -43,6 +45,6 @@ third-party certification, or production-readiness assessment.
 
 ## License provenance
 
-Project-owned material is licensed under PolyForm Shield 1.0.0. Redistributed
-third-party material retains the notices and licenses recorded in
+Project-owned software material is licensed under the PolyForm Perimeter
+License 1.0.1. Redistributed third-party material retains the notices and licenses recorded in
 `THIRD_PARTY_NOTICES.md`, including the preserved Apache-2.0 license text.
