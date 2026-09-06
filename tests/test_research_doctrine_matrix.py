@@ -111,8 +111,13 @@ def test_license_inventory_covers_all_tracked_binaries() -> None:
     }
 
     assert (ROOT / "LICENSE").read_text(encoding="utf-8").startswith(
-        "# PolyForm Shield License 1.0.0\n"
+        "# PolyForm Perimeter License 1.0.1\n"
     )
+    assert (ROOT / "PATENTS.md").is_file()
+    assert (ROOT / "CONTRIBUTING.md").is_file()
+    assert "PolyForm Perimeter License 1.0.1" in (
+        ROOT / "README.md"
+    ).read_text(encoding="utf-8")
     assert all(path in notices for path in binaries)
     assert "Apache-2.0 Components" in notices
     assert "BSD-3-Clause Components" in notices
@@ -153,4 +158,5 @@ def test_license_inventory_covers_all_tracked_binaries() -> None:
     assert "THIRD_PARTY_NOTICES.md" in allowed_root_files
 
     pre_commit = (ROOT / ".githooks/pre-commit").read_text(encoding="utf-8")
-    assert "LICENSE THIRD_PARTY_NOTICES.md" in pre_commit
+    assert "LICENSE" in pre_commit
+    assert "THIRD_PARTY_NOTICES.md" in pre_commit

@@ -617,7 +617,7 @@
       "CLASS": "REPOSITORY_PROVENANCE",
       "STATUS": "COMPLETE_AND_PROVEN",
       "CURRENT_AUTHORITY": "LICENSE and THIRD_PARTY_NOTICES.md",
-      "CURRENT_IMPLEMENTATION": "project-owned material is PolyForm Shield 1.0.0; all seven tracked binaries have known origin and compatible embedded-license attribution",
+      "CURRENT_IMPLEMENTATION": "project-owned material is PolyForm Perimeter License 1.0.1; all seven tracked binaries have known origin and compatible embedded-license attribution",
       "EVIDENCE": [
         "LICENSE",
         "THIRD_PARTY_NOTICES.md",

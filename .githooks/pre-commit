@@ -15,7 +15,7 @@ fi
 # 2) read allowed root files from governance policy if present
 # Fallback allowlist for environments where policy parsing fails — keep in sync with
 # .github/governance/THREADFORGE_GOVERNANCE.json.allowed_root_files
-allowed_root_files="README.md CHANGELOG.md SECURITY.md LICENSE THIRD_PARTY_NOTICES.md Makefile pyrightconfig.json pyproject.toml requirements.txt mkdocs.yml .gitignore .pre-commit-config.yaml tree.txt"
+allowed_root_files="README.md CHANGELOG.md SECURITY.md LICENSE PATENTS.md CONTRIBUTING.md THIRD_PARTY_NOTICES.md Makefile pyrightconfig.json pyproject.toml requirements.txt mkdocs.yml .gitignore .pre-commit-config.yaml tree.txt"
 policy_file="$repo_root/.github/governance/THREADFORGE_GOVERNANCE.json"
 if [ -f "$policy_file" ]; then
   # simple JSON parse for allowed_root_files (fallback if parsing fails)

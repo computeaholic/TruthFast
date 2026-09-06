@@ -130,13 +130,18 @@ custody and rotation.
 
 ## License
 
-TruthFast project-owned material is licensed under
-[PolyForm Shield 1.0.0](LICENSE). Redistributed third-party components retain
+TruthFast project-owned material is source-available under the
+[PolyForm Perimeter License 1.0.1](LICENSE). This is not an OSI-approved open
+source license. Redistributed third-party components retain
 their own licenses and attributions in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), including the preserved
 [Apache-2.0 text](THIRD_PARTY_LICENSES/Apache-2.0.txt). The license does not
 grant trademark rights or imply production certification, warranty, or
 ownership of third-party components.
+
+The paper is separately published under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+See [PATENTS.md](PATENTS.md) for the bounded patent-status notice and
+[CONTRIBUTING.md](CONTRIBUTING.md) for the current contribution policy.
 
 ---
 

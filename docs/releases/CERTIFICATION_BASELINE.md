@@ -134,7 +134,8 @@ Atlas defects closed: `3/3`. Release defects remaining: `0`.
   `d0660f375467b77a482c01b20285d5954133db35`; it is retained and not moved.
   No current runtime-qualified tag or GitHub release exists.
 - The historical engineering baseline used Apache License 2.0 for project-owned
-  material. The current TruthFast public export uses PolyForm Shield 1.0.0;
+  material. The current TruthFast public export uses PolyForm Perimeter License
+  1.0.1;
   redistributed tracked binaries and their Apache-2.0, BSD, and MIT dependency
   attribution remain recorded in `THIRD_PARTY_NOTICES.md`. Licensing is
   repository provenance and does not alter or extend runtime qualification.

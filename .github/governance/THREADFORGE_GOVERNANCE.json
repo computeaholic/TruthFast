@@ -17,6 +17,8 @@
       "CHANGELOG.md",
       "SECURITY.md",
       "LICENSE",
+      "PATENTS.md",
+      "CONTRIBUTING.md",
       "THIRD_PARTY_NOTICES.md",
       "Makefile",
       "pyrightconfig.json",

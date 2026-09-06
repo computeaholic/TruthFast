@@ -46,6 +46,8 @@ ROOT_ALLOWED_FILES=(
   ".ruff.toml"
   ".sqlfluff"
   "LICENSE"
+  "PATENTS.md"
+  "CONTRIBUTING.md"
   "Makefile"
   "THIRD_PARTY_NOTICES.md"
   "mkdocs.yml"
@@ -143,7 +145,9 @@ fi
 if find "$REPO_ROOT" -maxdepth 1 -type f -name '*.md' \
   ! -name 'README.md' \
   ! -name 'THIRD_PARTY_NOTICES.md' \
-  ! -name 'AGENTS.md' | grep -q .; then
+  ! -name 'AGENTS.md' \
+  ! -name 'PATENTS.md' \
+  ! -name 'CONTRIBUTING.md' | grep -q .; then
   fail "root markdown is restricted to the curated authority set"
 fi
 
