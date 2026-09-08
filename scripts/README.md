@@ -1,6 +1,6 @@
 # SCRIPT AUTHORITY MODEL
 
-This directory is the operational surface for ThreadForge automation. The
+This directory is the operational surface for TruthFast automation. The
 repository information model, directory contracts, and navigation live in
 `docs/index.md` and `docs/architecture/repository-manifest.yaml`.
 
