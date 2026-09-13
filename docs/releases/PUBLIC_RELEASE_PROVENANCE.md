@@ -1,7 +1,7 @@
 # TruthFast V1 Public Release Provenance
 
-This clean-history repository is a TruthFast public-release candidate extracted
-from the private [ThreadForge engineering repository](https://github.com/computeaholic/ThreadForge).
+This clean-history repository is the TruthFast V1 public reference distribution
+extracted from the private [ThreadForge engineering repository](https://github.com/computeaholic/ThreadForge).
 
 `PUBLIC_PROJECT_NAME=TruthFast`
 `PUBLIC_REPOSITORY=computeaholic/TruthFast`
@@ -40,8 +40,8 @@ third-party certification, or production-readiness assessment.
 - The project makes no HA, universal portability, production key-custody, or
   independent semantic-replay claim.
 - Reference credentials and keys are not production secret-management guidance.
-- The public repository is kept private until the owner completes the separate
-  publication gate.
+- The owner-controlled publication gate was completed after pre-public
+  verification; this repository is the public TruthFast reference distribution.
 
 ## License provenance
 
